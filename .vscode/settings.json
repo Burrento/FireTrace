@@ -1,0 +1,8 @@
+{
+  "python.analysis.extraPaths": [
+    "./FireTrace"
+  ],
+  "python.autoComplete.extraPaths": [
+    "./FireTrace"
+  ]
+}
