@@ -10,6 +10,7 @@ markdown = "*"
 django-filter = "*"
 
 [dev-packages]
+django-stubs = "*"
 
 [requires]
 python_version = "3.14"
