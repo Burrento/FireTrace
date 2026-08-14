@@ -1,7 +1,17 @@
 import { Link } from 'react-router-dom';
 import '../style.css';
+import { useEffect, useState } from 'react';
 
 function Welcome() {
+  const [message, setMessage] = useState('Connecting to backend...');
+  useEffect(() => {
+    fetch('http://192.168.1.22:8000/accounts/ping')
+      .then((res) => res.json())
+      .then((data) => setMessage(data.message))
+      .catch(() => setMessage('Could not reach'));
+  }, []);
+
+
   return (
     <center>
       <div className="welcome-header">

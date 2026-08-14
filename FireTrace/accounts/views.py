@@ -1,11 +1,8 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views import View
+from django.http import JsonResponse
 
-def hello_world(request):
-    return HttpResponse("Hello World")
-
-class HelloEnthopia(View):
-    def get(self, request):
-        return HttpResponse("Hello Enthopia")
+def ping(request):
+    return JsonResponse({"message": "Django says hello to React"})
     
