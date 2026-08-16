@@ -32,6 +32,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['192.168.1.22', 'localhost', '127.0.0.1']
 
+AUTH_USER_MODEL = 'accounts.User'
+
 
 # Application definition
 
@@ -145,7 +147,14 @@ MAILERS = {
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  
+    "http://localhost:5173",
+    "http://192.168.1.22:5173",
     "http://192.168.1.22:8000",
 
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
