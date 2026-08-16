@@ -1,4 +1,5 @@
 {
+  "python.defaultInterpreterPath": "C:\\Users\\bolan\\.virtualenvs\\FireTrace_BackEnd-lIgWxLaR\\Scripts\\python.exe",
   "python.analysis.extraPaths": [
     "./FireTrace"
   ],
