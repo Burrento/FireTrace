@@ -9,6 +9,8 @@ djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
 django-cors-headers = "*"
+psycopg = {extras = ["binary"], version = "*"}
+django-environ = "*"
 
 [dev-packages]
 django-stubs = "*"
