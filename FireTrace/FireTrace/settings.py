@@ -138,5 +138,5 @@ MAILERS = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
     "http://192.168.1.22:8000",
-    
+
 ]
