@@ -11,6 +11,7 @@ django-filter = "*"
 django-cors-headers = "*"
 psycopg = {extras = ["binary"], version = "*"}
 django-environ = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 django-stubs = "*"
