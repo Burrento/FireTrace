@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import '../../style.css';
-import { apiFetch } from '../../api';
+import { authFetchJson, getAccessToken } from '../../api';
 import { useReportDraft } from '../../context/useReportDraft';
 
 function ConfirmationStep() {
@@ -15,15 +15,13 @@ function ConfirmationStep() {
         if (submitted.current) return;
         submitted.current = true;
 
-        const access = localStorage.getItem('access');
-        if (!access) {
+        if (!getAccessToken()) {
             navigate('/login');
             return;
         }
 
-        apiFetch('/incidents/', {
+        authFetchJson('/incidents/', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${access}` },
             body: JSON.stringify(draft),
         })
             .then((data) => {

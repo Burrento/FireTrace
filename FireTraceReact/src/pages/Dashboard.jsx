@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../style.css';
-import { API_BASE_URL } from '../api';
+import { authFetch, getAccessToken, logout } from '../api';
 import { statusClass, humanize } from '../lib/incidentDisplay';
 
 function Dashboard() {
@@ -10,36 +10,30 @@ function Dashboard() {
   const [latestReport, setLatestReport] = useState(null);
 
   useEffect(() => {
-    const access = localStorage.getItem('access');
-    if (!access) {
+    if (!getAccessToken()) {
       navigate('/login');
       return;
     }
-    fetch(`${API_BASE_URL}/accounts/me`, {
-      headers: { Authorization: `Bearer ${access}` },
-    })
+    // authFetch refreshes the access token behind the scenes, so a 401 here
+    // means the refresh token is gone or expired too -- a real logout.
+    authFetch('/accounts/me')
       .then((res) => {
         if (!res.ok) throw new Error('Session expired');
         return res.json();
       })
       .then(setUser)
       .catch(() => {
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
         navigate('/login');
       });
 
-    fetch(`${API_BASE_URL}/incidents/`, {
-      headers: { Authorization: `Bearer ${access}` },
-    })
+    authFetch('/incidents/')
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setLatestReport(data[0] ?? null))
       .catch(() => setLatestReport(null));
   }, [navigate]);
 
-  function handleLogout() {
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
+  async function handleLogout() {
+    await logout();
     navigate('/login');
   }
 

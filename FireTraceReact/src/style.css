@@ -278,6 +278,29 @@ input[type="password"] {
     text-align: right;
 }
 
+.remember-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 350px;
+    margin: 12px auto 0;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: var(--ft-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+.remember-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    margin: 0;
+    accent-color: var(--ft-red);
+    cursor: pointer;
+}
+
 .ForgotPass{
     font-family: Arial, sans-serif;
     font-size: 15px;

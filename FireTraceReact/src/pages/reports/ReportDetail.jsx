@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../../style.css';
-import { API_BASE_URL } from '../../api';
+import { authFetch, getAccessToken } from '../../api';
 import IncidentMap from '../../components/IncidentMap';
 import { statusClass, humanize } from '../../lib/incidentDisplay';
 
@@ -12,14 +12,11 @@ function ReportDetail() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        const access = localStorage.getItem('access');
-        if (!access) {
+        if (!getAccessToken()) {
             navigate('/login');
             return;
         }
-        fetch(`${API_BASE_URL}/incidents/${id}/`, {
-            headers: { Authorization: `Bearer ${access}` },
-        })
+        authFetch(`/incidents/${id}/`)
             .then((res) => {
                 if (!res.ok) throw new Error('Report not found');
                 return res.json();
