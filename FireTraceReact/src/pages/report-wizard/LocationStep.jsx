@@ -26,8 +26,14 @@ function LocationStep() {
         );
     }
 
+    // Removing the pin also drops the confirmation — there is no longer a
+    // location for the user to be confirming.
+    function handleClearPin() {
+        updateDraft({ latitude: null, longitude: null, location_confirmed: false });
+    }
+
     return (
-        <center>
+        <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader">Fire Report Incident</h2>
                 <p>2 of 4</p>
@@ -36,13 +42,12 @@ function LocationStep() {
                 USE MY CURRENT LOCATION
             </button>
 
-            <div style={{ width: '90%', margin: '12px 0' }}>
-                <LocationPickerMap
-                    latitude={draft.latitude}
-                    longitude={draft.longitude}
-                    onChange={(lat, lng) => updateDraft({ latitude: lat, longitude: lng })}
-                />
-            </div>
+            <LocationPickerMap
+                latitude={draft.latitude}
+                longitude={draft.longitude}
+                onChange={(lat, lng) => updateDraft({ latitude: lat, longitude: lng })}
+                onClear={handleClearPin}
+            />
 
             <p className="barangay-text">Barangay</p>
             <div>
@@ -156,7 +161,7 @@ function LocationStep() {
                 <Link className="bottom-btn" to="/">Profile</Link>
 
             </nav>
-        </center>
+        </div>
     );
 }
 

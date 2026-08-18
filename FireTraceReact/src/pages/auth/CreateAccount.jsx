@@ -35,7 +35,7 @@ function CreateAccount() {
   }
 
   return (
-    <center>
+    <div className="page">
       <header className="top-bar">
         <button className="back-button"><Link to="/">←</Link></button>
         <h1>Create Account</h1>
@@ -61,7 +61,7 @@ function CreateAccount() {
         </button>
       </form>
       <p className="create">Already have an Account? <Link className="login2" to="/login">Login</Link></p>
-    </center>
+    </div>
   );
 }
 

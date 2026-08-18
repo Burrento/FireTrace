@@ -2,10 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../../style.css';
 import { API_BASE_URL } from '../../api';
-
-function statusClass(status) {
-    return 'status-badge status-' + status.toLowerCase().replace(/\s+/g, '-');
-}
+import { statusClass, humanize } from '../../lib/incidentDisplay';
 
 function MyReports() {
     const navigate = useNavigate();
@@ -34,7 +31,7 @@ function MyReports() {
     }, [navigate]);
 
     return(
-        <center>
+        <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader">FIRETRACE</h2>
                 <button className="LogOut"><Link to="/">Log Out</Link></button>
@@ -62,9 +59,13 @@ function MyReports() {
                     >
                         <div className="report-card-header">
                             <span className="report-id">{report.reference_number}</span>
-                            <span className={statusClass(report.status)}>{report.status.replace('_', ' ').toUpperCase()}</span>
+                            <span className={statusClass(report.status)}>
+                                {humanize(report.status_display, report.status).toUpperCase()}
+                            </span>
                         </div>
-                        <p className="report-subtitle">{report.incident_type} · Barangay {report.barangay}</p>
+                        <p className="report-subtitle">
+                            {humanize(report.incident_type_display, report.incident_type)} · Barangay {report.barangay}
+                        </p>
                         <p className="report-date">{new Date(report.created_at).toLocaleString()}</p>
                         {expandedId === report.id && (
                             <Link to={`/report/${report.id}`} className="view-details-btn">
@@ -81,7 +82,7 @@ function MyReports() {
             <button className="bottom-btn"><Link to="/">Notifications</Link></button>
             <button className="bottom-btn"><Link to="/">Profile</Link></button>
         </nav>
-        </center>
+        </div>
     );
 }
 

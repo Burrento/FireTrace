@@ -35,7 +35,7 @@ function ConfirmationStep() {
     }, []);
 
     return(
-        <center>
+        <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader">Fire Report Incident</h2>
                 <p>4 of 4</p>
@@ -76,7 +76,7 @@ function ConfirmationStep() {
                 <Link className="bottom-btn" to="/">Profile</Link>
 
             </nav>
-        </center>
+        </div>
     );
 }
 
