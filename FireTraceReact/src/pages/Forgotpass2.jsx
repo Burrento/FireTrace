@@ -1,0 +1,20 @@
+import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import '../style.css';
+
+function Forgotpass2() {
+    return(
+        <center>
+            <header className="top-bar">
+                <h2 className="firetraceheader2">FIRETRACE</h2>
+            </header>
+            <p className="newpass">New Password</p>
+            <input type="password" id="Password" name="Password" required /><br />
+            <p className="newpass2">Confirm New Password</p>
+            <input type="password" id="Password" name="Password" required /><br />
+            <button className="confirmemail"><Link to="/Login">CONFIRM</Link></button>
+        </center>
+    );
+}
+
+export default Forgotpass2;
