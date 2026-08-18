@@ -1,8 +1,8 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import '../style.css';
-import { API_BASE_URL } from '../api';
-import IncidentMap from '../components/IncidentMap';
+import '../../style.css';
+import { API_BASE_URL } from '../../api';
+import IncidentMap from '../../components/IncidentMap';
 
 function ReportDetail() {
     const { id } = useParams();

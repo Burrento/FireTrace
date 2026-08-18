@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import '../style.css';
-import { useReportDraft } from '../context/useReportDraft';
+import '../../style.css';
+import { useReportDraft } from '../../context/useReportDraft';
 
-function Report() {
+function IncidentDetailsStep() {
 
     const { draft, updateDraft } = useReportDraft();
     const [date, setDate] = useState("");
@@ -102,4 +102,4 @@ function Report() {
     );
 }
 
-export default Report;
+export default IncidentDetailsStep;

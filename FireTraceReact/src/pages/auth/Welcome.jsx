@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import '../style.css';
+import '../../style.css';
 import { useEffect, useState } from 'react';
-import { API_BASE_URL } from '../api';
+import { API_BASE_URL } from '../../api';
 
 function Welcome() {
   const [message, setMessage] = useState('Connecting to backend...');

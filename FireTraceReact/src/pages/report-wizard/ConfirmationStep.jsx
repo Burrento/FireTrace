@@ -1,10 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import '../style.css';
-import { apiFetch } from '../api';
-import { useReportDraft } from '../context/useReportDraft';
+import '../../style.css';
+import { apiFetch } from '../../api';
+import { useReportDraft } from '../../context/useReportDraft';
 
-function Continue4() {
+function ConfirmationStep() {
     const navigate = useNavigate();
     const { draft, resetDraft } = useReportDraft();
     const [incident, setIncident] = useState(null);
@@ -80,4 +80,4 @@ function Continue4() {
     );
 }
 
-export default Continue4;
+export default ConfirmationStep;

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import '../style.css';
+import '../../style.css';
 
-function ContinueThird() {
+function PhotoStep() {
     return(
         <center>
             <header className="top-bar">
@@ -34,4 +34,4 @@ function ContinueThird() {
     );
 }
 
-export default ContinueThird;
+export default PhotoStep;
