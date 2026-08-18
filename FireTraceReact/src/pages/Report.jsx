@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../style.css';
+import { useReportDraft } from '../context/useReportDraft';
 
 function Report() {
 
+    const { draft, updateDraft } = useReportDraft();
     const [date, setDate] = useState("");
     const [time, setTime] = useState("");
 
@@ -37,7 +39,12 @@ function Report() {
             <p className="incident-text">Incident Type:</p>
 
             <div>
-                <select id="incident-select" name="incident-select">
+                <select
+                    id="incident-select"
+                    name="incident-select"
+                    value={draft.incident_type}
+                    onChange={(e) => updateDraft({ incident_type: e.target.value })}
+                >
                     <option value="">Select Incident Type</option>
                     <option value="fire">Residential Fire</option>
                     <option value="vehicle">Vehicle Fire</option>
@@ -53,6 +60,8 @@ function Report() {
                     id="description"
                     name="description"
                     placeholder="Enter incident description..."
+                    value={draft.description}
+                    onChange={(e) => updateDraft({ description: e.target.value })}
                 ></textarea>
             </div>
 

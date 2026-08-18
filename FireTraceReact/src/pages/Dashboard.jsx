@@ -7,6 +7,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
+  const [latestReport, setLatestReport] = useState(null);
 
   useEffect(() => {
     const access = localStorage.getItem('access');
@@ -27,6 +28,13 @@ function Dashboard() {
         localStorage.removeItem('refresh');
         navigate('/login');
       });
+
+    fetch(`${API_BASE_URL}/incidents/`, {
+      headers: { Authorization: `Bearer ${access}` },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setLatestReport(data[0] ?? null))
+      .catch(() => setLatestReport(null));
   }, [navigate]);
 
   function handleLogout() {
@@ -54,20 +62,24 @@ function Dashboard() {
       <button className="FireReport"><Link to="/report">START FIRE REPORT</Link></button>
       <p className="report2">LATEST REPORT</p>
 
-      <div className="incident-card">
-        <div className="incident-header">
-          <span className="reference-number">FT-2026-00124</span>
-          <span className="status">UNDER REVIEW</span>
-        </div>
+      {latestReport ? (
+        <div className="incident-card">
+          <div className="incident-header">
+            <span className="reference-number">{latestReport.reference_number}</span>
+            <span className="status">{latestReport.status.replace('_', ' ').toUpperCase()}</span>
+          </div>
 
-        <div className="incident-info">
-          <div>Residential Fire</div>
-          <div>Barangay San Vicente North</div>
-          <div>May 20, 2026 - 08:35 AM</div>
-        </div>
+          <div className="incident-info">
+            <div>{latestReport.incident_type}</div>
+            <div>Barangay {latestReport.barangay}</div>
+            <div>{new Date(latestReport.created_at).toLocaleString()}</div>
+          </div>
 
-        <button className="view-details-button"><Link to="#">VIEW DETAILS</Link></button>
-      </div>
+          <button className="view-details-button"><Link to={`/report/${latestReport.id}`}>VIEW DETAILS</Link></button>
+        </div>
+      ) : (
+        <p className="dashboard-text2">No reports submitted yet.</p>
+      )}
 
       <nav className="bottom-nav">
         <button className="bottom-btn-active"><Link to="/dashboard">Home</Link></button>
