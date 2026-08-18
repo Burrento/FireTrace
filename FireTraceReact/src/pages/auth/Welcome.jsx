@@ -1,7 +1,14 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import '../../style.css';
+import { getAccessToken } from '../../api';
 
 function Welcome() {
+  // A returning user with a live session skips the intro and goes straight to
+  // reporting. First-time visitors still get the full welcome screen.
+  if (getAccessToken()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="page">
       <div className="welcome-header">

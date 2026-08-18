@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../../style.css';
-import { API_BASE_URL } from '../../api';
+import { authFetch, getAccessToken, logout } from '../../api';
 import { statusClass, humanize } from '../../lib/incidentDisplay';
 
 function MyReports() {
@@ -11,14 +11,11 @@ function MyReports() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        const access = localStorage.getItem('access');
-        if (!access) {
+        if (!getAccessToken()) {
             navigate('/login');
             return;
         }
-        fetch(`${API_BASE_URL}/incidents/`, {
-            headers: { Authorization: `Bearer ${access}` },
-        })
+        authFetch('/incidents/')
             .then((res) => {
                 if (!res.ok) throw new Error('Session expired');
                 return res.json();
@@ -30,11 +27,16 @@ function MyReports() {
             .catch(() => setError('Could not load your reports.'));
     }, [navigate]);
 
+    async function handleLogout() {
+        await logout();
+        navigate('/login');
+    }
+
     return(
         <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader">FIRETRACE</h2>
-                <button className="LogOut"><Link to="/">Log Out</Link></button>
+                <button className="LogOut" onClick={handleLogout}>Log Out</button>
             </header>
             <div className="search-container">
                 <input className="searchInput" type="text" placeholder="Search..."></input>

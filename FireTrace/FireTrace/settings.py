@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'accounts',
     'incidents',
@@ -160,3 +162,14 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+SIMPLE_JWT = {
+    # Short-lived: the frontend silently refreshes it via authFetch().
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    # How long a normal ("remember me" unticked) session survives.
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+
+# Applied instead of REFRESH_TOKEN_LIFETIME when the user ticks "Remember me".
+# Fixed window: 30 days from login, not extended by activity.
+REMEMBER_ME_REFRESH_LIFETIME = timedelta(days=30)
