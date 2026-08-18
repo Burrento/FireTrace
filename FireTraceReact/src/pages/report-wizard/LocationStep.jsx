@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
 import LocationPickerMap from '../../components/LocationPickerMap';
@@ -7,6 +8,10 @@ function LocationStep() {
     const { draft, updateDraft } = useReportDraft();
     const hasPin = draft.latitude != null && draft.longitude != null;
     const canContinue = Boolean(draft.barangay) && hasPin && draft.location_confirmed;
+
+    // Bumped only when we deliberately want the map to jump somewhere.
+    // Placing or dragging a pin leaves the camera exactly where it is.
+    const [recenterKey, setRecenterKey] = useState(0);
 
     function handleUseCurrentLocation() {
         if (!navigator.geolocation) {
@@ -19,11 +24,16 @@ function LocationStep() {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
                 });
+                setRecenterKey((key) => key + 1);
             },
             () => {
                 alert('Could not get your current location. Please pin it on the map instead.');
             }
         );
+    }
+
+    function handleClearPin() {
+        updateDraft({ latitude: null, longitude: null, location_confirmed: false });
     }
 
     return (
@@ -36,11 +46,13 @@ function LocationStep() {
                 USE MY CURRENT LOCATION
             </button>
 
-            <div style={{ width: '90%', margin: '12px 0' }}>
+            <div className="map-container">
                 <LocationPickerMap
                     latitude={draft.latitude}
                     longitude={draft.longitude}
                     onChange={(lat, lng) => updateDraft({ latitude: lat, longitude: lng })}
+                    onClear={handleClearPin}
+                    recenterKey={recenterKey}
                 />
             </div>
 

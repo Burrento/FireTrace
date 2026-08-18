@@ -1,33 +1,48 @@
-/* Welcome.jsx css */
-.body{
-    margin: 0;
-}
-.welcome-header {
-    background: linear-gradient(
-        to bottom,
-        rgb(162, 22, 32) 0%,
-        rgb(194, 28, 39) 100%
-    );
-    padding-bottom: 50px;
-}
+/* ============================================================
+   FireTrace — shared stylesheet
+   Mobile-first. All sizing is fluid with a phone-width cap
+   (--ft-max-width); all colors come from tokens in index.css so
+   the UI follows the device light/dark theme.
+   ============================================================ */
 
-.fire-icon {
-    font-size: 45px;
-    color: white;
-    padding-top: 60px;
-}
-
-.geo{
+/* ---------- Page shell ----------
+   Every page renders <center> as its root node, so it is the
+   layout container for the whole app. */
+center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 auto;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 var(--ft-gutter) calc(var(--ft-nav-height) + 24px);
     font-family: Arial, sans-serif;
-    color:rgb(185, 177, 177);
+    color: var(--ft-text);
+    text-align: center;
 }
-.firetrace1 {
-    font-family: "Roboto Condensed", sans-serif;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0px;
-    color: rgb(231, 231, 231);
-    margin-bottom: 50px;
+
+center > * {
+    max-width: 100%;
+}
+
+/* Unstyled wrappers (<form>, the <div>s around a select/textarea)
+   are flex items, so without this they shrink to their content and
+   the fluid controls inside them collapse. */
+center > form,
+center > div {
+    width: 100%;
+    max-width: var(--ft-max-width);
+    box-sizing: border-box;
+}
+
+/* <br> used as a spacer between blocks does nothing useful in a
+   flex column — only <br> inside paragraphs still matters. */
+center > br {
+    display: none;
+}
+
+.body {
+    margin: 0;
 }
 
 a {
@@ -35,71 +50,202 @@ a {
     text-decoration: none;
 }
 
+/* Shared: elements that should span the full device width even
+   though the shell has a side gutter. */
+.top-bar,
+.welcome-header {
+    width: calc(100% + 2 * var(--ft-gutter));
+    max-width: none;
+    margin-inline: calc(-1 * var(--ft-gutter));
+}
+
+/* Shared: section labels. These used to fake left-alignment with
+   `padding-right: 282px` inside <center>, which pushed them off
+   screen on a phone. They are now genuinely left-aligned blocks. */
+.report,
+.report2,
+.incident-text,
+.description-text,
+.barangay-text,
+.address-text,
+.addphoto,
+.email,
+.newpass,
+.newpass2,
+.label,
+.h3create,
+.logintext {
+    width: 100%;
+    max-width: var(--ft-max-width);
+    box-sizing: border-box;
+    padding-right: 0;
+    text-align: left;
+    color: var(--ft-text);
+}
+
+/* Shared: full-width action buttons */
+.started,
+.account,
+.create-button,
+.confirmemail,
+.CallBFP,
+.FireReport,
+.pinpointbtn,
+.takephoto,
+.selectphoto,
+.view-status-button,
+.contact-bfp-button,
+.view-details-button {
+    width: 100%;
+    max-width: var(--ft-max-width);
+    box-sizing: border-box;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+}
+
+button {
+    min-height: 44px;
+    cursor: pointer;
+}
+
+/* Buttons that wrap a <Link>: make the whole button tappable,
+   not just the text inside it. */
+button > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Shared: form controls. 16px font-size keeps iOS from zooming
+   in when a field is focused. */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+select,
+textarea {
+    width: 100%;
+    max-width: var(--ft-max-width);
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    background-color: var(--ft-input-bg);
+    color: var(--ft-text);
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+select {
+    height: 45px;
+}
+
+textarea {
+    height: 100px;
+    resize: none;
+}
+
+/* Welcome.jsx css */
+.welcome-header {
+    box-sizing: border-box;
+    padding: 0 var(--ft-gutter) 40px;
+    background: linear-gradient(
+        to bottom,
+        rgb(162, 22, 32) 0%,
+        rgb(194, 28, 39) 100%
+    );
+}
+
+.fire-icon {
+    font-size: 45px;
+    color: #ffffff;
+    padding-top: 60px;
+}
+
+.geo {
+    font-family: Arial, sans-serif;
+    color: rgb(220, 210, 210);
+}
+
+.firetrace1 {
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0px;
+    color: rgb(231, 231, 231);
+    margin-bottom: 40px;
+}
+
 .started {
     border: none;
-    border-radius: 10px;
-    color: rgb(255, 255, 255);
+    color: var(--ft-on-red);
     background-color: rgb(177, 26, 26);
     padding: 10px 20px;
     text-align: center;
-    font-family: Arial, sans-serif;
-    display: inline-block;
     font-size: 16px;
-    margin: 4px 2px;
-    margin-bottom: 20px;
-    cursor: pointer;
-    width: 250px;
-    margin-top: 40px;
+    margin: 40px 0 20px;
     transition: 0.4s;
 }
 
 .started:hover {
     background-color: rgb(221, 0, 0);
-    transition: background-color 0.3s ease;
 }
 
 .account {
     border: none;
-    border-radius: 10px;
-    color: rgb(0, 0, 0);
-    background-color: rgb(221, 221, 221);
+    color: var(--ft-neutral-btn-text);
+    background-color: var(--ft-neutral-btn);
     padding: 10px 20px;
     text-align: center;
-    font-family: Arial, sans-serif;
-    display: inline-block;
     font-size: 16px;
-    margin: 4px 2px;
     margin-bottom: 10px;
-    cursor: pointer;
-    width: 250px;
     transition: 0.4s;
 }
 
 .account:hover {
-    background-color: rgb(143, 143, 143);
-    transition: background-color 0.3s ease;
+    background-color: var(--ft-neutral-btn-hover);
 }
 
-.sentence1{
+.sentence1 {
     font-family: Arial, sans-serif;
-    color:rgb(185, 177, 177);
+    color: var(--ft-text-faint);
     font-size: 13px;
+    margin-top: 12px;
 }
 
 /* CreateAccount.jsx css */
 .top-bar {
-    height: 56px;
     display: flex;
     align-items: center;
-    padding: 0 20px;
-    background-color: white;
-    border-bottom: 1px solid #ddd;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 56px;
+    box-sizing: border-box;
+    padding: 8px var(--ft-gutter);
+    background-color: var(--ft-surface);
+    border-bottom: 1px solid var(--ft-border);
     font-family: Arial, sans-serif;
+    color: var(--ft-text);
+}
+
+.top-bar p {
+    flex: none;
+    font-size: 14px;
+    color: var(--ft-text-muted);
+    white-space: nowrap;
 }
 
 .back-button {
     border: none;
     background: none;
+    color: var(--ft-text);
     font-size: 24px;
     cursor: pointer;
     margin-right: 12px;
@@ -110,137 +256,118 @@ a {
     margin: 0;
 }
 
-.h3create {
-    font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
-    margin-top: 10px;
-}
-
 /* Labels */
 .label {
-    width: 340px;
-    font-family: Arial, sans-serif;
-    color: rgb(75, 75, 75);
     font-size: 14px;
-    text-align: left;
+    color: var(--ft-text-muted);
     display: block;
-    margin-bottom: -8px;
-}
-
-/* Text boxes */
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="password"] {
-    width: 350px;
-    height: 45px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 16px;
-    margin-bottom: 10px;
-    box-sizing: border-box;
+    margin-bottom: 4px;
 }
 
 /* Create Account button */
 .create-button {
-    width: 350px;
     height: 50px;
-    background-color: #D7192A;
-    color: white;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     border: none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
     font-size: 16px;
-    font-weight: bold;   
-    cursor: pointer;
+    font-weight: bold;
     margin-top: 10px;
     transition: 0.4s;
 }
 
-.create-button:hover {
-    background-color: #BD1525;
-    transition: background-color 0.3s ease;
+.create-button:hover:enabled {
+    background-color: var(--ft-red-hover);
+}
+
+.create-button:disabled {
+    opacity: 0.7;
+    cursor: default;
 }
 
 /* Privacy Names & Terms and Login */
-.Terms, .Privacy, .login2 {
+.Terms,
+.Privacy,
+.login2 {
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
-    color: #BD1525;
+    color: var(--ft-red-hover);
 }
 
 .create {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 14px;
 }
 
 /* Login.jsx css */
 .h3create {
-    width: 350px;
-    margin: 30px auto 25px;
+    margin: 24px auto 16px;
     font-family: Arial, sans-serif;
-    text-align: left;
     font-size: 22px;
 }
+
 .logintext {
-    width: 350px;
     font-family: Arial, sans-serif;
-    color: rgb(75, 75, 75);
+    color: var(--ft-text-muted);
     font-size: 14px;
-    text-align: left;
-    padding-bottom: 40px;
+    padding-bottom: 24px;
 }
 
-.ForgotPass{
-    font-family: Arial, sans-serif;
-    font-size: 15px;
-    font-weight: bold;
-    color: #BD1525;
+.forgot {
+    width: 100%;
+    max-width: var(--ft-max-width);
     text-align: right;
-    margin-left: 210px;
 }
 
-.register{
+.ForgotPass {
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
-    color: #000000;
+    color: var(--ft-red-hover);
+}
+
+.register {
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--ft-text);
     text-align: center;
-    margin-left: 20px;
+    margin-top: 16px;
 }
 
 .fire-icon2 {
-    color: #BD1525;
+    align-self: flex-start;
+    color: var(--ft-red-hover);
     font-size: 35px;
-    text-align: left;
-    margin-right: 320px;
+    margin-top: 20px;
 }
 
 .emergency-alert {
     width: 100%;
-    max-width: 250px;
+    max-width: var(--ft-max-width);
     min-height: 70px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
-    padding: 10px 20px;
-    margin-left: 20px;
-    background-color: #FFF5F5;
-    border: 1px solid #F5D2D2;
+    padding: 10px 16px;
+    margin: 16px auto 0;
+    background-color: var(--ft-alert-bg);
+    border: 1px solid var(--ft-alert-border);
     border-radius: 10px;
-    color: #C21C27;
+    color: var(--ft-alert-text);
 }
 
 .emergency-icon {
     font-size: 30px;
-    margin-right: 20px;
-    color: #D7192A;
+    margin-right: 16px;
+    color: var(--ft-red);
 }
 
 .emergency-alert p {
     font-family: Arial, sans-serif;
+    text-align: left;
     margin: 0;
     font-size: 12px;
     line-height: 1.7;
@@ -250,187 +377,143 @@ input[type="password"] {
 .email {
     font-size: 15px;
     padding-top: 20px;
-    padding-right: 250px;
+    padding-bottom: 8px;
 }
 
 .confirmemail {
-    width: 350px;
-    height: 40px;
+    height: 45px;
     border: none;
-    border-radius: 10px;
     font-size: 15px;
     font-weight: bold;
-    color: #ffffff;
-    background-color: #C21C27;
+    color: var(--ft-on-red);
+    background-color: var(--ft-red);
     transition: 0.3s ease;
-    cursor: pointer;
 }
 
-.confirmemail:hover{
-    color: #000000;
-    background-color: #990d1b;
+.confirmemail:hover {
+    background-color: var(--ft-red-dark);
 }
 
 /* Forgotpass2.jsx css */
-.firetraceheader2{
+.firetraceheader2 {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
-    font-size: 28px;
-    height: 70px;
+    color: var(--ft-text);
+    font-size: clamp(18px, 5vw, 28px);
+    min-height: 40px;
     font-weight: bold;
     display: flex;
     justify-content: center;
     align-items: center;
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     margin: 0;
 }
-.newpass {
-    font-size: 15px;
-    padding-top: 20px;
-    padding-right: 250px;
-}
 
+.newpass,
 .newpass2 {
     font-size: 15px;
     padding-top: 20px;
-    padding-right: 190px;
+    padding-bottom: 8px;
 }
 
 /* Dashboard.jsx css */
 .firetraceheader {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
-    font-size: 28px;
-    height: 70px;
+    color: var(--ft-text);
+    font-size: clamp(18px, 5vw, 28px);
+    min-height: 40px;
     font-weight: bold;
     display: flex;
-    padding-left: 70px;
     justify-content: center;
     align-items: center;
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     margin: 0;
 }
 
 .LogOut {
-    width: 8%;
-    height: 30px;
-    background-color: #D7192A;
-    color: white;
+    flex: none;
+    width: auto;
+    min-height: 36px;
+    padding: 8px 14px;
+    white-space: nowrap;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     border: none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
-    padding-bottom: 5px; 
-    cursor: pointer;
     transition: 0.4s;
-    margin:0;
+    margin: 0;
 }
 
 .LogOut:hover {
-    background-color: #BD1525;
-    color: rgb(0, 0, 0);
-    transition: background-color 0.3s ease;
+    background-color: var(--ft-red-hover);
 }
 
-.dashboard-text{
+.dashboard-text {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 17px;
-    padding-top: 20px;
-    padding-bottom: 10px;
-    padding-right: 110px;
+    padding: 20px 0 10px;
     margin: 0;
 }
 
-.dashboard-text2{
+.dashboard-text2 {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text-muted);
     font-size: 15px;
     padding-bottom: 10px;
-    padding-right: 110px;
     margin: 0;
 }
 
-.report{
+.report,
+.report2 {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
     font-weight: bold;
     font-size: 17px;
     margin: 0;
     padding-top: 20px;
-    padding-right: 282px;
+    padding-bottom: 8px;
 }
 
-.report2{
-    font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
-    font-weight: bold;
-    font-size: 17px;
-    margin: 0;
-    padding-top: 20px;
-    padding-right: 355px;
-}
-
-.CallBFP {
-    width: 45%;
-    height: 50px;
-    background-color: #D7192A;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;   
-    cursor: pointer;
-    transition: 0.4s;
-    margin:0;
-}
-
-.CallBFP:hover {
-    background-color: #BD1525;
-    color: rgb(0, 0, 0);
-    transition: background-color 0.3s ease;
-}
-
+.CallBFP,
 .FireReport {
-    width: 45%;
-    height: 50px;
-    background-color: #D7192A;
-    color: white;
+    min-height: 50px;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     border: none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
     font-size: 16px;
     font-weight: bold;
-    text-align: center;   
-    cursor: pointer;
+    text-align: center;
     transition: 0.4s;
-    margin:0;
+    margin: 0;
 }
 
+.CallBFP:hover,
 .FireReport:hover {
-    background-color: #BD1525;
-    color: rgb(0, 0, 0);
-    transition: background-color 0.3s ease;
+    background-color: var(--ft-red-hover);
 }
 
 .incident-card {
-    width: 500px;
-    padding: 14px 16px;
-    background-color: #ffffff;
-    border: 1px solid #e5e5e5;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-    font-family: Arial, sans-serif;
+    width: 100%;
+    max-width: var(--ft-max-width);
     box-sizing: border-box;
+    padding: 14px 16px;
+    background-color: var(--ft-surface);
+    border: 1px solid var(--ft-border-soft);
+    border-radius: 12px;
+    box-shadow: 0 2px 5px var(--ft-shadow);
+    font-family: Arial, sans-serif;
+    color: var(--ft-text);
 }
 
 .incident-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 6px;
 }
 
@@ -442,341 +525,279 @@ input[type="password"] {
 
 .status {
     background-color: #ffa91f;
-    color: #333;
-    font-size: 14px;
+    color: #333333;
+    font-size: 12px;
     font-weight: bold;
-    padding: 3px 12px;
+    padding: 4px 12px;
     border-radius: 20px;
-    min-width: 125px;
+    white-space: nowrap;
     text-align: center;
 }
 
 .incident-info {
-    color: #929292;
-    font-size: 16px;
+    color: var(--ft-text-muted);
+    font-size: 15px;
     line-height: 1.4;
+    text-align: left;
     margin-bottom: 10px;
 }
 
-.view-details-button{
-    width: 100%;
-    height: 45px;
-    background-color: #ffffff;
-    border: 2px solid #D7192A;
-    border-radius: 11px;
-    color: #D7192A;
+.view-details-button {
+    min-height: 45px;
+    background-color: transparent;
+    border: 2px solid var(--ft-red);
+    color: var(--ft-red);
     font-size: 15px;
     font-weight: bold;
-    cursor: pointer;
     transition: 0.4s;
 }
 
 .view-details-button:hover {
-    color: #ffffff;
-    background-color: #D7192A;
-    transition: background-color 0.3s ease;
+    color: var(--ft-on-red);
+    background-color: var(--ft-red);
 }
 
 /* Bottom Navigation Bar */
 .bottom-nav {
     position: fixed;
     bottom: 0;
-    left: 0;
-    width: 58.1%;
-    height: 40px;
-    background-color: #D7192A;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: var(--ft-max-width);
+    box-sizing: border-box;
+    min-height: var(--ft-nav-height);
     display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    align-items: stretch;
+    background-color: var(--ft-red);
+    box-shadow: 0 -2px 5px var(--ft-shadow);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    gap: 4px;
+    z-index: 10;
+}
+
+/* Targets the classes rather than `button`, because LocationStep,
+   PhotoStep, ConfirmationStep and ReportDetail render the nav with
+   <Link> anchors instead of <button>. */
+.bottom-nav .bottom-btn,
+.bottom-nav .bottom-btn-active {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
     align-items: center;
-    transform: translateX(36%);
-    margin: none;
-    position: fixed;
-}
-
-.bottom-nav button {
-    background: none;
-    width: 25%;
-    height: 60px;
+    justify-content: center;
     border: none;
-    border-radius: 11px;
-    border-color: #ffffff;
-    font-family: Arial, sans-serif;
-    font-size: 18px;
-    color: #000000;
     border-radius: 10px;
-    padding: 8px 12px;
-    background-color: #D7192A;
+    padding: 6px 2px;
+    font-family: Arial, sans-serif;
+    font-size: clamp(9px, 2.6vw, 12px);
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--ft-on-red);
+    background-color: var(--ft-red);
     cursor: pointer;
-    transition: background-color 0.6s ease;
-    transition: color 0.4s ease;
+    transition: background-color 0.3s ease;
 }
 
-.bottom-nav button:hover {
-    color: #000000;
-    transition: background-color 0.6s;
-    transition: color 0.4s ease;
-    background-color: #990d1b;
+.bottom-nav .bottom-btn:hover {
+    background-color: var(--ft-red-dark);
 }
 
-.bottom-nav button.bottom-btn-active {
-    color: #ffffff;
-    background-color: #990d1b;
+.bottom-nav .bottom-btn-active {
+    color: var(--ft-on-red);
+    background-color: var(--ft-red-dark);
 }
 
 /* Report.jsx css */
-
-.incident-text{
+.incident-text,
+.description-text {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
     font-size: 17px;
     padding-top: 20px;
-    padding-right: 390px;
     padding-bottom: 10px;
     margin: 0;
 }
 
-.description-text{
-    font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
-    font-size: 17px;
-    padding-top: 20px;
-    padding-right: 410px;
-    padding-bottom: 10px;
-    margin: 0;
-}
-
-select {
-    width: 500px;
-    height: 40px;
-    padding: 0 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: white;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #333;
-    cursor: pointer;
-    margin: 0;
-}
-
-textarea{
-    width: 480px;
-    height: 100px;
-    padding: 0 12px;
-    padding-top: 10px;
-    resize: none;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: white;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #333;
-    cursor: pointer;
-    margin: 0;
-}
 .date-time-container {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 80px;
+    width: 100%;
+    max-width: var(--ft-max-width);
+    margin-bottom: 24px;
 }
 
 .date-time-container input {
-    width: 245px;
-    height: 40px;
-    padding: 0 10px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    background-color: white;
-    color: #333;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    box-sizing: border-box;
+    flex: 1 1 140px;
+    width: auto;
+    min-width: 0;
+    margin-bottom: 0;
 }
 
-.backcontinue-container {
+.backcontinue-container,
+.backcontinue2-container {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
+    width: 100%;
+    max-width: var(--ft-max-width);
+    margin: 24px 0;
+}
+
+.backbtn,
+.continuebtn,
+.backbtn2,
+.continuebtn2 {
+    flex: 1 1 140px;
+    min-height: 50px;
+    border: none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    transition: 0.4s ease;
     margin: 0;
 }
 
-.backbtn {
-    width: 240px;
-    height: 50px;
-    border:none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color: #cfcccc;
-    font-size: 18px;
-    transition: 0.4s ease;
-    cursor: pointer;
-    margin-top: 143px;
+.backbtn,
+.backbtn2 {
+    background-color: var(--ft-neutral-btn);
+    color: var(--ft-neutral-btn-text);
 }
 
-.backbtn:hover{
-    background-color: #979696;
+.backbtn:hover,
+.backbtn2:hover {
+    background-color: var(--ft-neutral-btn-hover);
 }
 
-.continuebtn {
-    width: 240px;
-    height: 50px;
-    border:none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
-    font-size: 18px;
-    transition: 0.4s ease;
-    cursor: pointer;
-    margin-top: 143px   ;
+.continuebtn,
+.continuebtn2 {
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
 }
 
-.continuebtn:hover {
-    color:#000000;
-    background-color: #990d1b;
+.continuebtn:hover:enabled,
+.continuebtn2:hover:enabled {
+    background-color: var(--ft-red-dark);
 }
 
-/* Continue2.jsx css*/
+.continuebtn:disabled,
+.continuebtn2:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* Continue2.jsx css */
 .pinpointbtn {
-    width: 500px;
-    height: 40px;
-    border:none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
+    min-height: 45px;
+    border: none;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
-    cursor: pointer;
     margin-top: 20px;
 }
 
 .pinpointbtn:hover {
-    color:#000000;
-    background-color: #c4192a;
+    background-color: var(--ft-red-dark);
 }
 
-.barangay-text{
-    font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
-    font-size: 17px;
-    padding-top: 20px;
-    padding-right: 425px;
-    padding-bottom: 10px;
-    margin: 0;
+.map-container {
+    width: 100%;
+    max-width: var(--ft-max-width);
+    margin: 12px 0;
 }
 
-.address-text{
+.map-frame {
+    width: 100%;
+    height: 260px;
+    border: 1px solid var(--ft-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.removepinbtn {
+    width: 100%;
+    min-height: 40px;
+    margin-top: 8px;
+    border: 1px solid var(--ft-border);
+    border-radius: 10px;
+    background-color: var(--ft-surface);
+    color: var(--ft-text);
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    font-size: 14px;
+    font-weight: bold;
+    transition: 0.3s ease;
+}
+
+.removepinbtn:hover {
+    background-color: var(--ft-red);
+    border-color: var(--ft-red);
+    color: var(--ft-on-red);
+}
+
+.barangay-text,
+.address-text {
+    font-family: Arial, sans-serif;
     font-size: 17px;
     padding-top: 20px;
-    padding-right: 345px;
     padding-bottom: 10px;
     margin: 0;
 }
 
 .addresstxt {
-    width: 480px;
-    height: 25px;
-    padding: 0 12px;
-    padding-top: 10px;
-    resize: none;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: white;
+    height: 60px;
+}
+
+.latnlng {
     font-family: Arial, sans-serif;
+    color: var(--ft-text-muted);
     font-size: 14px;
-    color: #333;
-    cursor: pointer;
+    padding-top: 12px;
     margin: 0;
 }
 
-.latnlng{
-    font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
-    font-size: 14px;
-    padding-top: 20px;
-    padding-right: 1px;
-    margin: 0;
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    max-width: var(--ft-max-width);
+    margin-top: 12px;
+    text-align: left;
 }
 
-.checkbox-txt{
+.checkbox-txt {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 14px;
     padding-left: 5px;
     margin: 0;
 }
 
-.backcontinue2-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 0;
-}
-
-.backbtn2 {
-    width: 240px;
-    height: 50px;
-    border:none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color: #cfcccc;
-    font-size: 18px;
-    transition: 0.4s ease;
-    cursor: pointer;
-    margin-bottom: 20px;
-}
-
-.backbtn2:hover{
-    background-color: #979696;
-}
-
-.continuebtn2 {
-    width: 240px;
-    height: 50px;
-    border:none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
-    font-size: 18px;
-    transition: 0.4s ease;
-    cursor: pointer;
-    margin-bottom: 20px;
-}
-
-.continuebtn2:hover {
-    color:#000000;
-    background-color: #990d1b;
-}
-
 /* ContinueThird.jsx css */
-
-.addphoto{
+.addphoto {
     font-size: 18px;
     font-weight: bold;
-    padding-right: 130px;
-    color:#000000;
     margin-top: 20px;
 }
 
 .photo-warning {
-    width: 480px;
+    width: 100%;
+    max-width: var(--ft-max-width);
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     padding: 12px 16px;
     margin-top: 10px;
-    background-color: #ffe5e5;
-    border: 1px solid #f58a8a;
+    background-color: var(--ft-warning-bg);
+    border: 1px solid var(--ft-warning-border);
     border-radius: 10px;
-    color: #7a0000;
-    box-sizing: border-box;
+    color: var(--ft-warning-text);
 }
 
 .photo-warning-icon {
@@ -792,55 +813,37 @@ textarea{
     line-height: 1.4;
 }
 
-.backcontinue2-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 270px;
-    gap: 10px;
-}
-
 .takephoto {
-    width: 480px;
-    height: 40px;
-    border:none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
+    min-height: 45px;
+    border: none;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
-    cursor: pointer;
     margin-top: 20px;
 }
 
 .takephoto:hover {
-    color:#000000;
-    background-color: #c4192a;
+    background-color: var(--ft-red-dark);
 }
 
 .selectphoto {
-    width: 480px;
-    height: 40px;
-    border:none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color:#d3d3d3;
-    color:#000000;
+    min-height: 45px;
+    border: none;
+    background-color: var(--ft-neutral-btn);
+    color: var(--ft-neutral-btn-text);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
-    cursor: pointer;
     margin-top: 10px;
 }
 
 .selectphoto:hover {
-    color:#000000;
-    background-color: #c4192a;
+    background-color: var(--ft-neutral-btn-hover);
 }
 
 /* Continue4.jsx css */
-
 .submitted-icon {
     width: 70px;
     height: 70px;
@@ -850,22 +853,23 @@ textarea{
     color: #ffffff;
     font-size: 32px;
     font-weight: bold;
-    margin-top: 50px;
+    margin-top: 40px;
     margin-bottom: 15px;
 }
 
 .submitted-title {
     font-family: Arial, sans-serif;
-    color: #000000;
+    color: var(--ft-text);
     font-size: 22px;
     font-weight: bold;
     margin: 0;
 }
 
 .submitted-subtitle {
-    width: 320px;
+    width: 100%;
+    max-width: var(--ft-max-width);
     font-family: Arial, sans-serif;
-    color: #8a8a8a;
+    color: var(--ft-text-faint);
     font-size: 14px;
     text-align: center;
     margin-top: 8px;
@@ -873,7 +877,6 @@ textarea{
 }
 
 .submitted-card {
-    width: 350px;
     text-align: left;
     padding: 18px 20px;
     margin-bottom: 25px;
@@ -881,10 +884,9 @@ textarea{
 
 .submitted-label {
     font-family: Arial, sans-serif;
-    color: #9a9a9a;
+    color: var(--ft-text-faint);
     font-size: 13px;
-    margin: 0;
-    margin-top: 10px;
+    margin: 10px 0 0;
 }
 
 .submitted-label:first-child {
@@ -893,7 +895,7 @@ textarea{
 
 .submitted-reference {
     font-family: Arial, sans-serif;
-    color: #D7192A;
+    color: var(--ft-red);
     font-size: 18px;
     font-weight: bold;
     margin: 0;
@@ -901,14 +903,14 @@ textarea{
 
 .submitted-value {
     font-family: Arial, sans-serif;
-    color: #000000;
+    color: var(--ft-text);
     font-size: 15px;
     margin: 0;
 }
 
 .submitted-status {
     display: inline-block;
-    background-color: #1c1c1c;
+    background-color: var(--ft-red-dark);
     color: #ffffff;
     font-family: Arial, sans-serif;
     font-size: 13px;
@@ -919,49 +921,48 @@ textarea{
 }
 
 .view-status-button {
-    width: 350px;
-    height: 50px;
+    min-height: 50px;
     border: none;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color: #D7192A;
-    color: #ffffff;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
-    cursor: pointer;
     margin-bottom: 12px;
 }
 
 .view-status-button:hover {
-    background-color: #990d1b;
+    background-color: var(--ft-red-dark);
 }
 
 .contact-bfp-button {
-    width: 350px;
-    height: 50px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    background-color: #ffffff;
-    color: #000000;
+    min-height: 50px;
+    border: 1px solid var(--ft-border);
+    background-color: var(--ft-surface);
+    color: var(--ft-text);
     font-size: 15px;
     font-weight: bold;
     transition: 0.4s ease;
-    cursor: pointer;
     margin-bottom: 30px;
 }
 
 .contact-bfp-button:hover {
-    background-color: #f2f2f2;
+    background-color: var(--ft-surface-alt);
 }
 
 /* MyReport.jsx css */
 .search-container {
-    padding-top: 20px;
+    display: flex;
+    width: 100%;
+    max-width: var(--ft-max-width);
+    margin: 20px auto 0;
 }
 
-.searchInput {
+input.searchInput {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
+    border-right: none;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-top-left-radius: 10px;
@@ -970,19 +971,23 @@ textarea{
 }
 
 .searchbtn {
-    width: 40px;
-    height: 44px;
+    flex: none;
+    width: 48px;
+    height: 45px;
+    min-height: 45px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
-    background-color: #FFFFFF;
-    border: 2px solid #CCCCCC;
-    color: #757575;
-    cursor: pointer;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    background-color: var(--ft-input-bg);
+    border: 1px solid var(--ft-border);
+    color: var(--ft-text-muted);
     transition: 0.4s ease;
 }
 
 .searchbtn:hover {
-    background-color: #BD1525;
+    background-color: var(--ft-red-hover);
+    color: #ffffff;
 }
 
 .filter-buttons {
@@ -991,41 +996,40 @@ textarea{
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 5px;
+    padding: 12px 0 0;
     width: 100%;
-    max-width: 420px;
+    max-width: var(--ft-max-width);
     margin: 0 auto;
 }
 
-.filter-btn {
-    height: 30px;
+.filter-btn,
+.filter-btn-active {
+    min-height: 32px;
+    height: 32px;
     padding: 0 14px;
-    border: 1px solid #d9dee5;
     border-radius: 20px;
-    background-color: #ffffff;
-    color: #8a98aa;
     font-size: 11px;
     font-weight: bold;
     cursor: pointer;
     transition: 0.2s ease;
 }
 
+.filter-btn {
+    border: 1px solid var(--ft-border);
+    background-color: var(--ft-surface);
+    color: var(--ft-text-faint);
+}
+
 .filter-btn:hover {
-    background-color: #D7192A;
-    color: #FFF5F5;
-    transition: 0.3s ease;
+    background-color: var(--ft-red);
+    border-color: var(--ft-red);
+    color: var(--ft-on-red);
 }
 
 .filter-btn-active {
-    height: 30px;
-    padding: 0 14px;
     background-color: #dc2f2f;
-    border-color: #dc2f2f;
-    border-radius: 20px;
+    border: 1px solid #dc2f2f;
     color: #ffffff;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: pointer;
 }
 
 .report-list {
@@ -1033,20 +1037,20 @@ textarea{
     flex-direction: column;
     gap: 12px;
     width: 100%;
-    max-width: 420px;
+    max-width: var(--ft-max-width);
     margin: 0 auto;
-    padding: 16px 5px 5px;
+    padding: 16px 0 0;
     box-sizing: border-box;
 }
 
 .report-card {
-    background-color: #ffffff;
-    border: 1px solid #e6e6e6;
+    background-color: var(--ft-surface);
+    border: 1px solid var(--ft-border-soft);
     border-radius: 12px;
     padding: 14px 16px;
     text-align: left;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px var(--ft-shadow);
     transition: 0.2s ease;
 }
 
@@ -1098,23 +1102,23 @@ textarea{
 
 .report-subtitle {
     margin: 8px 0 2px;
-    color: #4a4a4a;
+    color: var(--ft-text-muted);
     font-size: 13px;
 }
 
 .report-date {
     margin: 0;
-    color: #8a98aa;
+    color: var(--ft-text-faint);
     font-size: 12px;
 }
 
 .view-details-btn {
     display: block;
     margin-top: 14px;
-    padding: 10px;
+    padding: 12px 10px;
     border: 2px solid #dc2f2f;
     border-radius: 20px;
-    background-color: #ffffff;
+    background-color: transparent;
     color: #dc2f2f;
     font-weight: bold;
     font-size: 13px;
@@ -1128,4 +1132,3 @@ textarea{
     background-color: #dc2f2f;
     color: #ffffff;
 }
-

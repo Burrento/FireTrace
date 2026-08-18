@@ -6,7 +6,6 @@ import { API_BASE_URL } from '../api';
 function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [error, setError] = useState('');
   const [latestReport, setLatestReport] = useState(null);
 
   useEffect(() => {
@@ -44,7 +43,7 @@ function Dashboard() {
   }
 
   if (!user) {
-    return <center>{error || 'Loading…'}</center>;
+    return <center><p className="dashboard-text">Loading…</p></center>;
   }
 
   return (
