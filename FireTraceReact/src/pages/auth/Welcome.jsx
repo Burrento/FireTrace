@@ -1,18 +1,7 @@
 import { Link } from 'react-router-dom';
 import '../../style.css';
-import { useEffect, useState } from 'react';
-import { API_BASE_URL } from '../../api';
 
 function Welcome() {
-  const [message, setMessage] = useState('Connecting to backend...');
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/accounts/ping`)
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => setMessage('Could not reach'));
-  }, []);
-
-
   return (
     <center>
       <div className="welcome-header">

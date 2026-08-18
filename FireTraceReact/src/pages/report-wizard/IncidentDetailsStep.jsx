@@ -1,32 +1,26 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
 
 function IncidentDetailsStep() {
 
     const { draft, updateDraft } = useReportDraft();
-    const [date, setDate] = useState("");
-    const [time, setTime] = useState("");
 
-    useEffect(() => {
-        const now = new Date();
+    // Captured once when the step opens, rather than in an effect that
+    // sets state synchronously on mount.
+    const now = useMemo(() => new Date(), []);
 
-        setDate(
-            now.toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric"
-            })
-        );
+    const date = now.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+    });
 
-        setTime(
-            now.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-        );
-    }, []);
+    const time = now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 
     return (
         <center>
