@@ -1,3 +1,10 @@
+/* ============================================================
+   FireTrace — shared stylesheet
+   Mobile-first: every page renders inside .page, which is fluid
+   with a phone-width cap. Colors come from the tokens defined in
+   index.css so the UI follows the device light/dark theme.
+   ============================================================ */
+
 /* Global reset */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -11,31 +18,35 @@ html, body, #root {
 
 .page {
     width: 100%;
-    max-width: 480px;
+    max-width: var(--ft-max-width);
     margin: 0 auto;
     padding: 0 20px 90px;
     text-align: center;
+    color: var(--ft-text);
 }
 
 /* Welcome.jsx css */
 .welcome-header {
+    /* Full-bleed inside .page's side padding */
+    width: calc(100% + 40px);
+    margin-inline: -20px;
     background: linear-gradient(
         to bottom,
         rgb(162, 22, 32) 0%,
         rgb(194, 28, 39) 100%
     );
-    padding-bottom: 50px;
+    padding: 0 20px 50px;
 }
 
 .fire-icon {
     font-size: 45px;
-    color: white;
+    color: #ffffff;
     padding-top: 60px;
 }
 
 .geo{
     font-family: Arial, sans-serif;
-    color:rgb(185, 177, 177);
+    color: rgb(220, 210, 210);
 }
 .firetrace1 {
     font-family: "Roboto Condensed", sans-serif;
@@ -51,10 +62,20 @@ a {
     text-decoration: none;
 }
 
+/* Buttons that wrap a <Link>: make the whole button tappable,
+   not just the text inside it. */
+button > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
 .started {
     border: none;
     border-radius: 10px;
-    color: rgb(255, 255, 255);
+    color: var(--ft-on-red);
     background-color: rgb(177, 26, 26);
     padding: 10px 20px;
     text-align: center;
@@ -66,7 +87,6 @@ a {
     cursor: pointer;
     width: 100%;
     max-width: 250px;
-    box-sizing: border-box;
     margin-top: 40px;
     transition: 0.4s;
 }
@@ -79,8 +99,8 @@ a {
 .account {
     border: none;
     border-radius: 10px;
-    color: rgb(0, 0, 0);
-    background-color: rgb(221, 221, 221);
+    color: var(--ft-neutral-btn-text);
+    background-color: var(--ft-neutral-btn);
     padding: 10px 20px;
     text-align: center;
     font-family: Arial, sans-serif;
@@ -91,34 +111,35 @@ a {
     cursor: pointer;
     width: 100%;
     max-width: 250px;
-    box-sizing: border-box;
     transition: 0.4s;
 }
 
 .account:hover {
-    background-color: rgb(143, 143, 143);
+    background-color: var(--ft-neutral-btn-hover);
     transition: background-color 0.3s ease;
 }
 
 .sentence1{
     font-family: Arial, sans-serif;
-    color:rgb(185, 177, 177);
+    color: var(--ft-text-faint);
     font-size: 13px;
 }
 
 /* CreateAccount.jsx css */
 .top-bar {
-    width: 100%;
-    height: 56px;
+    /* Full-bleed inside .page's side padding */
+    width: calc(100% + 40px);
+    margin-inline: -20px;
+    min-height: 56px;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 8px;
     padding: 0 20px;
-    background-color: white;
-    border-bottom: 1px solid #ddd;
+    background-color: var(--ft-surface);
+    border-bottom: 1px solid var(--ft-border);
     font-family: Arial, sans-serif;
-    box-sizing: border-box;
+    color: var(--ft-text);
 }
 
 .back-button {
@@ -126,6 +147,7 @@ a {
     justify-self: start;
     border: none;
     background: none;
+    color: var(--ft-text);
     font-size: 24px;
     cursor: pointer;
 }
@@ -143,12 +165,13 @@ a {
     justify-self: end;
     margin: 0;
     font-size: 13px;
+    color: var(--ft-text-muted);
     white-space: nowrap;
 }
 
 .h3create {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     margin-top: 10px;
 }
 
@@ -157,15 +180,14 @@ a {
     width: 100%;
     max-width: 340px;
     font-family: Arial, sans-serif;
-    color: rgb(75, 75, 75);
+    color: var(--ft-text-muted);
     font-size: 14px;
     text-align: left;
     display: block;
     margin-bottom: -8px;
-    box-sizing: border-box;
 }
 
-/* Text boxes */
+/* Text boxes — 16px font-size keeps iOS from zooming in on focus */
 input[type="text"],
 input[type="email"],
 input[type="tel"],
@@ -174,11 +196,12 @@ input[type="password"] {
     max-width: 350px;
     height: 45px;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--ft-border);
     border-radius: 8px;
+    background-color: var(--ft-input-bg);
+    color: var(--ft-text);
     font-size: 16px;
     margin-bottom: 10px;
-    box-sizing: border-box;
 }
 
 /* Create Account button */
@@ -186,8 +209,8 @@ input[type="password"] {
     width: 100%;
     max-width: 350px;
     height: 50px;
-    background-color: #D7192A;
-    color: white;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     border: none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
@@ -196,12 +219,16 @@ input[type="password"] {
     cursor: pointer;
     margin-top: 10px;
     transition: 0.4s;
-    box-sizing: border-box;
 }
 
-.create-button:hover {
-    background-color: #BD1525;
+.create-button:hover:enabled {
+    background-color: var(--ft-red-hover);
     transition: background-color 0.3s ease;
+}
+
+.create-button:disabled {
+    opacity: 0.7;
+    cursor: default;
 }
 
 /* Privacy Names & Terms and Login */
@@ -209,12 +236,12 @@ input[type="password"] {
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
-    color: #BD1525;
+    color: var(--ft-red-hover);
 }
 
 .create {
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 14px;
 }
 
@@ -226,18 +253,16 @@ input[type="password"] {
     font-family: Arial, sans-serif;
     text-align: left;
     font-size: 22px;
-    box-sizing: border-box;
 }
 .logintext {
     width: 100%;
     max-width: 350px;
     margin: 0 auto;
     font-family: Arial, sans-serif;
-    color: rgb(75, 75, 75);
+    color: var(--ft-text-muted);
     font-size: 14px;
     text-align: left;
     padding-bottom: 40px;
-    box-sizing: border-box;
 }
 
 .forgot {
@@ -251,45 +276,45 @@ input[type="password"] {
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
-    color: #BD1525;
+    color: var(--ft-red-hover);
 }
 
 .register{
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
-    color: #000000;
+    color: var(--ft-text);
     text-align: center;
 }
 
 .fire-icon2 {
-    color: #BD1525;
+    color: var(--ft-red-hover);
     font-size: 35px;
 }
 
 .emergency-alert {
     width: 100%;
-    max-width: 250px;
+    max-width: 350px;
     min-height: 70px;
     display: flex;
     align-items: center;
     padding: 10px 20px;
     margin: 0 auto;
-    background-color: #FFF5F5;
-    border: 1px solid #F5D2D2;
+    background-color: var(--ft-alert-bg);
+    border: 1px solid var(--ft-alert-border);
     border-radius: 10px;
-    color: #C21C27;
-    box-sizing: border-box;
+    color: var(--ft-alert-text);
 }
 
 .emergency-icon {
     font-size: 30px;
     margin-right: 20px;
-    color: #D7192A;
+    color: var(--ft-red);
 }
 
 .emergency-alert p {
     font-family: Arial, sans-serif;
+    text-align: left;
     margin: 0;
     font-size: 12px;
     line-height: 1.7;
@@ -306,20 +331,19 @@ input[type="password"] {
 .confirmemail {
     width: 100%;
     max-width: 350px;
-    height: 40px;
+    height: 45px;
     border: none;
     border-radius: 10px;
     font-size: 15px;
     font-weight: bold;
-    color: #ffffff;
-    background-color: #C21C27;
+    color: var(--ft-on-red);
+    background-color: var(--ft-red);
     transition: 0.3s ease;
     cursor: pointer;
 }
 
 .confirmemail:hover{
-    color: #000000;
-    background-color: #990d1b;
+    background-color: var(--ft-red-dark);
 }
 
 /* Forgotpass2.jsx css */
@@ -328,7 +352,7 @@ input[type="password"] {
     justify-self: center;
     min-width: 0;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: clamp(17px, 5.4vw, 28px);
     font-weight: bold;
     margin: 0;
@@ -354,7 +378,7 @@ input[type="password"] {
     justify-self: center;
     min-width: 0;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     /* Shrinks on narrow phones so the step indicator ("2 of 4") keeps its own
        line instead of being squeezed into a wrapped column. */
     font-size: clamp(17px, 5.4vw, 28px);
@@ -366,23 +390,23 @@ input[type="password"] {
 .LogOut {
     grid-column: 3;
     justify-self: end;
-    height: 30px;
-    background-color: #D7192A;
-    color: white;
+    height: 32px;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     border: none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
-    padding: 0 14px 5px;
+    padding: 0 14px;
+    white-space: nowrap;
     cursor: pointer;
     transition: 0.4s;
-    margin:0;
+    margin: 0;
 }
 
 .LogOut:hover {
-    background-color: #BD1525;
-    color: rgb(0, 0, 0);
+    background-color: var(--ft-red-hover);
     transition: background-color 0.3s ease;
 }
 
@@ -390,7 +414,7 @@ input[type="password"] {
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 17px;
     padding-top: 20px;
     padding-bottom: 10px;
@@ -401,7 +425,7 @@ input[type="password"] {
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text-muted);
     font-size: 15px;
     padding-bottom: 10px;
     margin: 0;
@@ -411,7 +435,7 @@ input[type="password"] {
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-weight: bold;
     font-size: 17px;
     margin: 0;
@@ -422,7 +446,7 @@ input[type="password"] {
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-weight: bold;
     font-size: 17px;
     margin: 0;
@@ -430,46 +454,44 @@ input[type="password"] {
 }
 
 .CallBFP {
-    width: 45%;
+    width: 100%;
     height: 50px;
-    background-color: #D7192A;
-    color: white;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     border: none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
     font-size: 16px;
     font-weight: bold;
-    text-align: center;   
+    text-align: center;
     cursor: pointer;
     transition: 0.4s;
-    margin:0;
+    margin: 0;
 }
 
 .CallBFP:hover {
-    background-color: #BD1525;
-    color: rgb(0, 0, 0);
+    background-color: var(--ft-red-hover);
     transition: background-color 0.3s ease;
 }
 
 .FireReport {
-    width: 45%;
+    width: 100%;
     height: 50px;
-    background-color: #D7192A;
-    color: white;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     border: none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
     font-size: 16px;
     font-weight: bold;
-    text-align: center;   
+    text-align: center;
     cursor: pointer;
     transition: 0.4s;
-    margin:0;
+    margin: 0;
 }
 
 .FireReport:hover {
-    background-color: #BD1525;
-    color: rgb(0, 0, 0);
+    background-color: var(--ft-red-hover);
     transition: background-color 0.3s ease;
 }
 
@@ -477,18 +499,19 @@ input[type="password"] {
     width: 100%;
     max-width: 500px;
     padding: 14px 16px;
-    background-color: #ffffff;
-    border: 1px solid #e5e5e5;
+    background-color: var(--ft-surface);
+    border: 1px solid var(--ft-border-soft);
     border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 5px var(--ft-shadow);
     font-family: Arial, sans-serif;
-    box-sizing: border-box;
+    color: var(--ft-text);
 }
 
 .incident-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 6px;
 }
 
@@ -500,29 +523,30 @@ input[type="password"] {
 
 .status {
     background-color: #ffa91f;
-    color: #333;
-    font-size: 14px;
+    color: #333333;
+    font-size: 12px;
     font-weight: bold;
-    padding: 3px 12px;
+    padding: 4px 12px;
     border-radius: 20px;
-    min-width: 125px;
+    white-space: nowrap;
     text-align: center;
 }
 
 .incident-info {
-    color: #929292;
-    font-size: 16px;
+    color: var(--ft-text-muted);
+    font-size: 15px;
     line-height: 1.4;
+    text-align: left;
     margin-bottom: 10px;
 }
 
 .view-details-button{
     width: 100%;
     height: 45px;
-    background-color: #ffffff;
-    border: 2px solid #D7192A;
+    background-color: transparent;
+    border: 2px solid var(--ft-red);
     border-radius: 11px;
-    color: #D7192A;
+    color: var(--ft-red);
     font-size: 15px;
     font-weight: bold;
     cursor: pointer;
@@ -530,8 +554,8 @@ input[type="password"] {
 }
 
 .view-details-button:hover {
-    color: #ffffff;
-    background-color: #D7192A;
+    color: var(--ft-on-red);
+    background-color: var(--ft-red);
     transition: background-color 0.3s ease;
 }
 
@@ -542,52 +566,50 @@ input[type="password"] {
     left: 0;
     right: 0;
     width: 100%;
-    max-width: 480px;
+    max-width: var(--ft-max-width);
     margin: 0 auto;
-    height: 40px;
-    background-color: #D7192A;
+    min-height: var(--ft-nav-height);
+    background-color: var(--ft-red);
     display: flex;
     justify-content: space-around;
-    padding: 10px 0;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-    align-items: center;
-    box-sizing: border-box;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 5px var(--ft-shadow);
+    align-items: stretch;
+    z-index: 10;
 }
 
 .bottom-nav button,
 .bottom-nav a {
-    background: none;
-    width: 20%;
-    height: 60px;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
     border: none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    font-size: 11px;
+    font-size: clamp(9px, 2.6vw, 12px);
     line-height: 1.2;
     text-align: center;
-    color: #000000;
-    padding: 8px 4px;
-    background-color: #D7192A;
+    white-space: nowrap;
+    color: var(--ft-on-red);
+    padding: 6px 2px;
+    background-color: var(--ft-red);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    box-sizing: border-box;
-    transition: background-color 0.6s ease, color 0.4s ease;
+    transition: background-color 0.3s ease;
 }
 
 .bottom-nav button:hover,
 .bottom-nav a:hover {
-    color: #000000;
-    background-color: #990d1b;
-    transition: background-color 0.6s, color 0.4s ease;
+    background-color: var(--ft-red-dark);
 }
 
 .bottom-nav button.bottom-btn-active,
 .bottom-nav a.bottom-btn-active {
-    color: #ffffff;
-    background-color: #990d1b;
+    color: var(--ft-on-red);
+    background-color: var(--ft-red-dark);
 }
 
 /* Report.jsx css */
@@ -596,7 +618,7 @@ input[type="password"] {
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 17px;
     padding-top: 20px;
     padding-bottom: 10px;
@@ -607,7 +629,7 @@ input[type="password"] {
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 17px;
     padding-top: 20px;
     padding-bottom: 10px;
@@ -617,132 +639,128 @@ input[type="password"] {
 select {
     width: 100%;
     max-width: 500px;
-    height: 40px;
+    height: 45px;
     padding: 0 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--ft-border);
     border-radius: 8px;
-    background-color: white;
+    background-color: var(--ft-input-bg);
     font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #333;
+    font-size: 16px;
+    color: var(--ft-text);
     cursor: pointer;
     margin: 0;
-    box-sizing: border-box;
 }
 
 textarea{
     width: 100%;
     max-width: 480px;
     height: 100px;
-    padding: 0 12px;
-    padding-top: 10px;
+    padding: 10px 12px;
     resize: none;
-    border: 1px solid #ccc;
+    border: 1px solid var(--ft-border);
     border-radius: 8px;
-    background-color: white;
+    background-color: var(--ft-input-bg);
     font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #333;
-    cursor: pointer;
+    font-size: 16px;
+    color: var(--ft-text);
     margin: 0;
-    box-sizing: border-box;
 }
 .date-time-container {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
     width: 100%;
-    margin-bottom: 80px;
+    margin-bottom: 24px;
 }
 
 .date-time-container input {
-    flex: 1;
+    flex: 1 1 140px;
     min-width: 0;
-    height: 40px;
+    height: 45px;
     padding: 0 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--ft-border);
     border-radius: 10px;
-    background-color: white;
-    color: #333;
+    background-color: var(--ft-input-bg);
+    color: var(--ft-text);
     font-family: Arial, sans-serif;
-    font-size: 14px;
-    box-sizing: border-box;
+    font-size: 16px;
+    margin-bottom: 0;
 }
 
 .backcontinue-container {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
     width: 100%;
-    margin: 0;
+    margin: 24px 0;
 }
 
 .backbtn {
-    flex: 1;
+    flex: 1 1 140px;
     max-width: 240px;
     height: 50px;
     border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color: #cfcccc;
+    background-color: var(--ft-neutral-btn);
+    color: var(--ft-neutral-btn-text);
     font-size: 18px;
     transition: 0.4s ease;
     cursor: pointer;
-    margin-top: 143px;
+    margin: 0;
 }
 
 .backbtn:hover{
-    background-color: #979696;
+    background-color: var(--ft-neutral-btn-hover);
 }
 
 .continuebtn {
-    flex: 1;
+    flex: 1 1 140px;
     max-width: 240px;
     height: 50px;
     border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 18px;
     transition: 0.4s ease;
     cursor: pointer;
-    margin-top: 143px   ;
+    margin: 0;
 }
 
-.continuebtn:hover {
-    color:#000000;
-    background-color: #990d1b;
+.continuebtn:hover:enabled {
+    background-color: var(--ft-red-dark);
 }
 
 /* Continue2.jsx css*/
 .pinpointbtn {
     width: 100%;
     max-width: 500px;
-    height: 40px;
+    height: 45px;
     border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
     cursor: pointer;
     margin-top: 20px;
-    box-sizing: border-box;
 }
 
 .pinpointbtn:hover {
-    color:#000000;
-    background-color: #c4192a;
+    background-color: var(--ft-red-dark);
 }
 
 .barangay-text{
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 17px;
     padding-top: 20px;
     padding-bottom: 10px;
@@ -753,7 +771,7 @@ textarea{
     width: 100%;
     text-align: left;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 17px;
     padding-top: 20px;
     padding-bottom: 10px;
@@ -763,19 +781,16 @@ textarea{
 .addresstxt {
     width: 100%;
     max-width: 480px;
-    height: 25px;
-    padding: 0 12px;
-    padding-top: 10px;
+    height: 60px;
+    padding: 10px 12px;
     resize: none;
-    border: 1px solid #ccc;
+    border: 1px solid var(--ft-border);
     border-radius: 8px;
-    background-color: white;
+    background-color: var(--ft-input-bg);
     font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #333;
-    cursor: pointer;
+    font-size: 16px;
+    color: var(--ft-text);
     margin: 0;
-    box-sizing: border-box;
 }
 
 /* Map (LocationPickerMap / IncidentMap) */
@@ -785,7 +800,7 @@ textarea{
     max-width: 500px;
     height: 260px;
     margin: 12px auto 0;
-    border: 1px solid #ccc;
+    border: 1px solid var(--ft-border);
     border-radius: 10px;
     overflow: hidden;
 }
@@ -796,10 +811,11 @@ textarea{
     right: 10px;
     z-index: 1;
     padding: 7px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--ft-border);
     border-radius: 8px;
+    /* Sits on top of the map tiles, which stay light in both themes. */
     background-color: #ffffff;
-    color: #D7192A;
+    color: #d7192a;
     font-family: Arial, sans-serif;
     font-size: 12px;
     font-weight: bold;
@@ -809,7 +825,7 @@ textarea{
 }
 
 .map-clear-btn:hover {
-    background-color: #D7192A;
+    background-color: #d7192a;
     color: #ffffff;
 }
 
@@ -819,22 +835,31 @@ textarea{
     margin: 6px auto 0;
     font-family: Arial, sans-serif;
     font-size: 12px;
-    color: #8a8a8a;
+    color: var(--ft-text-faint);
     text-align: left;
 }
 
 .latnlng{
     width: 100%;
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text-muted);
     font-size: 14px;
     padding-top: 20px;
     margin: 0;
 }
 
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    margin-top: 12px;
+    text-align: left;
+}
+
 .checkbox-txt{
     font-family: Arial, sans-serif;
-    color: rgb(0, 0, 0);
+    color: var(--ft-text);
     font-size: 14px;
     padding-left: 5px;
     margin: 0;
@@ -842,20 +867,22 @@ textarea{
 
 .backcontinue2-container {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
     width: 100%;
-    margin: 0;
+    margin: 24px 0;
 }
 
 .backbtn2 {
-    flex: 1;
+    flex: 1 1 140px;
     max-width: 240px;
     height: 50px;
     border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color: #cfcccc;
+    background-color: var(--ft-neutral-btn);
+    color: var(--ft-neutral-btn-text);
     font-size: 18px;
     transition: 0.4s ease;
     cursor: pointer;
@@ -863,27 +890,32 @@ textarea{
 }
 
 .backbtn2:hover{
-    background-color: #979696;
+    background-color: var(--ft-neutral-btn-hover);
 }
 
 .continuebtn2 {
-    flex: 1;
+    flex: 1 1 140px;
     max-width: 240px;
     height: 50px;
     border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 18px;
     transition: 0.4s ease;
     cursor: pointer;
     margin-bottom: 20px;
 }
 
-.continuebtn2:hover {
-    color:#000000;
-    background-color: #990d1b;
+.continuebtn2:hover:enabled {
+    background-color: var(--ft-red-dark);
+}
+
+.continuebtn:disabled,
+.continuebtn2:disabled {
+    opacity: 0.6;
+    cursor: default;
 }
 
 /* ContinueThird.jsx css */
@@ -893,7 +925,7 @@ textarea{
     text-align: left;
     font-size: 18px;
     font-weight: bold;
-    color:#000000;
+    color: var(--ft-text);
     margin-top: 20px;
 }
 
@@ -904,11 +936,10 @@ textarea{
     align-items: center;
     padding: 12px 16px;
     margin-top: 10px;
-    background-color: #ffe5e5;
-    border: 1px solid #f58a8a;
+    background-color: var(--ft-warning-bg);
+    border: 1px solid var(--ft-warning-border);
     border-radius: 10px;
-    color: #7a0000;
-    box-sizing: border-box;
+    color: var(--ft-warning-text);
 }
 
 .photo-warning-icon {
@@ -928,13 +959,12 @@ textarea{
 .takephoto {
     width: 100%;
     max-width: 480px;
-    height: 40px;
-    box-sizing: border-box;
+    height: 45px;
     border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color:#D7192A;
-    color:#FFF5F5;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
@@ -943,20 +973,18 @@ textarea{
 }
 
 .takephoto:hover {
-    color:#000000;
-    background-color: #c4192a;
+    background-color: var(--ft-red-dark);
 }
 
 .selectphoto {
     width: 100%;
     max-width: 480px;
-    height: 40px;
-    box-sizing: border-box;
+    height: 45px;
     border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color:#d3d3d3;
-    color:#000000;
+    background-color: var(--ft-neutral-btn);
+    color: var(--ft-neutral-btn-text);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
@@ -965,8 +993,7 @@ textarea{
 }
 
 .selectphoto:hover {
-    color:#000000;
-    background-color: #c4192a;
+    background-color: var(--ft-neutral-btn-hover);
 }
 
 /* Continue4.jsx css */
@@ -980,13 +1007,12 @@ textarea{
     color: #ffffff;
     font-size: 32px;
     font-weight: bold;
-    margin-top: 50px;
-    margin-bottom: 15px;
+    margin: 50px auto 15px;
 }
 
 .submitted-title {
     font-family: Arial, sans-serif;
-    color: #000000;
+    color: var(--ft-text);
     font-size: 22px;
     font-weight: bold;
     margin: 0;
@@ -996,7 +1022,7 @@ textarea{
     width: 100%;
     max-width: 320px;
     font-family: Arial, sans-serif;
-    color: #8a8a8a;
+    color: var(--ft-text-faint);
     font-size: 14px;
     text-align: center;
     margin: 8px auto 25px;
@@ -1008,12 +1034,11 @@ textarea{
     text-align: left;
     padding: 18px 20px;
     margin-bottom: 25px;
-    box-sizing: border-box;
 }
 
 .submitted-label {
     font-family: Arial, sans-serif;
-    color: #9a9a9a;
+    color: var(--ft-text-faint);
     font-size: 13px;
     margin: 0;
     margin-top: 10px;
@@ -1025,7 +1050,7 @@ textarea{
 
 .submitted-reference {
     font-family: Arial, sans-serif;
-    color: #D7192A;
+    color: var(--ft-red);
     font-size: 18px;
     font-weight: bold;
     margin: 0;
@@ -1033,14 +1058,14 @@ textarea{
 
 .submitted-value {
     font-family: Arial, sans-serif;
-    color: #000000;
+    color: var(--ft-text);
     font-size: 15px;
     margin: 0;
 }
 
 .submitted-status {
     display: inline-block;
-    background-color: #1c1c1c;
+    background-color: var(--ft-red-dark);
     color: #ffffff;
     font-family: Arial, sans-serif;
     font-size: 13px;
@@ -1057,30 +1082,28 @@ textarea{
     border: none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color: #D7192A;
-    color: #ffffff;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
     cursor: pointer;
     margin-bottom: 12px;
-    box-sizing: border-box;
 }
 
 .view-status-button:hover {
-    background-color: #990d1b;
+    background-color: var(--ft-red-dark);
 }
 
 .contact-bfp-button {
     width: 100%;
     max-width: 350px;
     height: 50px;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
+    border: 1px solid var(--ft-border);
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    background-color: #ffffff;
-    color: #000000;
+    background-color: var(--ft-surface);
+    color: var(--ft-text);
     font-size: 15px;
     font-weight: bold;
     transition: 0.4s ease;
@@ -1089,15 +1112,23 @@ textarea{
 }
 
 .contact-bfp-button:hover {
-    background-color: #f2f2f2;
+    background-color: var(--ft-surface-alt);
 }
 
 /* MyReport.jsx css */
 .search-container {
+    display: flex;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
     padding-top: 20px;
 }
 
-.searchInput {
+input.searchInput {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    margin-bottom: 0;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-top-left-radius: 10px;
@@ -1106,19 +1137,24 @@ textarea{
 }
 
 .searchbtn {
-    width: 40px;
-    height: 44px;
+    flex: none;
+    width: 48px;
+    height: 45px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
-    background-color: #FFFFFF;
-    border: 2px solid #CCCCCC;
-    color: #757575;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    background-color: var(--ft-input-bg);
+    border: 1px solid var(--ft-border);
+    border-left: none;
+    color: var(--ft-text-muted);
     cursor: pointer;
     transition: 0.4s ease;
 }
 
 .searchbtn:hover {
-    background-color: #BD1525;
+    background-color: var(--ft-red-hover);
+    color: #ffffff;
 }
 
 .filter-buttons {
@@ -1127,19 +1163,19 @@ textarea{
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 5px;
+    padding: 12px 0 0;
     width: 100%;
     max-width: 420px;
     margin: 0 auto;
 }
 
 .filter-btn {
-    height: 30px;
+    height: 32px;
     padding: 0 14px;
-    border: 1px solid #d9dee5;
+    border: 1px solid var(--ft-border);
     border-radius: 20px;
-    background-color: #ffffff;
-    color: #8a98aa;
+    background-color: var(--ft-surface);
+    color: var(--ft-text-faint);
     font-size: 11px;
     font-weight: bold;
     cursor: pointer;
@@ -1147,16 +1183,17 @@ textarea{
 }
 
 .filter-btn:hover {
-    background-color: #D7192A;
-    color: #FFF5F5;
+    background-color: var(--ft-red);
+    border-color: var(--ft-red);
+    color: var(--ft-on-red);
     transition: 0.3s ease;
 }
 
 .filter-btn-active {
-    height: 30px;
+    height: 32px;
     padding: 0 14px;
     background-color: #dc2f2f;
-    border-color: #dc2f2f;
+    border: 1px solid #dc2f2f;
     border-radius: 20px;
     color: #ffffff;
     font-size: 11px;
@@ -1171,18 +1208,17 @@ textarea{
     width: 100%;
     max-width: 420px;
     margin: 0 auto;
-    padding: 16px 5px 5px;
-    box-sizing: border-box;
+    padding: 16px 0 0;
 }
 
 .report-card {
-    background-color: #ffffff;
-    border: 1px solid #e6e6e6;
+    background-color: var(--ft-surface);
+    border: 1px solid var(--ft-border-soft);
     border-radius: 12px;
     padding: 14px 16px;
     text-align: left;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px var(--ft-shadow);
     transition: 0.2s ease;
 }
 
@@ -1234,23 +1270,23 @@ textarea{
 
 .report-subtitle {
     margin: 8px 0 2px;
-    color: #4a4a4a;
+    color: var(--ft-text-muted);
     font-size: 13px;
 }
 
 .report-date {
     margin: 0;
-    color: #8a98aa;
+    color: var(--ft-text-faint);
     font-size: 12px;
 }
 
 .view-details-btn {
     display: block;
     margin-top: 14px;
-    padding: 10px;
+    padding: 12px 10px;
     border: 2px solid #dc2f2f;
     border-radius: 20px;
-    background-color: #ffffff;
+    background-color: transparent;
     color: #dc2f2f;
     font-weight: bold;
     font-size: 13px;
@@ -1264,4 +1300,3 @@ textarea{
     background-color: #dc2f2f;
     color: #ffffff;
 }
-

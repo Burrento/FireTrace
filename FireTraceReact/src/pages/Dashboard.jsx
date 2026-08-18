@@ -7,7 +7,6 @@ import { statusClass, humanize } from '../lib/incidentDisplay';
 function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [error, setError] = useState('');
   const [latestReport, setLatestReport] = useState(null);
 
   useEffect(() => {
@@ -45,7 +44,7 @@ function Dashboard() {
   }
 
   if (!user) {
-    return <div className="page">{error || 'Loading…'}</div>;
+    return <div className="page"><p className="dashboard-text">Loading…</p></div>;
   }
 
   return (
