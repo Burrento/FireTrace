@@ -39,7 +39,7 @@ function Login() {
         <input type="email" id="Email" name="Email" value={email} onChange={(e) => setEmail(e.target.value)} required /><br /><br />
         <label className="label">Password</label><br />
         <input type="password" id="Password" name="Password" value={password} onChange={(e) => setPassword(e.target.value)} required /><br />
-        <p className="forgot"><a className="ForgotPass" href="#">Forgot Password?</a></p><br />
+        <p className="forgot"><Link className="ForgotPass" to="/forgotpass1">Forgot Password?</Link></p><br />
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <button className="create-button" type="submit" disabled={submitting}>
           {submitting ? 'Logging in…' : 'Login'}
