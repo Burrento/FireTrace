@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import '../style.css';
-import { apiFetch } from '../api';
+import '../../style.css';
+import { apiFetch } from '../../api';
 
 function CreateAccount() {
   const navigate = useNavigate();

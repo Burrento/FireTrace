@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import '../style.css';
+import '../../style.css';
 
-function Forgotpass1() {
+function ForgotPasswordRequest() {
     return(
         <center>
             <header className="top-bar">
@@ -16,4 +16,4 @@ function Forgotpass1() {
     );
 }
 
-export default Forgotpass1;
+export default ForgotPasswordRequest;

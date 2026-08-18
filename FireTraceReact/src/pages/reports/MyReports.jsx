@@ -1,13 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import '../style.css';
-import { API_BASE_URL } from '../api';
+import '../../style.css';
+import { API_BASE_URL } from '../../api';
 
 function statusClass(status) {
     return 'status-badge status-' + status.toLowerCase().replace(/\s+/g, '-');
 }
 
-function MyReport() {
+function MyReports() {
     const navigate = useNavigate();
     const [reports, setReports] = useState([]);
     const [expandedId, setExpandedId] = useState(null);
@@ -85,4 +85,4 @@ function MyReport() {
     );
 }
 
-export default MyReport;
+export default MyReports;

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import '../style.css';
-import { useReportDraft } from '../context/useReportDraft';
-import LocationPickerMap from '../components/LocationPickerMap';
+import '../../style.css';
+import { useReportDraft } from '../../context/useReportDraft';
+import LocationPickerMap from '../../components/LocationPickerMap';
 
-function Continue2() {
+function LocationStep() {
     const { draft, updateDraft } = useReportDraft();
     const hasPin = draft.latitude != null && draft.longitude != null;
     const canContinue = Boolean(draft.barangay) && hasPin && draft.location_confirmed;
@@ -160,4 +160,4 @@ function Continue2() {
     );
 }
 
-export default Continue2;
+export default LocationStep;
