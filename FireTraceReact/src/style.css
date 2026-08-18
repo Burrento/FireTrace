@@ -10,9 +10,15 @@
     box-sizing: border-box;
 }
 
-html, body, #root {
+html, body {
     margin: 0;
     width: 100%;
+    overflow-x: hidden;
+}
+
+/* #root's width/max-width/centering live in index.css — don't set
+   margin here, this file loads later and would override the auto. */
+#root {
     overflow-x: hidden;
 }
 
