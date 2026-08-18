@@ -4,7 +4,7 @@ import '../../style.css';
 
 function ForgotPasswordReset() {
     return(
-        <center>
+        <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader2">FIRETRACE</h2>
             </header>
@@ -13,7 +13,7 @@ function ForgotPasswordReset() {
             <p className="newpass2">Confirm New Password</p>
             <input type="password" id="Password" name="Password" required /><br />
             <button className="confirmemail"><Link to="/Login">CONFIRM</Link></button>
-        </center>
+        </div>
     );
 }
 

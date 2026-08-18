@@ -30,7 +30,7 @@ function Login() {
   }
 
   return (
-    <center>
+    <div className="page">
       <i className="fa-solid fa-fire-flame-simple fire-icon2"></i>
       <h3 className="h3create">Welcome back</h3>
       <p className="logintext">Log in to submit and track fire incident reports.</p>
@@ -54,7 +54,7 @@ function Login() {
           immediately. Do not wait for this app.
         </p>
       </div>
-    </center>
+    </div>
   );
 }
 

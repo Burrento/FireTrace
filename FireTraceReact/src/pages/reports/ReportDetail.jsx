@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import '../../style.css';
 import { API_BASE_URL } from '../../api';
 import IncidentMap from '../../components/IncidentMap';
+import { statusClass, humanize } from '../../lib/incidentDisplay';
 
 function ReportDetail() {
     const { id } = useParams();
@@ -28,15 +29,15 @@ function ReportDetail() {
     }, [id, navigate]);
 
     if (error) {
-        return <center><p className="submitted-subtitle">{error}</p></center>;
+        return <div className="page"><p className="submitted-subtitle">{error}</p></div>;
     }
 
     if (!incident) {
-        return <center><p className="submitted-subtitle">Loading…</p></center>;
+        return <div className="page"><p className="submitted-subtitle">Loading…</p></div>;
     }
 
     return (
-        <center>
+        <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader">Report Details</h2>
             </header>
@@ -44,11 +45,13 @@ function ReportDetail() {
             <div className="incident-card">
                 <div className="incident-header">
                     <span className="reference-number">{incident.reference_number}</span>
-                    <span className="status">{incident.status.replace('_', ' ').toUpperCase()}</span>
+                    <span className={statusClass(incident.status)}>
+                        {humanize(incident.status_display, incident.status).toUpperCase()}
+                    </span>
                 </div>
 
                 <div className="incident-info">
-                    <div>{incident.incident_type}</div>
+                    <div>{humanize(incident.incident_type_display, incident.incident_type)}</div>
                     <div>Barangay {incident.barangay}</div>
                     {incident.address && <div>{incident.address}</div>}
                     <div>{new Date(incident.created_at).toLocaleString()}</div>
@@ -56,9 +59,7 @@ function ReportDetail() {
                 </div>
             </div>
 
-            <div style={{ width: '90%', margin: '12px 0' }}>
-                <IncidentMap latitude={Number(incident.latitude)} longitude={Number(incident.longitude)} />
-            </div>
+            <IncidentMap latitude={Number(incident.latitude)} longitude={Number(incident.longitude)} />
 
             <nav className="bottom-nav">
                 <Link className="bottom-btn" to="/dashboard">Home</Link>
@@ -67,7 +68,7 @@ function ReportDetail() {
                 <Link className="bottom-btn" to="/">Notifications</Link>
                 <Link className="bottom-btn" to="/">Profile</Link>
             </nav>
-        </center>
+        </div>
     );
 }
 

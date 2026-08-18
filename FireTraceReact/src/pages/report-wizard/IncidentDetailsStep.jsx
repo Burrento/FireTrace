@@ -29,7 +29,7 @@ function IncidentDetailsStep() {
     }, []);
 
     return (
-        <center>
+        <div className="page">
 
             <header className="top-bar">
                 <h2 className="firetraceheader">Fire Report Incident</h2>
@@ -98,7 +98,7 @@ function IncidentDetailsStep() {
 
             </nav>
 
-        </center>
+        </div>
     );
 }
 

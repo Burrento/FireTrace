@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../style.css';
 import { API_BASE_URL } from '../api';
+import { statusClass, humanize } from '../lib/incidentDisplay';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -44,11 +45,11 @@ function Dashboard() {
   }
 
   if (!user) {
-    return <center>{error || 'Loading…'}</center>;
+    return <div className="page">{error || 'Loading…'}</div>;
   }
 
   return (
-    <center>
+    <div className="page">
       <header className="top-bar">
         <h2 className="firetraceheader">FIRETRACE</h2>
         <button className="LogOut" onClick={handleLogout}>Log Out</button>
@@ -66,11 +67,13 @@ function Dashboard() {
         <div className="incident-card">
           <div className="incident-header">
             <span className="reference-number">{latestReport.reference_number}</span>
-            <span className="status">{latestReport.status.replace('_', ' ').toUpperCase()}</span>
+            <span className={statusClass(latestReport.status)}>
+              {humanize(latestReport.status_display, latestReport.status).toUpperCase()}
+            </span>
           </div>
 
           <div className="incident-info">
-            <div>{latestReport.incident_type}</div>
+            <div>{humanize(latestReport.incident_type_display, latestReport.incident_type)}</div>
             <div>Barangay {latestReport.barangay}</div>
             <div>{new Date(latestReport.created_at).toLocaleString()}</div>
           </div>
@@ -88,7 +91,7 @@ function Dashboard() {
         <button className="bottom-btn"><Link to="/">Notifications</Link></button>
         <button className="bottom-btn"><Link to="/">Profile</Link></button>
       </nav>
-    </center>
+    </div>
   );
 }
 
