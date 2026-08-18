@@ -1,37 +1,37 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../style.css';
-
-const reports = [
-    {
-        id: 'FT-2026-00124',
-        status: 'Under Review',
-        type: 'Residential Fire',
-        location: 'Barangay San Vicente North',
-        date: 'May 20, 2026 · 08:35 AM',
-    },
-    {
-        id: 'FT-2026-00110',
-        status: 'Verified',
-        type: 'Grass Fire',
-        location: 'Brgy. San Roque',
-        date: 'May 18, 2026 · 03:10 PM',
-    },
-    {
-        id: 'FT-2026-00015',
-        status: 'Resolved',
-        type: 'Vehicle Fire',
-        location: 'Brgy. San Vicente South',
-        date: 'May 15, 2026 · 11:05 AM',
-    },
-];
+import { API_BASE_URL } from '../api';
 
 function statusClass(status) {
     return 'status-badge status-' + status.toLowerCase().replace(/\s+/g, '-');
 }
 
 function MyReport() {
-    const [expandedId, setExpandedId] = useState(reports[0]?.id ?? null);
+    const navigate = useNavigate();
+    const [reports, setReports] = useState([]);
+    const [expandedId, setExpandedId] = useState(null);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const access = localStorage.getItem('access');
+        if (!access) {
+            navigate('/login');
+            return;
+        }
+        fetch(`${API_BASE_URL}/incidents/`, {
+            headers: { Authorization: `Bearer ${access}` },
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error('Session expired');
+                return res.json();
+            })
+            .then((data) => {
+                setReports(data);
+                setExpandedId(data[0]?.id ?? null);
+            })
+            .catch(() => setError('Could not load your reports.'));
+    }, [navigate]);
 
     return(
         <center>
@@ -39,18 +39,20 @@ function MyReport() {
                 <h2 className="firetraceheader">FIRETRACE</h2>
                 <button className="LogOut"><Link to="/">Log Out</Link></button>
             </header>
-            <div class="search-container">
+            <div className="search-container">
                 <input className="searchInput" type="text" placeholder="Search..."></input>
                 <button type="button" className="searchbtn">🔍</button>
             </div>
             <div className="filter-buttons">
-                <button class="filter-btn-active">All</button>
-                <button class="filter-btn">Submitted</button>
-                <button class="filter-btn">Under Review</button>
-                <button class="filter-btn">Verified</button>
-                <button class="filter-btn">Responding</button>
-                <button class="filter-btn">Resolved</button>
+                <button className="filter-btn-active">All</button>
+                <button className="filter-btn">Submitted</button>
+                <button className="filter-btn">Under Review</button>
+                <button className="filter-btn">Verified</button>
+                <button className="filter-btn">Responding</button>
+                <button className="filter-btn">Resolved</button>
             </div>
+            {error && <p className="report-subtitle">{error}</p>}
+            {!error && reports.length === 0 && <p className="report-subtitle">You haven't submitted any reports yet.</p>}
             <div className="report-list">
                 {reports.map((report) => (
                     <div
@@ -59,11 +61,11 @@ function MyReport() {
                         onClick={() => setExpandedId(expandedId === report.id ? null : report.id)}
                     >
                         <div className="report-card-header">
-                            <span className="report-id">{report.id}</span>
-                            <span className={statusClass(report.status)}>{report.status.toUpperCase()}</span>
+                            <span className="report-id">{report.reference_number}</span>
+                            <span className={statusClass(report.status)}>{report.status.replace('_', ' ').toUpperCase()}</span>
                         </div>
-                        <p className="report-subtitle">{report.type} · {report.location}</p>
-                        <p className="report-date">{report.date}</p>
+                        <p className="report-subtitle">{report.incident_type} · Barangay {report.barangay}</p>
+                        <p className="report-date">{new Date(report.created_at).toLocaleString()}</p>
                         {expandedId === report.id && (
                             <Link to={`/report/${report.id}`} className="view-details-btn">
                                 VIEW DETAILS
