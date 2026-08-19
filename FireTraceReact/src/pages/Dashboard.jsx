@@ -54,12 +54,13 @@ function Dashboard() {
           <div className="app-name"><span className="fire-txt">FIRE</span><span className="trace-txt">TRACE</span></div>
           <span className="station-name">{user.user_type === 'bfp' ? 'BFP Personnel' : 'Civilian'}</span>
         </div>
+        <button className="LogOut" onClick={handleLogout}>Log Out</button>
       </header>
 
       <section className="welcome-hero">
         <div className="hero-text">
-          <h1 className="main-headline">Good day!</h1>
-          <p className="sub-headline" style={{fontSize: '18px', marginTop: 6}}>{user.username}</p>
+          <h1 className="main-headline">Welcome, {user.username}</h1>
+          <p className="sub-headline">Report incidents quickly and help keep your community safe.</p>
         </div>
       </section>
 
