@@ -64,16 +64,6 @@ function ConfirmationStep() {
 
             <button className="view-status-button"><Link to="/myreport">VIEW REPORT STATUS</Link></button><br />
             <button className="contact-bfp-button">&#128222; CONTACT BFP FOR URGENT HELP</button>
-
-            <nav className="bottom-nav">
-
-                <Link className="bottom-btn" to="/dashboard">Home</Link>
-                <Link className="bottom-btn-active" to="/report">Report</Link>
-                <Link className="bottom-btn" to="/myreport">My Report</Link>
-                <Link className="bottom-btn" to="/">Notifications</Link>
-                <Link className="bottom-btn" to="/">Profile</Link>
-
-            </nav>
         </div>
     );
 }

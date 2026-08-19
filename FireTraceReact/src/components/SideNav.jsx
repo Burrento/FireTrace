@@ -6,16 +6,19 @@ const NAV_ITEMS = [
     { key: 'home', to: '/dashboard', label: 'Home' },
     { key: 'report', to: '/report', label: 'Report' },
     { key: 'myreport', to: '/myreport', label: 'My Report' },
-    { key: 'notifications', to: '/', label: 'Notifications' },
-    { key: 'profile', to: '/', label: 'Profile' },
+    { key: 'notifications', to: '/Notifications', label: 'Notifications' },
+    { key: 'profile', to: '/profile', label: 'Profile' },
 ];
 
 const REPORT_FLOW_PATHS = ['/report', '/continue2', '/continuethird', '/continue4'];
 
 function activeKeyFor(pathname) {
-    if (pathname === '/dashboard') return 'home';
-    if (pathname === '/myreport') return 'myreport';
-    if (REPORT_FLOW_PATHS.includes(pathname)) return 'report';
+    const lower = pathname.toLowerCase();
+    if (lower === '/dashboard') return 'home';
+    if (lower === '/myreport') return 'myreport';
+    if (lower === '/notifications') return 'notifications';
+    if (lower === '/profile') return 'profile';
+    if (REPORT_FLOW_PATHS.includes(lower)) return 'report';
     return null;
 }
 

@@ -77,13 +77,6 @@ function Dashboard() {
         <p className="dashboard-text2">No reports submitted yet.</p>
       )}
 
-      <nav className="bottom-nav">
-        <button className="bottom-btn-active"><Link to="/dashboard">Home</Link></button>
-        <button className="bottom-btn"><Link to="/report">Report</Link></button>
-        <button className="bottom-btn"><Link to="/myreport">My Report</Link></button>
-        <button className="bottom-btn"><Link to="/">Notifications</Link></button>
-        <button className="bottom-btn"><Link to="/">Profile</Link></button>
-      </nav>
     </div>
   );
 }

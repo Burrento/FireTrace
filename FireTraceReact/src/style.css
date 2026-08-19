@@ -418,7 +418,7 @@ input[type="password"] {
 
 .LogOut {
     grid-column: 3;
-    justify-self: end;
+    justify-self: flex-end;
     height: 32px;
     background-color: var(--ft-red);
     color: var(--ft-on-red);
@@ -590,9 +590,9 @@ input[type="password"] {
 
 /* Hamburger + Side Navigation */
 .hamburger-btn {
-    position: fixed;
-    top: 14px;
-    left: calc(21% + 14px);
+    position: absolute;
+    top: 8px;
+    left: 14px;
     width: 40px;
     height: 40px;
     border: none;
@@ -621,7 +621,7 @@ input[type="password"] {
 }
 
 .side-nav-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
     opacity: 0;
@@ -636,11 +636,12 @@ input[type="password"] {
 }
 
 .side-nav {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    height: 100vh;
+    bottom: 0;
     width: 240px;
+    max-width: 80%;
     background-color: #D7192A;
     display: flex;
     flex-direction: column;
@@ -1435,7 +1436,474 @@ input.searchInput {
     transition: 0.2s ease;
 }
 
+/* Notifications.jsx css */
+
+.notif-list {
+    width: 100%;
+    padding: 8px 16px 24px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.notif-group {
+    margin-bottom: 8px;
+}
+
+.notif-group-title {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    color: #6b7280;
+    margin: 18px 0 6px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.notif-icon {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.notif-icon-warning {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.notif-icon-verified {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.notif-icon-resolved {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.notif-icon-thanks {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.notif-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.notif-title {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: #111827;
+    margin: 0;
+}
+
+.notif-sub {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.notif-sub-solo {
+    align-self: center;
+}
+
 .view-details-btn:hover {
     background-color: #dc2f2f;
     color: #ffffff;
 }
+
+/* Profile.jsx css */
+.profile-menu {
+    width: 100%;
+    padding: 8px 16px 24px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    padding: 14px 4px;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: Arial, sans-serif;
+}
+
+.profile-menu-icon {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background-color: #f3f4f6;
+}
+
+/* Personal.jsx css*/
+
+.Personal{
+    width: 450px;
+    height: 50px;
+    margin-top: 10px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.profile-subtext{
+    font-size: 12px;
+    color: #888;
+    transition: 0.3s ease;
+}
+
+.Personal:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Change{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Change:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.ContactInfo{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.ContactInfo:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.PrivacyNotice{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.PrivacyNotice:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Consent{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Consent:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Help{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Help:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.OfficialBFP{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.OfficialBFP:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Logout2{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Logout2:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Personal:hover .profile-subtext,
+.Change:hover .profile-subtext,
+.ContactInfo:hover .profile-subtext,
+.PrivacyNotice:hover .profile-subtext,
+.Consent:hover .profile-subtext,
+.Help:hover .profile-subtext,
+.OfficialBFP:hover .profile-subtext,
+.Logout2:hover .profile-subtext{
+    color: white;
+}
+
+.edit-profile-form {
+    text-align: left;
+}
+
+.edit-profile-form p {
+    margin: 16px 0 4px;
+    font-size: 14px;
+    color: black;
+}
+
+.edit-profile-form p:first-child {
+    margin-top: 10px;
+}
+
+.edit-profile-form input {
+    margin-bottom: 0;
+}
+
+.SaveChanges-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.SaveChanges-btn:hover{
+    color: black;
+    background-color: #990d1b;
+}
+
+.Cancel-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: rgb(0, 0, 0);
+    background-color: #cac0c0;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Cancel-btn:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+/* ChangePass.jsx css*/
+.UpdatePass-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.UpdatePass-btn:hover{
+    color: black;
+    background-color: #990d1b;
+}
+
+/* ContactInfo.jsx css */
+.UpdateNumber-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 30px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.UpdateNumber-btn:hover{
+    color: black;
+    background-color: #990d1b;
+}
+
+.otp-row{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.OTP-btn{
+    width: 60px;
+    height: 40px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 10px;
+    color: black;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.OTP-btn:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+/* HelpReport.jsx css */
+.help-guide-list {
+    width: 100%;
+    padding: 8px 0 24px;
+    box-sizing: border-box;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.help-guide-card {
+    background: var(--ft-surface);
+    border: 1px solid var(--ft-border-soft);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 3px var(--ft-shadow);
+}
+
+.help-guide-title {
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--ft-text);
+    margin: 0 0 4px;
+}
+
+.help-guide-desc {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: var(--ft-text-muted);
+    margin: 0;
+}
+
+/* OfficialBFP.jsx css*/
+.bfp-card {
+    width: 90%;
+    margin: 16px auto;
+    padding: 12px 16px;
+    text-align: left;
+}
+
+.bfp-station {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.bfp-contact {
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.bfp-contact:last-of-type {
+    border-bottom: none;
+}
+
+.bfp-label {
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0 0 4px;
+}
+
+.bfp-value {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+}
+
+.bfp-notice {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: #ffe3e3;
+    color: #D7192A;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* PrivacyNotice.jsx css */

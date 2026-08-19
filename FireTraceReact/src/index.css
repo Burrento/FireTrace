@@ -104,6 +104,7 @@ body {
 }
 
 #root {
+  position: relative;
   width: 100%;
   max-width: var(--ft-max-width);
   margin: 0 auto;
