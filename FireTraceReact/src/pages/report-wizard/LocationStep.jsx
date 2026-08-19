@@ -152,15 +152,6 @@ function LocationStep() {
                 {canContinue ? <Link to="/continuethird">Continue</Link> : 'Continue'}
             </button>
             </div>
-            <nav className="bottom-nav">
-
-                <Link className="bottom-btn" to="/dashboard">Home</Link>
-                <Link className="bottom-btn-active" to="/report">Report</Link>
-                <Link className="bottom-btn" to="/myreport">My Report</Link>
-                <Link className="bottom-btn" to="/">Notifications</Link>
-                <Link className="bottom-btn" to="/">Profile</Link>
-
-            </nav>
         </div>
     );
 }
