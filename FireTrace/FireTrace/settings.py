@@ -10,10 +10,18 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
+
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env()
+environ.Env.read_env(BASE_DIR.parent / '.env')
+
+GOOGLE_MAPS_API_KEY = env('GOOGLE_MAPS_API_KEY', default='')
 
 
 # Quick-start development settings - unsuitable for production
@@ -27,6 +35,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['192.168.1.22', 'localhost', '127.0.0.1']
 
+AUTH_USER_MODEL = 'accounts.User'
+
 
 # Application definition
 
@@ -38,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'accounts',
     'incidents',
@@ -82,8 +93,12 @@ WSGI_APPLICATION = 'FireTrace.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME', default='firetrace_db'),
+        'USER': env('DB_USER', default='postgres'),
+        'PASSWORD': env('DB_PASSWORD', default=''),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
     }
 }
 
@@ -136,7 +151,25 @@ MAILERS = {
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  
+    "http://localhost:5173",
+    "http://192.168.1.22:5173",
     "http://192.168.1.22:8000",
-    
+
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    # Short-lived: the frontend silently refreshes it via authFetch().
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    # How long a normal ("remember me" unticked) session survives.
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+
+# Applied instead of REFRESH_TOKEN_LIFETIME when the user ticks "Remember me".
+# Fixed window: 30 days from login, not extended by activity.
+REMEMBER_ME_REFRESH_LIFETIME = timedelta(days=30)

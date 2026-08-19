@@ -1,8 +1,42 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
+  /* FireTrace theme tokens — light values, overridden below for dark devices */
+  --ft-bg: #ffffff;
+  --ft-backdrop: #f1f1f3;
+  --ft-surface: #ffffff;
+  --ft-surface-alt: #f7f7f8;
+  --ft-text: #000000;
+  --ft-text-muted: #4b4b4b;
+  --ft-text-faint: #8a8a8a;
+  --ft-border: #dddddd;
+  --ft-border-soft: #e6e6e6;
+  --ft-input-bg: #ffffff;
+  --ft-alert-bg: #fff5f5;
+  --ft-alert-border: #f5d2d2;
+  --ft-alert-text: #c21c27;
+  --ft-warning-bg: #ffe5e5;
+  --ft-warning-border: #f58a8a;
+  --ft-warning-text: #7a0000;
+  --ft-neutral-btn: #cfcccc;
+  --ft-neutral-btn-hover: #979696;
+  --ft-neutral-btn-text: #000000;
+  --ft-shadow: rgba(0, 0, 0, 0.1);
+
+  /* Brand — identical in both themes */
+  --ft-red: #d7192a;
+  --ft-red-hover: #bd1525;
+  --ft-red-dark: #990d1b;
+  --ft-on-red: #ffffff;
+
+  /* Layout */
+  --ft-max-width: 480px;
+  --ft-gutter: 16px;
+  --ft-nav-height: 56px;
+
+  /* Vite starter tokens still referenced by App.css */
+  --text: var(--ft-text-muted);
+  --text-h: var(--ft-text);
+  --bg: var(--ft-bg);
+  --border: var(--ft-border);
   --code-bg: #f4f3ec;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
@@ -15,27 +49,41 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
+  font: 16px/145% var(--sans);
   letter-spacing: 0.18px;
+  /* keep light dark so native controls follow the device theme too */
   color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color: var(--ft-text);
+  background: var(--ft-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
+    --ft-bg: #16171d;
+    --ft-backdrop: #0e0f13;
+    --ft-surface: #1f2028;
+    --ft-surface-alt: #23242c;
+    --ft-text: #f3f4f6;
+    --ft-text-muted: #c3c7cf;
+    --ft-text-faint: #9ca3af;
+    --ft-border: #2e303a;
+    --ft-border-soft: #2e303a;
+    --ft-input-bg: #23242c;
+    --ft-alert-bg: #3a1d1f;
+    --ft-alert-border: #7a3034;
+    --ft-alert-text: #ff9ba1;
+    --ft-warning-bg: #3a1d1f;
+    --ft-warning-border: #7a3034;
+    --ft-warning-text: #ffc9c9;
+    --ft-neutral-btn: #3a3b45;
+    --ft-neutral-btn-hover: #4a4b57;
+    --ft-neutral-btn-text: #f3f4f6;
+    --ft-shadow: rgba(0, 0, 0, 0.5);
+
     --code-bg: #1f2028;
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
@@ -52,44 +100,49 @@
 
 body {
   margin: 0;
+  background: var(--ft-backdrop);
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
+  width: 100%;
+  max-width: var(--ft-max-width);
   margin: 0 auto;
   text-align: center;
+  background: var(--ft-bg);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Only frame the phone-width column once there is room beside it */
+@media (min-width: 520px) {
+  #root {
+    border-inline: 1px solid var(--ft-border);
+  }
 }
 
 h1,
 h2 {
   font-family: var(--heading);
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--ft-text);
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+  font-size: 36px;
+  letter-spacing: -1.08px;
+  margin: 20px 0;
 }
+
 h2 {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
 }
+
 p {
   margin: 0;
 }
@@ -99,7 +152,7 @@ code,
   font-family: var(--mono);
   display: inline-flex;
   border-radius: 4px;
-  color: var(--text-h);
+  color: var(--ft-text);
 }
 
 code {

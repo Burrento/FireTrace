@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import '../style.css';
+import '../../style.css';
 
-function Forgotpass1() {
+function ForgotPasswordRequest() {
     return(
-        <center>
+        <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader">FIRETRACE</h2>
                 <button className="LogOut"><Link to="/Login">Back</Link></button>
@@ -12,8 +11,8 @@ function Forgotpass1() {
             <p className="email">Email Address</p>
             <input type="email" id="Email" name="Email" required /><br />
             <button className="confirmemail"><Link to="/forgotpass2">CONFRIM</Link></button>
-        </center>
+        </div>
     );
 }
 
-export default Forgotpass1;
+export default ForgotPasswordRequest;
