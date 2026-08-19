@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+﻿import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../../style.css';
 import { API_BASE_URL } from '../../api';
@@ -17,7 +17,7 @@ function ReportDetail() {
             return;
         }
         fetch(`${API_BASE_URL}/incidents/${id}/`, {
-            headers: { Authorization: `Bearer ${access}` },
+            headers: { Authorization: 'Bearer ' + access },
         })
             .then((res) => {
                 if (!res.ok) throw new Error('Report not found');
@@ -32,7 +32,7 @@ function ReportDetail() {
     }
 
     if (!incident) {
-        return <center><p className="submitted-subtitle">Loading…</p></center>;
+        return <center><p className="submitted-subtitle">Loading...</p></center>;
     }
 
     return (

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
@@ -23,7 +23,7 @@ function ConfirmationStep() {
 
         apiFetch('/incidents/', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${access}` },
+            headers: { Authorization: 'Bearer ' + access },
             body: JSON.stringify(draft),
         })
             .then((data) => {
@@ -62,7 +62,7 @@ function ConfirmationStep() {
                 </>
             )}
 
-            {!incident && !error && <p className="submitted-subtitle">Submitting your report…</p>}
+            {!incident && !error && <p className="submitted-subtitle">Submitting your report...</p>}
 
             <button className="view-status-button"><Link to="/myreport">VIEW REPORT STATUS</Link></button><br />
             <button className="contact-bfp-button">&#128222; CONTACT BFP FOR URGENT HELP</button>
