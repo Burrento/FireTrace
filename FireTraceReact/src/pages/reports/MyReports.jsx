@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../../style.css';
 import { API_BASE_URL } from '../../api';
@@ -20,7 +20,7 @@ function MyReports() {
             return;
         }
         fetch(`${API_BASE_URL}/incidents/`, {
-            headers: { Authorization: `Bearer ${access}` },
+            headers: { Authorization: 'Bearer ' + access },
         })
             .then((res) => {
                 if (!res.ok) throw new Error('Session expired');
@@ -75,11 +75,11 @@ function MyReports() {
                 ))}
             </div>
             <nav className="bottom-nav">
-            <button className="bottom-btn"><Link to="/dashboard">Home</Link></button>
-            <button className="bottom-btn"><Link to="/report">Report</Link></button>
-            <button className="bottom-btn-active"><Link to="/myreport">My Report</Link></button>
-            <button className="bottom-btn"><Link to="/">Notifications</Link></button>
-            <button className="bottom-btn"><Link to="/">Profile</Link></button>
+            <Link className="bottom-btn" to="/dashboard">Home</Link>
+            <Link className="bottom-btn" to="/report">Report</Link>
+            <Link className="bottom-btn-active" to="/myreport">My Report</Link>
+            <Link className="bottom-btn" to="/">Notifications</Link>
+            <Link className="bottom-btn" to="/">Profile</Link>
         </nav>
         </center>
     );

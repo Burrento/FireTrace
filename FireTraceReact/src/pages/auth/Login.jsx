@@ -30,29 +30,50 @@ function Login() {
   }
 
   return (
-    <center>
-      <i className="fa-solid fa-fire-flame-simple fire-icon2"></i>
-      <h3 className="h3create">Welcome back</h3>
-      <p className="logintext">Log in to submit and track fire incident reports.</p>
-      <form onSubmit={handleSubmit}>
-        <label className="label">Email Address</label><br />
-        <input type="email" id="Email" name="Email" value={email} onChange={(e) => setEmail(e.target.value)} required /><br /><br />
-        <label className="label">Password</label><br />
-        <input type="password" id="Password" name="Password" value={password} onChange={(e) => setPassword(e.target.value)} required /><br />
-        <p className="forgot"><Link className="ForgotPass" to="/forgotpass1">Forgot Password?</Link></p><br />
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button className="create-button" type="submit" disabled={submitting}>
-          {submitting ? 'Logging in…' : 'Login'}
-        </button>
-      </form>
-      <p className="register">Don't have an Account? <Link className="login2" to="/create">Register</Link></p><br />
+    <center className="auth-page">
+      <div className="auth-form-container">
+        <header className="auth-header">
+          <Link to="/" className="auth-back-link">
+            <span className="back-arrow">←</span>
+            <span className="auth-header-title">Sign In</span>
+          </Link>
+        </header>
 
-      <div className="emergency-alert">
-        <i className="fa-solid fa-triangle-exclamation emergency-icon"></i>
-        <p>In an active emergency, call the BFP<br />
-          hotline or 911<br />
-          immediately. Do not wait for this app.
-        </p>
+        <div className="login-logo-section">
+          <i className="fa-solid fa-fire-flame-simple"></i>
+        </div>
+
+        <div className="auth-description">
+          <h2 className="auth-welcome-text">Welcome back</h2>
+          <p>Sign in to your account to continue</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="input-group">
+            <label className="label">Email Address</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
+
+          <p className="forgot"><Link className="ForgotPass" to="/forgotpass1">Forgot Password?</Link></p>
+          
+          {error && <p className="auth-error">{error}</p>}
+          
+          <button className="create-button" type="submit" disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign In'}
+          </button>
+        </form>
+        
+        <p className="auth-footer">Don't have an account? <Link className="auth-footer-link" to="/create">Register</Link></p>
+
+        <div className="login-emergency-alert">
+          <i className="fa-solid fa-triangle-exclamation"></i>
+          <p>For immediate emergency response, contact the official BFP Hotline or 911. Dispatchers are available 24/7.</p>
+        </div>
       </div>
     </center>
   );

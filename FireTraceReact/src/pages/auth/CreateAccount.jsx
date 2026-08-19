@@ -35,32 +35,57 @@ function CreateAccount() {
   }
 
   return (
-    <center>
-      <header className="top-bar">
-        <button className="back-button"><Link to="/">←</Link></button>
-        <h1>Create Account</h1>
-      </header>
-      <h3 className="h3create">Create Your FireTrace Account</h3>
-      <form onSubmit={handleSubmit}>
-        <label className="label">Full Name</label><br />
-        <input type="text" id="Full-Name" name="Full-Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required /><br /><br />
-        <label className="label">Email Address</label><br />
-        <input type="email" id="Email" name="Email" value={email} onChange={(e) => setEmail(e.target.value)} required /><br /><br />
-        <label className="label">Mobile Number (Registered)</label><br />
-        <input type="tel" id="Mobile-Number" name="Mobile-Number" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} required /><br /><br />
-        <label className="label">Password</label><br />
-        <input type="password" id="Password" name="Password" value={password} onChange={(e) => setPassword(e.target.value)} required /><br />
-        <p className="create">
-          <input type="checkbox" id="show-password" required />  I agree to the{' '}
-          <a className="Privacy" href="#">Privacy Names </a>&
-          <a className="Terms" href="#"> Terms of Use </a>
-        </p>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button className="create-button" type="submit" disabled={submitting}>
-          {submitting ? 'Creating…' : 'Create Account'}
-        </button>
-      </form>
-      <p className="create">Already have an Account? <Link className="login2" to="/login">Login</Link></p>
+    <center className="auth-page">
+      <div className="auth-form-container">
+        <header className="auth-header">
+          <Link to="/" className="auth-back-link">
+            <span className="back-arrow">←</span>
+            <span className="auth-header-title">Create Account</span>
+          </Link>
+        </header>
+
+        <div className="auth-description">
+          <p>Provide your details below to set up your profile.</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="auth-form compact-form">
+          <div className="input-group" style={{ marginBottom: '24px' }}>
+            <label className="label">Full Name</label>
+            <input type="text" placeholder="e.g. Juan Dela Cruz" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '24px' }}>
+            <label className="label">Email Address</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '24px' }}>
+            <label className="label">Mobile Number</label>
+            <input type="tel" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} required />
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '24px' }}>
+            <label className="label">Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
+
+          <div className="terms-container">
+            <input type="checkbox" id="terms" required />
+            <label htmlFor="terms" className="checkbox-txt">
+              I agree to the <a className="Privacy" href="#">Privacy Policy</a> & 
+              <a className="Terms" href="#"> Terms of Service</a>
+            </label>
+          </div>
+
+          {error && <p className="auth-error">{error}</p>}
+
+          <button className="create-button" type="submit" disabled={submitting}>
+            {submitting ? 'Processing…' : 'Create Account'}
+          </button>
+        </form>
+        
+        <p className="auth-footer">Already have an account? <Link className="auth-footer-link" to="/login">Sign In</Link></p>
+      </div>
     </center>
   );
 }

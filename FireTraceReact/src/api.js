@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://192.168.1.22:8000';
+export const API_BASE_URL = 'http://192.168.2.103:8000';
 
 export async function apiFetch(path, options = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
