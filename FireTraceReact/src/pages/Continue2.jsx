@@ -99,15 +99,6 @@ function Continue2() {
             <button className="backbtn2"><Link to="/report">Back</Link></button>
             <button className="continuebtn2"><Link to="/continuethird">Continue</Link></button>
             </div>
-            <nav className="bottom-nav">
-
-                <Link className="bottom-btn" to="/dashboard">Home</Link>
-                <Link className="bottom-btn-active" to="/report">Report</Link>
-                <Link className="bottom-btn" to="/myreport">My Report</Link>
-                <Link className="bottom-btn" to="/">Notifications</Link>
-                <Link className="bottom-btn" to="/">Profile</Link>
-
-            </nav>
         </center>
     );
 }

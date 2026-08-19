@@ -5,7 +5,7 @@ function Dashboard() {
   return (
     <center>
         <header className="top-bar">
-            <h2 className="firetraceheader">FIRETRACE</h2>
+            <h2 className="firetraceheader">DASHBOARD</h2>
             <button className="LogOut"><Link to="/">Log Out</Link></button>
         </header>
         <p className="dashboard-text">Here you can submit and track fire incident reports.</p>
@@ -30,13 +30,6 @@ function Dashboard() {
             <button className="view-details-button"><Link to="#">VIEW DETAILS</Link></button>
         </div>
 
-        <nav className="bottom-nav">
-            <button className="bottom-btn-active"><Link to="/dashboard">Home</Link></button>
-            <button className="bottom-btn"><Link to="/report">Report</Link></button>
-            <button className="bottom-btn"><Link to="/myreport">My Report</Link></button>
-            <button className="bottom-btn"><Link to="/">Notifications</Link></button>
-            <button className="bottom-btn"><Link to="/">Profile</Link></button>
-        </nav>
     </center>
 
   );

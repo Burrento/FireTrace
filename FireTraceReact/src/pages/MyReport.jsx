@@ -36,7 +36,7 @@ function MyReport() {
     return(
         <center>
             <header className="top-bar">
-                <h2 className="firetraceheader">FIRETRACE</h2>
+                <h2 className="firetraceheader">MY REPORT</h2>
                 <button className="LogOut"><Link to="/">Log Out</Link></button>
             </header>
             <div class="search-container">
@@ -72,13 +72,6 @@ function MyReport() {
                     </div>
                 ))}
             </div>
-            <nav className="bottom-nav">
-            <button className="bottom-btn"><Link to="/dashboard">Home</Link></button>
-            <button className="bottom-btn"><Link to="/report">Report</Link></button>
-            <button className="bottom-btn-active"><Link to="/myreport">My Report</Link></button>
-            <button className="bottom-btn"><Link to="/">Notifications</Link></button>
-            <button className="bottom-btn"><Link to="/">Profile</Link></button>
-        </nav>
         </center>
     );
 }
