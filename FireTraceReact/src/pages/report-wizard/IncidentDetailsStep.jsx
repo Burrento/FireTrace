@@ -1,33 +1,29 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import '../style.css';
+import { useMemo } from 'react';
+import '../../style.css';
+import { useReportDraft } from '../../context/useReportDraft';
 
-function Report() {
+function IncidentDetailsStep() {
 
-    const [date, setDate] = useState("");
-    const [time, setTime] = useState("");
+    const { draft, updateDraft } = useReportDraft();
 
-    useEffect(() => {
-        const now = new Date();
+    // Captured once when the step opens, rather than in an effect that
+    // sets state synchronously on mount.
+    const now = useMemo(() => new Date(), []);
 
-        setDate(
-            now.toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric"
-            })
-        );
+    const date = now.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+    });
 
-        setTime(
-            now.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-        );
-    }, []);
+    const time = now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 
     return (
-        <center>
+        <div className="page">
 
             <header className="top-bar">
                 <h2 className="firetraceheader">FIRE REPORT INCIDENT</h2>
@@ -37,7 +33,12 @@ function Report() {
             <p className="incident-text">Incident Type:</p>
 
             <div>
-                <select id="incident-select" name="incident-select">
+                <select
+                    id="incident-select"
+                    name="incident-select"
+                    value={draft.incident_type}
+                    onChange={(e) => updateDraft({ incident_type: e.target.value })}
+                >
                     <option value="">Select Incident Type</option>
                     <option value="fire">Residential Fire</option>
                     <option value="vehicle">Vehicle Fire</option>
@@ -53,6 +54,8 @@ function Report() {
                     id="description"
                     name="description"
                     placeholder="Enter incident description..."
+                    value={draft.description}
+                    onChange={(e) => updateDraft({ description: e.target.value })}
                 ></textarea>
             </div>
 
@@ -79,8 +82,18 @@ function Report() {
             <button className="backbtn"><Link to="/dashboard">Back</Link></button>
             <button className="continuebtn"><Link to="/continue2">Continue</Link></button>
             </div>
-        </center>
+            <nav className="bottom-nav">
+
+                <button className="bottom-btn"><Link to="/dashboard">Home</Link></button>
+                <button className="bottom-btn-active"><Link to="/report">Report</Link></button>
+                <button className="bottom-btn"><Link to="/myreport">My Report</Link></button>
+                <button className="bottom-btn"><Link to="/">Notifications</Link></button>
+                <button className="bottom-btn"><Link to="/">Profile</Link></button>
+
+            </nav>
+
+        </div>
     );
 }
 
-export default Report;
+export default IncidentDetailsStep;

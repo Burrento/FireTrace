@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import '../style.css';
+import '../../style.css';
 
-function ContinueThird() {
+function PhotoStep() {
     return(
-        <center>
+        <div className="page">
             <header className="top-bar">
                 <h2 className="firetraceheader">Fire Report Incident</h2>
                 <p>3 of 4</p>
@@ -21,8 +20,17 @@ function ContinueThird() {
             <button className="backbtn"><Link to="/continue2">Back</Link></button>
             <button className="continuebtn"><Link to="/continue4">Continue</Link></button>
             </div>
-        </center>
+            <nav className="bottom-nav">
+
+                <Link className="bottom-btn" to="/dashboard">Home</Link>
+                <Link className="bottom-btn-active" to="/report">Report</Link>
+                <Link className="bottom-btn" to="/myreport">My Report</Link>
+                <Link className="bottom-btn" to="/">Notifications</Link>
+                <Link className="bottom-btn" to="/">Profile</Link>
+
+            </nav>
+        </div>
     );
 }
 
-export default ContinueThird;
+export default PhotoStep;
