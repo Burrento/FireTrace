@@ -1,5 +1,5 @@
-/* ============================================================
-   FireTrace — shared stylesheet
+﻿/* ============================================================
+   FireTrace â€” shared stylesheet
    Mobile-first. All sizing is fluid with a phone-width cap
    (--ft-max-width); all colors come from tokens in index.css so
    the UI follows the device light/dark theme.
@@ -333,7 +333,7 @@ center > div {
 }
 
 /* <br> used as a spacer between blocks does nothing useful in a
-   flex column — only <br> inside paragraphs still matters. */
+   flex column â€” only <br> inside paragraphs still matters. */
 center > br {
     display: none;
 }
@@ -459,6 +459,40 @@ textarea {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* Dashboard-specific hero for civilians */
+.dashboard-hero {
+    position: relative;
+    padding: 48px 20px;
+    background: linear-gradient(180deg, #7a1111 0%, #b71c1c 100%);
+    color: #fff;
+    text-align: center;
+    border-radius: 20px;
+    max-width: 740px;
+    margin: 18px auto 6px;
+    box-shadow: 0 10px 30px rgba(183, 28, 28, 0.18);
+}
+
+.dashboard-hero-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.dash-greeting {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.dash-username {
+    font-size: 18px;
+    font-weight: 600;
+    opacity: 0.95;
+    margin: 0;
+}
+
+
 .welcome-hero {
     position: relative;
     padding: 80px 24px 60px;
@@ -574,13 +608,13 @@ textarea {
     letter-spacing: 1px;
 }
 
-.welcome-actions {
-    padding: 40px 24px;
+.welcome-actions, .dashboard-actions {
+    padding: 28px 20px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 20px;
     flex: 1;
-    max-width: 440px;
+    max-width: 740px;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
@@ -1647,3 +1681,4 @@ input.searchInput {
     background-color: #dc2f2f;
     color: #ffffff;
 }
+
