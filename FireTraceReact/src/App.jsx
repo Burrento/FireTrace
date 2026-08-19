@@ -10,6 +10,7 @@ import Continue2 from './pages/continue2';
 import ContinueThird from './pages/continuethird';
 import Continue4 from './pages/continue4';
 import MyReport from './pages/myreport';
+import NavLayout from './components/NavLayout';
 
 function App() {
   return (
@@ -20,12 +21,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgotpass1" element={<Forgotpass1 />} />
         <Route path="/forgotpass2" element={<Forgotpass2 />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/report" element={<Report />} />
-        <Route path="/continue2" element={<Continue2 />} />
-        <Route path="/continuethird" element={<ContinueThird />} />
-        <Route path="/continue4" element={<Continue4 />} />
-        <Route path="/myreport" element={<MyReport />} />
+        <Route element={<NavLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/report" element={<Report />} />
+          <Route path="/continue2" element={<Continue2 />} />
+          <Route path="/continuethird" element={<ContinueThird />} />
+          <Route path="/continue4" element={<Continue4 />} />
+          <Route path="/myreport" element={<MyReport />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

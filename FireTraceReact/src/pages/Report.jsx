@@ -30,7 +30,7 @@ function Report() {
         <center>
 
             <header className="top-bar">
-                <h2 className="firetraceheader">Fire Report Incident</h2>
+                <h2 className="firetraceheader">FIRE REPORT INCIDENT</h2>
                 <p>1 of 4</p>
             </header>
 
@@ -79,16 +79,6 @@ function Report() {
             <button className="backbtn"><Link to="/dashboard">Back</Link></button>
             <button className="continuebtn"><Link to="/continue2">Continue</Link></button>
             </div>
-            <nav className="bottom-nav">
-
-                <button className="bottom-btn"><Link to="/dashboard">Home</Link></button>
-                <button className="bottom-btn-active"><Link to="/report">Report</Link></button>
-                <button className="bottom-btn"><Link to="/myreport">My Report</Link></button>
-                <button className="bottom-btn"><Link to="/">Notifications</Link></button>
-                <button className="bottom-btn"><Link to="/">Profile</Link></button>
-
-            </nav>
-
         </center>
     );
 }
