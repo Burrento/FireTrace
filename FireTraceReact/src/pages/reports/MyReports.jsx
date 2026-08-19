@@ -37,7 +37,6 @@ function MyReports() {
         <center>
             <header className="top-bar">
                 <h2 className="firetraceheader">FIRETRACE</h2>
-                <button className="LogOut"><Link to="/">Log Out</Link></button>
             </header>
             <div className="search-container">
                 <input className="searchInput" type="text" placeholder="Search..."></input>
@@ -79,7 +78,7 @@ function MyReports() {
             <Link className="bottom-btn" to="/report">Report</Link>
             <Link className="bottom-btn-active" to="/myreport">My Report</Link>
             <Link className="bottom-btn" to="/">Notifications</Link>
-            <Link className="bottom-btn" to="/">Profile</Link>
+            <Link className="bottom-btn" to="/">Account</Link>
         </nav>
         </center>
     );

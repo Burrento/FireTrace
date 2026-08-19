@@ -461,14 +461,14 @@ textarea {
 
 .welcome-hero {
     position: relative;
-    padding: 80px 24px 60px;
-    background: #b71c1c;
-    color: #ffffff;
-    text-align: center;
-    border-bottom-left-radius: 48px;
-    border-bottom-right-radius: 48px;
+    padding: 36px 20px 28px;
+    background: linear-gradient(180deg, var(--ft-surface) 0%, var(--ft-surface-alt) 100%);
+    color: var(--ft-text);
+    text-align: left;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .hero-background-overlay {
@@ -596,25 +596,24 @@ textarea {
 .secondary-action-card {
     display: flex;
     align-items: center;
-    padding: 24px;
-    border-radius: 24px;
+    padding: 18px;
+    border-radius: 14px;
     text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid var(--ft-border);
+    transition: all 0.2s ease;
+    border: 1px solid var(--ft-border-soft);
     position: relative;
     overflow: hidden;
 }
 
 .primary-action-card {
-    background: #ffffff;
-    color: #1a1a1a;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    background: var(--ft-surface);
+    color: var(--ft-text);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .secondary-action-card {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(8px);
-    color: var(--ft-text);
+    background: var(--ft-surface-alt);
+    color: var(--ft-text-muted);
 }
 
 .card-icon {
@@ -629,15 +628,15 @@ textarea {
 }
 
 .primary-action-card .card-icon {
-    background: linear-gradient(135deg, #a21620 0%, #d32f2f 100%);
-    color: #ffffff;
-    box-shadow: 0 8px 15px rgba(162, 22, 32, 0.2);
+    background: linear-gradient(135deg, rgba(211,47,47,0.12) 0%, rgba(211,47,47,0.08) 100%);
+    color: var(--ft-red);
+    box-shadow: none;
 }
 
 .secondary-action-card .card-icon {
-    background: var(--ft-surface);
+    background: var(--ft-surface-alt);
     color: var(--ft-text-muted);
-    border: 1px solid var(--ft-border);
+    border: 1px solid var(--ft-border-soft);
 }
 
 .card-text {
@@ -1084,10 +1083,10 @@ textarea {
     min-height: var(--ft-nav-height);
     display: flex;
     align-items: stretch;
-    background-color: var(--ft-red);
-    box-shadow: 0 -2px 5px var(--ft-shadow);
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-    gap: 4px;
+    background-color: var(--ft-surface);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    gap: 8px;
     z-index: 10;
 }
 
@@ -1098,31 +1097,34 @@ textarea {
 .bottom-nav .bottom-btn-active {
     flex: 1 1 0;
     min-width: 0;
-    min-height: 44px;
+    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
-    border-radius: 10px;
-    padding: 6px 2px;
+    border-radius: 12px;
+    padding: 8px 10px;
     font-family: Arial, sans-serif;
-    font-size: clamp(9px, 2.6vw, 12px);
+    font-size: 13px;
     line-height: 1.2;
     text-align: center;
     white-space: nowrap;
-    color: var(--ft-on-red);
-    background-color: var(--ft-red);
+    color: var(--ft-text-muted);
+    background-color: transparent;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.18s ease;
+    border: 1px solid transparent;
 }
 
 .bottom-nav .bottom-btn:hover {
-    background-color: var(--ft-red-dark);
+    background-color: var(--ft-surface-alt);
+    color: var(--ft-text);
 }
 
 .bottom-nav .bottom-btn-active {
-    color: var(--ft-on-red);
-    background-color: var(--ft-red-dark);
+    color: var(--ft-text);
+    background-color: linear-gradient(90deg, rgba(211,47,47,0.08), rgba(255,202,40,0.04));
+    border-color: rgba(211,47,47,0.08);
 }
 
 /* Report.jsx css */

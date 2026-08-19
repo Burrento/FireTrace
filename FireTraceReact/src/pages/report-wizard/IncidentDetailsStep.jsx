@@ -88,7 +88,7 @@ function IncidentDetailsStep() {
                 <button className="bottom-btn-active"><Link to="/report">Report</Link></button>
                 <button className="bottom-btn"><Link to="/myreport">My Report</Link></button>
                 <button className="bottom-btn"><Link to="/">Notifications</Link></button>
-                <button className="bottom-btn"><Link to="/">Profile</Link></button>
+                <button className="bottom-btn"><Link to="/">Account</Link></button>
 
             </nav>
 

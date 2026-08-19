@@ -73,7 +73,7 @@ function ConfirmationStep() {
                 <Link className="bottom-btn-active" to="/report">Report</Link>
                 <Link className="bottom-btn" to="/myreport">My Report</Link>
                 <Link className="bottom-btn" to="/">Notifications</Link>
-                <Link className="bottom-btn" to="/">Profile</Link>
+                <Link className="bottom-btn" to="/">Account</Link>
 
             </nav>
         </center>
