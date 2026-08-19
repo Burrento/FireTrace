@@ -46,27 +46,45 @@ function Dashboard() {
     return <center><p className="dashboard-text">Loading...</p></center>;
   }
 
+  const isCivilian = user.user_type !== 'bfp';
+
   return (
     <center>
       <header className="top-bar">
-        <div className="brand-identity">
-          <div className="app-logo"><i className="fa fa-fire" aria-hidden="true">🔥</i><div className="logo-glow"/></div>
-          <div className="app-name"><span className="fire-txt">FIRE</span><span className="trace-txt">TRACE</span></div>
-          <span className="station-name">{user.user_type === 'bfp' ? 'BFP Personnel' : 'Civilian'}</span>
-        </div>
-        <button className="LogOut" onClick={handleLogout}>Log Out</button>
+        {isCivilian ? (
+          <div className="dashboard-header">
+            <div className="app-name centered-name"><span className="fire-txt">FIRE</span><span className="trace-txt">TRACE</span></div>
+            <div className="station-name">{user.user_type === 'bfp' ? 'BFP Personnel' : 'Civilian'}</div>
+            <button className="LogOut" onClick={handleLogout}>Log Out</button>
+          </div>
+        ) : (
+          <div className="brand-identity">
+            <div className="app-logo"><i className="fa fa-fire" aria-hidden="true">🔥</i><div className="logo-glow"/></div>
+            <div className="app-name"><span className="fire-txt">FIRE</span><span className="trace-txt">TRACE</span></div>
+            <span className="station-name">{user.user_type === 'bfp' ? 'BFP Personnel' : 'Civilian'}</span>
+          </div>
+        )}
       </header>
 
-      <section className="welcome-hero">
-        <div className="hero-text">
-          <h1 className="main-headline">Welcome, {user.username}</h1>
-          <p className="sub-headline">Report incidents quickly and help keep your community safe.</p>
-        </div>
-      </section>
+      {isCivilian ? (
+        <section className="dashboard-hero">
+          <div className="dashboard-hero-inner">
+            <h1 className="dash-greeting">Good day!</h1>
+            <p className="dash-username">{user.username}</p>
+          </div>
+        </section>
+      ) : (
+        <section className="welcome-hero">
+          <div className="hero-text">
+            <h1 className="main-headline">Welcome, {user.username}</h1>
+            <p className="sub-headline">Report incidents quickly and help keep your community safe.</p>
+          </div>
+        </section>
+      )}
 
       <div className="welcome-actions">
         <div className="action-grid">
-          <Link to="/report" className="primary-action-card">
+          <Link to="/report" className="primary-action-card dashboard-card">
             <div className="card-icon">🔥</div>
             <div className="card-text">
               <h3>Start Fire Report</h3>
@@ -75,7 +93,7 @@ function Dashboard() {
             <div className="arrow-icon">→</div>
           </Link>
 
-          <a href="tel:+639171234567" className="secondary-action-card" style={{textDecoration: 'none'}}>
+          <a href="tel:+639171234567" className="secondary-action-card dashboard-card" style={{textDecoration: 'none'}}>
             <div className="card-icon">📞</div>
             <div className="card-text">
               <h3>Call BFP - CALAPAN</h3>
