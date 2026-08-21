@@ -191,9 +191,20 @@ class SystemHealthView(APIView):
         return Response({
             'components': components,
             'overall': overall,
-            'realtime_transport': 'polling',
+            # Reported rather than hardcoded: the dashboard header says "Live"
+            # only when its socket is actually up, and this should agree with
+            # what the server is configured to do.
+            'realtime_transport': self._realtime_transport(),
             'checked_at': timezone.now(),
         })
+
+    def _realtime_transport(self):
+        """'websocket' when a channel layer is configured, else 'polling'."""
+        try:
+            from channels.layers import get_channel_layer
+        except ImportError:
+            return 'polling'
+        return 'websocket' if get_channel_layer() is not None else 'polling'
 
     def _database_status(self):
         started = time.perf_counter()

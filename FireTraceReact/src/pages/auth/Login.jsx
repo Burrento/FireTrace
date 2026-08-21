@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../../style.css';
-import { apiFetch } from '../../api';
+import { API_BASE_URL, apiFetch } from '../../api';
 import { isLoggedIn, saveTokens } from '../../auth';
 import PasswordInput from '../../components/PasswordInput';
 
@@ -30,7 +30,11 @@ function Login() {
         '/accounts/login',
         {
           method: 'POST',
-          body: JSON.stringify({ username: email, password, remember_me: remember }),
+          body: JSON.stringify({
+            username: email.trim().toLowerCase(),
+            password,
+            remember_me: remember,
+          }),
         },
         { skipAuth: true },
       );
@@ -38,8 +42,13 @@ function Login() {
       // The login response carries user_type so the first screen is the right
       // one, with no intermediate redirect through the civilian dashboard.
       navigate(tokens.user_type === 'bfp' ? '/bfp' : '/dashboard');
-    } catch {
-      setError('Invalid email or password');
+    } catch (err) {
+      // Only a 401 is actually a bad credential. A dead backend or a host the
+      // API rejects used to land here too and read as "wrong password", which
+      // sent people hunting for a typo that was never there.
+      if (err.status === 401) setError('Invalid email or password');
+      else if (!err.status) setError(`Cannot reach the server at ${API_BASE_URL}.`);
+      else setError(err.message || 'Sign in failed. Please try again.');
     } finally {
       setSubmitting(false);
     }

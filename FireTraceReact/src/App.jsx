@@ -4,6 +4,7 @@ import CreateAccount from './pages/auth/CreateAccount';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/Dashboard';
 import BfpDashboard from './pages/bfp/BfpDashboard';
+import BfpReports from './pages/bfp/BfpReports';
 import ForgotPasswordRequest from './pages/auth/ForgotPasswordRequest';
 import ForgotPasswordReset from './pages/auth/ForgotPasswordReset';
 import IncidentDetailsStep from './pages/report-wizard/IncidentDetailsStep';
@@ -31,6 +32,7 @@ function App() {
           {/* BFP Administrative Portal. Both this route and its API check the
               user's role, so a civilian reaching it gets nothing. */}
           <Route path="/bfp" element={<BfpDashboard />} />
+          <Route path="/bfp/reports" element={<BfpReports />} />
           <Route path="/forgotpass1" element={<ForgotPasswordRequest />} />
           <Route path="/forgotpass2" element={<ForgotPasswordReset />} />
           <Route path="/report" element={<IncidentDetailsStep />} />

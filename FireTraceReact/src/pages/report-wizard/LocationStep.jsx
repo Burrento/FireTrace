@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
@@ -7,6 +7,7 @@ import BottomNav from '../../components/BottomNav';
 import { CALAPAN_BARANGAYS } from '../../data/barangays';
 
 function LocationStep() {
+    const navigate = useNavigate();
     const { draft, updateDraft } = useReportDraft();
     const hasPin = draft.latitude != null && draft.longitude != null;
     const canContinue = Boolean(draft.barangay) && hasPin && draft.location_confirmed;
@@ -71,7 +72,7 @@ function LocationStep() {
         <center>
             <header className="top-bar">
                 <h2 className="firetraceheader">Fire Report Incident</h2>
-                <p>2 of 4</p>
+                <p>2 of 3</p>
             </header>
             <button className="pinpointbtn" onClick={handleUseCurrentLocation} type="button">
                 USE MY CURRENT LOCATION
@@ -154,8 +155,8 @@ function LocationStep() {
 
             <div className="backcontinue2-container">
             <button className="backbtn2"><Link to="/report">Back</Link></button>
-            <button className="continuebtn2" disabled={!canContinue}>
-                {canContinue ? <Link to="/continuethird">Continue</Link> : 'Continue'}
+            <button className="continuebtn2" disabled={!canContinue} onClick={() => navigate('/continuethird')}>
+                Continue
             </button>
             </div>
             <BottomNav active="report" />

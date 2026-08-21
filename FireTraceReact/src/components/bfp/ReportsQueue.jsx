@@ -57,7 +57,7 @@ function formatSubmitted(iso) {
   };
 }
 
-function ReportsQueue({ tick, onAuthError, onChanged }) {
+function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports' }) {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState(null);
@@ -127,7 +127,7 @@ function ReportsQueue({ tick, onAuthError, onChanged }) {
     <section className="bfp-panel bfp-queue-panel">
       <header className="bfp-panel-head">
         <div>
-          <h2 className="bfp-panel-title">Incoming Reports</h2>
+          <h2 className="bfp-panel-title">{title}</h2>
           <p className="bfp-panel-sub">
             {total} report{total === 1 ? '' : 's'}
             {filtersActive ? ' matching filters' : ''}

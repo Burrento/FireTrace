@@ -12,6 +12,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'password', 'user_type')
 
+    # The username *is* the email address here, and email is case-insensitive in
+    # practice while Django's username lookup is not. Store it folded so a phone
+    # keyboard capitalising the first letter cannot lock someone out of their
+    # own account. LoginSerializer folds the same way.
+    def validate_username(self, value):
+        value = value.strip().lower()
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError('An account with this email already exists.')
+        return value
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
@@ -29,6 +42,13 @@ class LoginSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         remember_me = attrs.pop('remember_me', False)
+
+        # Usernames are stored folded (see RegisterSerializer), so fold the
+        # submitted one too — otherwise "Juan@..." fails against "juan@...".
+        submitted = attrs.get(self.username_field)
+        if isinstance(submitted, str):
+            attrs[self.username_field] = submitted.strip().lower()
+
         data = super().validate(attrs)
 
         # super() already built a token pair, but the refresh half needs a

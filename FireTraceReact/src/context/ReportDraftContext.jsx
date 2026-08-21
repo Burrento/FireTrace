@@ -3,6 +3,29 @@ import { ReportDraftContext } from './reportDraftContextObject';
 
 const STORAGE_KEY = 'reportDraft';
 
+/* latitude/longitude are DecimalField(max_digits=9, decimal_places=6) on the
+   server, so a raw Google Maps or Geolocation coordinate — which carries a
+   dozen or more decimals — is rejected outright with "no more than 9 digits in
+   total". Round on the way into the draft, once, so every writer is covered and
+   the Lat/Lng the reporter is shown is exactly what gets filed.
+
+   Six decimal places is ~0.1 m at this latitude: far finer than any fix the
+   phone or the map pin can actually justify. */
+const COORD_DECIMALS = 6;
+
+function roundCoord(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Number(number.toFixed(COORD_DECIMALS)) : null;
+}
+
+function withRoundedCoords(patch) {
+  const next = { ...patch };
+  if ('latitude' in next) next.latitude = roundCoord(next.latitude);
+  if ('longitude' in next) next.longitude = roundCoord(next.longitude);
+  return next;
+}
+
 const emptyDraft = {
   incident_type: '',
   description: '',
@@ -21,7 +44,9 @@ const emptyDraft = {
 function loadDraft() {
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
-    return stored ? { ...emptyDraft, ...JSON.parse(stored) } : emptyDraft;
+    // Rounded again on the way out: a draft saved before this fix shipped can
+    // still be sitting in sessionStorage with full-precision coordinates.
+    return stored ? { ...emptyDraft, ...withRoundedCoords(JSON.parse(stored)) } : emptyDraft;
   } catch {
     return emptyDraft;
   }
@@ -32,7 +57,7 @@ export function ReportDraftProvider({ children }) {
 
   function updateDraft(patch) {
     setDraft((prev) => {
-      const next = { ...prev, ...patch };
+      const next = { ...prev, ...withRoundedCoords(patch) };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });

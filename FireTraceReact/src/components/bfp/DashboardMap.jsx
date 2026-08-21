@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { APIProvider, Map, AdvancedMarker, InfoWindow, Pin } from '@vis.gl/react-google-maps';
+import { useEffect, useRef, useState } from 'react';
+import { APIProvider, Map, AdvancedMarker, InfoWindow, Pin, useMap } from '@vis.gl/react-google-maps';
 
 /* The live operations map.
 
@@ -19,13 +19,73 @@ const INCIDENT_PIN = { background: '#d7192a', borderColor: '#7f0d18', glyphColor
 const REPORT_PIN = { background: '#f7b32b', borderColor: '#a9760a', glyphColor: '#5a3d00' };
 const DUPLICATE_PIN = { background: '#8b5cf6', borderColor: '#5b21b6', glyphColor: '#ffffff' };
 
+/* A civilian report pulses on the map while it is this recent. The window is
+   comfortably wider than the 15s dashboard poll, so a report is always still
+   pulsing by the time the first refresh that carries it reaches the screen. */
+const PULSE_WINDOW_MS = 90000;
+const PULSE_RECHECK_MS = 5000;
+
 function markerStyle(marker) {
   if (marker.kind === 'incident') return INCIDENT_PIN;
   if (marker.duplicate_status === 'possible_duplicate') return DUPLICATE_PIN;
   return REPORT_PIN;
 }
 
-function MapLegend({ withheld }) {
+/* The ids of the civilian reports that should be pulsing right now.
+
+   Freshness is read off `created_at` rather than off a diff between polls, so
+   it survives a remount, a background tab and the switch from polling to
+   Channels without changing. `now` only advances while something is pulsing;
+   the rest of the time it stays frozen, which can only make an arriving report
+   look newer than it is — never older. */
+function useFreshReports(reports) {
+  const [now, setNow] = useState(() => Date.now());
+
+  const fresh = new Set();
+  for (const report of reports) {
+    const age = now - new Date(report.created_at).getTime();
+    // A negative age is clock skew between server and browser; still fresh.
+    if (!Number.isNaN(age) && age < PULSE_WINDOW_MS) fresh.add(report.id);
+  }
+
+  const pulsing = fresh.size > 0;
+  useEffect(() => {
+    if (!pulsing) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), PULSE_RECHECK_MS);
+    return () => clearInterval(timer);
+  }, [pulsing]);
+
+  return fresh;
+}
+
+/* How close the camera goes when a report lands. Neighbourhood level: close
+   enough to see which street, wide enough to keep the surrounding barangay and
+   any nearby incident in frame. */
+const FOCUS_ZOOM = 15;
+
+/* Moves the camera to a report the moment it arrives.
+
+   Only ever reacts to an id it has not focused before, so the operator can pan
+   and zoom freely afterwards without the map dragging itself back. It also
+   never zooms *out*: if they are already closer in than FOCUS_ZOOM, that was a
+   deliberate choice and the camera only pans. */
+function FocusOnNewReport({ report }) {
+  const map = useMap();
+  const focusedRef = useRef(null);
+
+  useEffect(() => {
+    if (!map || !report) return;
+    if (focusedRef.current === report.id) return;
+
+    focusedRef.current = report.id;
+    map.panTo({ lat: report.latitude, lng: report.longitude });
+    if ((map.getZoom() ?? 0) < FOCUS_ZOOM) map.setZoom(FOCUS_ZOOM);
+  }, [map, report]);
+
+  return null;
+}
+
+function MapLegend({ withheld, pulsing }) {
   return (
     <div className="bfp-map-legend">
       <span className="bfp-legend-item">
@@ -40,6 +100,12 @@ function MapLegend({ withheld }) {
         <span className="bfp-legend-dot" style={{ background: DUPLICATE_PIN.background }} />
         Possible duplicate
       </span>
+      {pulsing > 0 && (
+        <span className="bfp-legend-item">
+          <span className="bfp-legend-dot bfp-legend-dot-pulse" />
+          {pulsing} just reported
+        </span>
+      )}
       {withheld > 0 && (
         <span className="bfp-legend-note" title="Low geocoding confidence records are not plotted">
           <i className="fa-solid fa-eye-slash" /> {withheld} withheld (low confidence)
@@ -86,19 +152,32 @@ function MarkerDetails({ marker, onClose }) {
   );
 }
 
-function DashboardMap({ data, loading, error }) {
+function DashboardMap({
+  data,
+  loading,
+  error,
+  title = 'Live Incident Map',
+  hours,
+  onHoursChange,
+  focusOnNew = true,
+}) {
   const [selected, setSelected] = useState(null);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const reports = data?.reports ?? [];
   const incidents = data?.incidents ?? [];
   const markers = [...incidents, ...reports];
+  const fresh = useFreshReports(reports);
+
+  // The newest still-pulsing report drives the camera. `reports` arrives
+  // newest-first from the server, so the first match is the latest.
+  const newestFresh = focusOnNew ? reports.find((r) => fresh.has(r.id)) : undefined;
 
   if (!apiKey) {
     return (
       <section className="bfp-panel bfp-map-panel">
         <header className="bfp-panel-head">
-          <h2 className="bfp-panel-title">Live Incident Map</h2>
+          <h2 className="bfp-panel-title">{title}</h2>
         </header>
         <div className="bfp-map-fallback">
           <i className="fa-solid fa-triangle-exclamation" />
@@ -115,12 +194,35 @@ function DashboardMap({ data, loading, error }) {
     <section className="bfp-panel bfp-map-panel">
       <header className="bfp-panel-head">
         <div>
-          <h2 className="bfp-panel-title">Live Incident Map</h2>
+          <h2 className="bfp-panel-title">{title}</h2>
           <p className="bfp-panel-sub">
             {incidents.length} verified · {reports.length} unverified plotted
+            {/* Say which slice this is. A map that quietly hides older pins is
+                worse than no filter at all -- the operator has no way to tell
+                an empty map from a filtered one. */}
+            {data?.recent_hours ? ` · last ${data.recent_hours}h + ongoing` : ''}
+            {data?.scope === 'all' ? ' · all time' : ''}
           </p>
         </div>
-        {loading && !data && <span className="bfp-panel-flag">Loading…</span>}
+        <div className="bfp-map-head-right">
+          {/* Only the live map offers this; the All Reports map is all-time by
+              definition and passes no handler. */}
+          {onHoursChange && (
+            <div className="bfp-window-switch" role="group" aria-label="Map time window">
+              {(data?.recent_hours_choices ?? [1, 6, 24]).map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  className={choice === hours ? 'is-active' : ''}
+                  onClick={() => onHoursChange(choice)}
+                >
+                  {choice}h
+                </button>
+              ))}
+            </div>
+          )}
+          {loading && !data && <span className="bfp-panel-flag">Loading…</span>}
+        </div>
       </header>
 
       {error && <p className="bfp-inline-error">{error}</p>}
@@ -136,6 +238,23 @@ function DashboardMap({ data, loading, error }) {
             mapTypeControl={false}
             fullscreenControl
           >
+            {newestFresh && <FocusOnNewReport report={newestFresh} />}
+
+            {/* Drawn as their own markers under the pins so the ring stays
+                centred on the coordinate while the pin keeps its tip anchor. */}
+            {reports
+              .filter((report) => fresh.has(report.id))
+              .map((report) => (
+                <AdvancedMarker
+                  key={`pulse-${report.id}`}
+                  position={{ lat: report.latitude, lng: report.longitude }}
+                  clickable={false}
+                  zIndex={0}
+                >
+                  <span className="bfp-map-pulse" aria-hidden="true" />
+                </AdvancedMarker>
+              ))}
+
             {markers.map((marker) => (
               <AdvancedMarker
                 key={`${marker.kind}-${marker.id}`}
@@ -158,7 +277,7 @@ function DashboardMap({ data, loading, error }) {
         </APIProvider>
       </div>
 
-      <MapLegend withheld={data?.withheld_low_confidence ?? 0} />
+      <MapLegend withheld={data?.withheld_low_confidence ?? 0} pulsing={fresh.size} />
     </section>
   );
 }
