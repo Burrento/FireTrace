@@ -12,6 +12,9 @@ function IncidentMap({ latitude, longitude }) {
           defaultZoom={16}
           gestureHandling="greedy"
           disableDefaultUI={false}
+          streetViewControl={false}
+          mapTypeControl={false}
+          fullscreenControl={false}
         >
           <AdvancedMarker position={position} />
         </Map>
