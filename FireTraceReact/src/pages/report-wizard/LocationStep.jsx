@@ -3,6 +3,7 @@ import { useState } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
 import LocationPickerMap from '../../components/LocationPickerMap';
+import BottomNav from '../../components/BottomNav';
 
 function LocationStep() {
     const { draft, updateDraft } = useReportDraft();
@@ -159,15 +160,7 @@ function LocationStep() {
                 {canContinue ? <Link to="/continuethird">Continue</Link> : 'Continue'}
             </button>
             </div>
-            <nav className="bottom-nav">
-
-                <Link className="bottom-btn" to="/dashboard">Home</Link>
-                <Link className="bottom-btn-active" to="/report">Report</Link>
-                <Link className="bottom-btn" to="/myreport">My Report</Link>
-                <Link className="bottom-btn" to="/">Notifications</Link>
-                <Link className="bottom-btn" to="/">Account</Link>
-
-            </nav>
+            <BottomNav active="report" />
         </center>
     );
 }

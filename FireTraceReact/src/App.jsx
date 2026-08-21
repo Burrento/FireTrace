@@ -12,15 +12,20 @@ import ConfirmationStep from './pages/report-wizard/ConfirmationStep';
 import MyReports from './pages/reports/MyReports';
 import ReportDetail from './pages/reports/ReportDetail';
 import { ReportDraftProvider } from './context/ReportDraftContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   return (
+    <ThemeProvider>
     <ReportDraftProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Welcome />} />
-          <Route path="/create" element={<CreateAccount />} />
+          {/* Login is the landing page. /login stays routed because several
+              pages redirect there when a session expires. */}
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/create" element={<CreateAccount />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/forgotpass1" element={<ForgotPasswordRequest />} />
           <Route path="/forgotpass2" element={<ForgotPasswordReset />} />
@@ -33,6 +38,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </ReportDraftProvider>
+    </ThemeProvider>
   );
 }
 
