@@ -1,9 +1,13 @@
 import { clearTokens, getAccessToken, getRefreshToken, setAccessToken } from './auth';
 
-// Set VITE_API_BASE_URL in FireTraceReact/.env when the backend is not on
-// localhost — your LAN IP for phone testing, or a tunnel URL. Restart Vite
-// after changing it; .env is only read at startup.
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Set VITE_API_BASE_URL in FireTraceReact/.env when the backend is not on this
+// machine — your LAN IP for phone testing, or a tunnel URL. Restart Vite after
+// changing it; .env is only read at startup.
+//
+// The default is 127.0.0.1 rather than localhost on purpose: `runserver
+// 0.0.0.0:8000` binds IPv4 only, and Chrome on Windows tries ::1 first, so
+// every call to http://localhost:8000 is refused before Django sees it.
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 /* Shared across callers so several parallel 401s trigger one refresh, not one
    refresh each. */
@@ -60,11 +64,34 @@ export async function apiFetch(path, options = {}, { skipAuth = false } = {}) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const error = new Error(
-      data.detail || Object.values(data).flat().join(' ') || 'Request failed',
-    );
+    const error = new Error(describeError(data));
     error.status = res.status;
+    // Kept whole so a form can highlight the offending inputs; the flattened
+    // message is only for showing the reporter something readable.
+    error.fields = data;
     throw error;
   }
   return data;
+}
+
+/* DRF reports field errors as {field: ["message"]}. Flattening those to bare
+   messages loses the only part that says *which* field is wrong -- a lone "This
+   field may not be blank." on the photo step reads as if the photo were
+   required, when it is a description left empty two steps earlier. */
+function describeError(data) {
+  if (data.detail) return data.detail;
+  if (typeof data === 'string') return data;
+
+  const parts = Object.entries(data).map(([field, messages]) => {
+    const text = Array.isArray(messages) ? messages.join(' ') : String(messages);
+    if (field === 'non_field_errors') return text;
+    return `${humanizeField(field)}: ${text}`;
+  });
+
+  return parts.join(' ') || 'Request failed';
+}
+
+function humanizeField(field) {
+  const words = field.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

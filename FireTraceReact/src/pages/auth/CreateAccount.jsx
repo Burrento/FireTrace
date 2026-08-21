@@ -21,8 +21,8 @@ function CreateAccount() {
       await apiFetch('/accounts/register', {
         method: 'POST',
         body: JSON.stringify({
-          username: email,
-          email,
+          username: email.trim().toLowerCase(),
+          email: email.trim().toLowerCase(),
           password,
           first_name: fullName,
         }),

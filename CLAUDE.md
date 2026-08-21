@@ -1,190 +1,205 @@
-# FireTrace — working notes
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Geolocation-based fire incident reporting for BFP Calapan. Django REST backend
-(`FireTrace/`) + React frontend (`FireTraceReact/`). Both must run at once.
+(`FireTrace/`) + React/Vite frontend (`FireTraceReact/`). Both must run at once.
 
-Domain rules, API surface and setup live in `README.md` — read that first.
-This file is the running list of **what is not done**, so a new session doesn't
-have to rediscover it.
+`README.md` has the setup, env vars and full API surface — read it for anything
+operational. This file covers architecture and what is **not** done.
 
-## Run
+## Commands
 
 ```
-cd FireTrace       && python manage.py runserver 0.0.0.0:8000
-cd FireTraceReact  && npm run dev -- --host
-cd FireTrace       && python manage.py test          # 23 tests, all passing
-cd FireTraceReact  && npm run lint && npm run build
+# backend (from FireTrace/)
+python manage.py runserver 0.0.0.0:8000     # 0.0.0.0 needed for LAN/phone testing
+python manage.py migrate
+python manage.py test                        # 23 tests, all in incidents/tests.py
+python manage.py test incidents.tests.DuplicateFlaggingTests.test_name   # single test
+python manage.py seed_demo_data [--reset]    # bfp@firetrace.test / firetrace123, then /bfp
+
+# frontend (from FireTraceReact/)
+npm run dev -- --host                        # --host exposes on LAN
+npm run lint && npm run build
 ```
 
-Demo data: `python manage.py seed_demo_data [--reset]` → creates
-`bfp@firetrace.test` / `firetrace123`, then open `/bfp`.
+`.env` lives at the repo root (`FireTrace BackEnd/.env`), not inside `FireTrace/`;
+`settings.py` reads `BASE_DIR.parent / '.env'`. The frontend has its own
+`FireTraceReact/.env` for `VITE_API_BASE_URL` and `VITE_GOOGLE_MAPS_*`.
+
+Promote a civilian account to BFP (public registration always creates civilians):
+
+```
+python manage.py shell -c "from accounts.models import User; u=User.objects.get(username='email'); u.user_type='bfp'; u.save()"
+```
 
 ---
 
-## Dependencies NOT installed
+## Architecture
 
-Nothing below is needed for the current code to run. They are required only for
-the features listed as unfinished.
+### Django apps
 
-### Real-time (Channels/Redis) — needed to replace polling
+| App | Role |
+|---|---|
+| `accounts` | Custom `User` (`AbstractUser` + `user_type` bfp/civilian), JWT auth, `IsBFPPersonnel` |
+| `incidents` | Both record types, duplicate rule, geocoding grading, all report/incident/map views |
+| `analytics` | `AuditLog` model + KPI / activity / health dashboard views |
+| `realtime` | `notify.broadcast_dashboard_event` → Channels `group_send`; `consumers.DashboardConsumer` serves `/ws/dashboard` |
 
-```
-pipenv install channels channels-redis daphne
-```
+Routes: `/accounts/` auth · `/api/reports/` · `/api/incidents/` · `/api/dashboard/`
+(kpis, map, activity, health — `map/` is `incidents.views.DashboardMapView`, routed
+under analytics on purpose) · `/incidents/` deprecated alias for `/api/reports/`.
 
-| Package | Version in thesis spec | Status |
-|---|---|---|
-| `channels` | 4.2 | not installed |
-| `channels-redis` | — | not installed |
-| `daphne` | — | not installed (ASGI server) |
-| **Redis server** | 7.2 | **not installed, not on PATH** |
+### The two record types are the whole design
 
-Redis is a separate service, not a pip package. On Windows use Memurai, WSL2,
-or Docker (`docker run -p 6379:6379 redis:7.2`).
+`IncidentReport` = one civilian submission, kept verbatim, never merged or deleted.
+`Incident` = the canonical event, created **only** by a person via
+`POST /api/incidents/verify/` with `report_ids`. Reports link to an incident via
+`report.incident`; linking changes nothing else about the report.
 
-### Photo uploads — only if switching `FileField` → `ImageField`
+**Two independent status dimensions.** `workflow_status` (Submitted → Under Review →
+Verified → Responding → Resolved) and `duplicate_status` (Not Flagged / Possible /
+Kept Separate / Confirmed) live on separate fields, are moved by separate endpoints,
+and every combination is legal. Never derive one from the other.
 
-```
-pipenv install pillow
-```
+**Duplicates are flagged, never merged.** `incidents/duplicates.py` flags a report as
+`POSSIBLE` only when both `DUPLICATE_RADIUS_METERS` (Haversine, default 150) **and**
+`DUPLICATE_TIME_WINDOW_MINUTES` (default 30) hold. The distance and time delta that
+triggered it are stored on the report so the reasoning is inspectable. Only a person
+moves it to Kept Separate / Confirmed; a report already ruled on is never re-flagged.
 
-`IncidentReport.photo` is currently a `FileField` specifically to avoid this
-dependency. `ImageField` adds image validation and dimensions. Pillow on
-Python 3.14 was untested — verify the wheel installs before committing to it.
+**Confidence is graded server-side** in `incidents/geocoding.py` from
+`location_source` + `gps_accuracy_m` — a client cannot assert its own confidence
+(there is a test for that). Only High/Medium are plotted on the map; Low is kept and
+reviewable but withheld from the map, with the withheld count shown in the legend.
+
+**Analytics are descriptive only.** Counts, trends, observed response times. No
+forecasting, no risk scoring, no automated dispatch.
+
+### Write path
+
+Every personnel mutation goes through `incidents/services.record_activity(...)`,
+which writes an `IncidentTimelineEvent` *and* an `AuditLog` row in one call. The two
+vocabularies differ deliberately: the timeline is the history of an incident, the
+audit log is the history of personnel activity. Then the view calls
+`broadcast_dashboard_event(...)`. Follow that order in any new mutating view.
+
+Read scoping is centralised in `ReportQuerysetMixin` — civilians see only their own
+reports. Everything under `/api/dashboard/` and every queue/incident view uses
+`IsBFPPersonnel`.
 
 ### Frontend
 
-**Nothing to install.** The dashboard uses only packages already in
-`package.json` (`@vis.gl/react-google-maps`, `react-router-dom`). No new
-frontend dependency was added.
+Single Vite SPA, routes in `src/App.jsx`, wrapped in `ThemeProvider` +
+`ReportDraftProvider`. Two shells share one app:
 
-### Dead dependency
+- **Civilian**, a phone column — `#root` is capped at `480px` in `index.css`.
+- **BFP portal** at `/bfp` — `BfpDashboard` sets `document.body.dataset.shell='bfp'`
+  on mount and removes it on unmount; `styles/bfp-dashboard.css` keys off
+  `body[data-shell='bfp']` to escape the 480px cap.
 
-`django-filter` is in the `Pipfile` and installed, but **never imported**
-anywhere. Queue filtering is hand-written in `ReportQueueView.get_queryset`.
-Either use it or drop it from the `Pipfile`.
+`src/api.js` — `apiFetch` hardcodes `Content-Type: application/json`, attaches the
+bearer token, and on a 401 refreshes once through a **shared** promise so parallel
+401s trigger one refresh. `src/auth.js` picks `localStorage` (remember me, paired
+with a 30-day refresh token) vs `sessionStorage`; reads check both.
 
----
+The report wizard (`pages/report-wizard/`, routes `/report` → `/continue2` →
+`/continuethird` → `/continue4`) accumulates one draft in `ReportDraftContext`,
+persisted to `sessionStorage`, and posts it once at the confirmation step.
 
-## Installed vs. thesis-specified versions
-
-The environment runs newer versions than the authorized stack. Everything
-works; this matters only if the defense requires the exact pinned versions.
-**Unresolved — needs a decision.**
-
-| Component | Thesis spec | Actually installed |
-|---|---|---|
-| Python | 3.12 | 3.14.6 (`Pipfile` pins 3.14) |
-| Django | 5.2 | 6.1 |
-| Django REST Framework | 3.16 | 3.18.0 |
-| Node.js | 22 LTS | 24.16.0 |
-| PostgreSQL | 17 | 18.6 |
-| React | 19 | 19.2.8 ✓ |
-| Django Channels | 4.2 | not installed |
-| Redis | 7.2 | not installed |
-
-Downgrading Python/Postgres means rebuilding the virtualenv and the database.
+`pages/bfp/useDashboardData.js` — one clock drives every panel so they all show
+the same moment. The clock is a WebSocket to `/ws/dashboard`; a push carries no
+data, it only means "refetch now", so the REST endpoints stay the only thing
+that reads and scopes the database. The timer survives as a fallback: 15s while
+the socket is down, 60s once it is live. It pauses on a hidden tab and refreshes
+on return; the socket stays open.
 
 ---
 
 ## Unfinished work
 
-### Never verified at runtime
+**The BFP dashboard has never been opened in a browser.** Builds and lints clean,
+API covered by tests, but grid layout, marker drawing, InfoWindows, polling and dark
+mode on the new panels are all unverified.
 
-**The BFP dashboard has never been opened in a browser.** It builds clean and
-lints clean, and the API is covered by tests, but no one has seen it render.
-Unverified: grid layout, Maps markers drawing, InfoWindows, the 15s polling,
-dark mode on the new panels.
+*Most likely failure point — Map ID.* `DashboardMap.jsx` reads
+`VITE_GOOGLE_MAPS_MAP_ID`, while `IncidentMap.jsx` and `LocationPickerMap.jsx` pass
+literal strings. `AdvancedMarker` needs a **real Map ID from Google Cloud Console**;
+with an arbitrary string the map renders but markers silently don't. Check this first
+if the map looks empty.
 
-**Most likely failure point — Map ID.** `DashboardMap.jsx` reads
-`VITE_GOOGLE_MAPS_MAP_ID`, while the older `IncidentMap.jsx` and
-`LocationPickerMap.jsx` pass literal strings (`firetrace-incident-map`,
-`firetrace-location-picker`). `AdvancedMarker` needs a **real Map ID
-configured in Google Cloud Console**; with an arbitrary string the map renders
-but markers silently do not appear. If the dashboard map looks empty, check
-this first.
+**No UI to create a canonical `Incident`** — the biggest functional hole. The API is
+complete but the queue has no row selection and nothing calls
+`POST /api/incidents/verify/`. Consequence: the Responding and Resolved KPI cards
+read 0 forever in real use, since only `seed_demo_data` or the admin creates any.
 
-### Missing features
-
-**No UI to create a canonical `Incident`.** The API is complete
-(`POST /api/incidents/verify/` takes `report_ids`), but nothing in the
-dashboard calls it — the queue has no row selection and no "verify selected"
-action. Consequence: the **Responding and Resolved KPI cards read 0 forever**
-in real use, because those count canonical incidents and only `seed_demo_data`
-or the Django admin creates any. This is the biggest functional hole.
-
-**Photo capture is a stub.** `pages/report-wizard/PhotoStep.jsx` has TAKE SAFE
-PHOTO / SELECT FROM GALLERY buttons that do nothing — no file input, no
-capture, no upload. The backend accepts `photo` on `POST /api/reports/` and the
-queue's Photo column works, but real submissions will always show "no photo".
-Note the report is submitted as JSON in `ConfirmationStep.jsx`; uploading a
-file needs `multipart/form-data`, so `apiFetch` (which hardcodes
-`Content-Type: application/json`) needs a path for that.
+**Photo capture is a stub.** `report-wizard/PhotoStep.jsx` buttons do nothing. The
+backend accepts `photo` on `POST /api/reports/` and the queue's Photo column works,
+but real submissions always show "no photo". Uploading needs `multipart/form-data`,
+so `apiFetch` needs a path that doesn't force a JSON content type.
 
 **Timeline endpoints are unused.** `/api/reports/<id>/timeline/` and
-`/api/incidents/<id>/timeline/` are built and tested, but no frontend screen
-consumes them. There is no report detail view or drawer in the dashboard —
+`/api/incidents/<id>/timeline/` are built and tested; no screen consumes them, and
 clicking a queue row does nothing.
 
-**Real-time is polling.** `realtime/notify.py` is a documented no-op.
-Every mutating view already calls `broadcast_dashboard_event`, so switching to
-Channels is a change to that file plus `useDashboardData.js` and nothing else.
-Step-by-step instructions are in the module docstring.
-
-**Civilian app still on the legacy path.** It posts to `/incidents/`, which is
-an alias for `/api/reports/` (`incidents/legacy_urls.py`). The serializer also
-exposes a read-only `status` alias for `workflow_status` because the shipped
-app reads `report.status`. Both can be deleted once the civilian pages move to
-`/api/reports/` and `workflow_status`.
+**Civilian app still on the legacy path.** It posts to `/incidents/`
+(`incidents/legacy_urls.py`) and reads `report.status`, a read-only serializer alias
+for `workflow_status`. Both can be deleted once the civilian pages move over.
 
 ### Testing gaps
-
-- No frontend tests at all.
-- `analytics/tests.py` and `realtime/tests.py` are empty stubs. The KPI,
-  activity-feed and health views are only covered indirectly via
-  `incidents/tests.py`.
+No frontend tests. `analytics/tests.py`, `realtime/tests.py`, `accounts/tests.py`
+are empty — KPI/activity/health views are only covered indirectly.
 
 ### Known small issues
-
-- `Dashboard.jsx` reads `user.first_name`, but `UserSerializer` doesn't return
-  it — always `undefined`, silently falls back to `username`. Pre-existing.
-- Two pre-existing ESLint errors: unused `err` in `ForgotPasswordRequest.jsx`
-  and `ForgotPasswordReset.jsx`.
-- `SECRET_KEY` is hardcoded in `settings.py` and `DEBUG = True`. Fine for dev,
-  must change before any real deployment.
-- Email backend is console-only (`MAILERS` in `settings.py`), so password
-  reset mails only print to the terminal.
+- `Dashboard.jsx` reads `user.first_name`, which `UserSerializer` never returns —
+  always `undefined`, falls back to `username`.
+- Two pre-existing ESLint errors: unused `err` in `ForgotPasswordRequest.jsx` and
+  `ForgotPasswordReset.jsx`.
+- `SECRET_KEY` hardcoded in `settings.py`, `DEBUG = True`.
+- Email backend is console-only, so password reset mails print to the terminal.
+- `django-filter` is installed and in the `Pipfile` but never imported — queue
+  filtering is hand-written in `ReportQueueView.get_queryset`. Use it or drop it.
 
 ---
 
-## Conventions and gotchas
+## Dependencies NOT installed
 
-**Two record types, kept apart.** `IncidentReport` = one civilian submission.
-`Incident` = the canonical event, created only by a person. Never merge or
-delete a report — the duplicate rule only ever *flags*.
+Nothing below is needed for current code to run.
 
-**Two independent status dimensions.** `workflow_status` and
-`duplicate_status` are separate fields with separate endpoints. Never derive
-one from the other. Linking several reports to one incident is **not** a
-duplicate ruling.
+- **Redis** — only for a multi-process deployment. `CHANNEL_LAYERS` uses
+  `InMemoryChannelLayer`, which needs no server but only reaches clients on the
+  same process (fine for `runserver`). `channels-redis` is installed; swap the
+  backend per the comment in `settings.py` when there is a Redis to point at.
+  Nothing on this machine can run one today — no Docker, and `wsl` is a stub.
+- **Pillow** — only if `IncidentReport.photo` switches `FileField` → `ImageField`.
+  It is a `FileField` specifically to avoid the dependency; the Pillow wheel on
+  Python 3.14 is untested.
+- **Frontend: nothing.** The dashboard uses only what is already in `package.json`.
 
-**Confidence is graded server-side** in `incidents/geocoding.py` from
-`location_source` + `gps_accuracy_m`. A client cannot assert its own
-confidence — there's a test for that.
+### Installed vs. thesis-specified versions — unresolved
 
-**Model renames need hand-written migrations.** `0002` renames
-`Incident` → `IncidentReport`; left to itself `makemigrations` emits
-DeleteModel + CreateModel and drops every row.
+| Component | Thesis spec | Installed |
+|---|---|---|
+| Python | 3.12 | 3.14.6 (`Pipfile` pins 3.14) |
+| Django / DRF | 5.2 / 3.16 | 6.1 / 3.18 |
+| Node / PostgreSQL | 22 LTS / 17 | 24.16 / 18.6 |
+| React | 19 | 19.2.8 ✓ |
+| Channels / Redis | 4.2 / 7.2 | 4.3.2 + daphne 4.2.3 / no Redis (in-memory layer) |
 
-**Layout escape hatch.** `#root` is capped at `480px` (phone column) in
-`index.css`. `BfpDashboard` sets `document.body.dataset.shell = 'bfp'` on mount
-and removes it on unmount; `bfp-dashboard.css` keys off
-`body[data-shell='bfp']` to go full-width.
+Downgrading Python or Postgres means rebuilding the virtualenv and the database.
 
-**Tooling on this machine (Git Bash on Windows):**
-- Bash heredocs (`<<'EOF'`) into files fail on CRLF — use the Write tool for
+---
+
+## Gotchas
+
+- **Model renames need hand-written migrations.** `0002` renames `Incident` →
+  `IncidentReport`; left alone, `makemigrations` emits DeleteModel + CreateModel and
+  drops every row.
+- Bash heredocs (`<<'EOF'`) into files fail on CRLF here — use the Write tool for
   multi-line source files.
-- `manage.py shell < script.py` swallows output. Use
-  `manage.py shell -c "$(cat script.py)"`.
-- Uploaded photos land in `MEDIA_ROOT` and are **not** rolled back by a
-  transaction — clean up `FireTrace/media/` after any rolled-back seed run.
+- `manage.py shell < script.py` swallows output; use `shell -c "$(cat script.py)"`.
+- Uploaded photos land in `MEDIA_ROOT` and are **not** rolled back by a transaction —
+  clean `FireTrace/media/` after a rolled-back seed run.
+- Phone testing: the LAN IP must match `VITE_API_BASE_URL`, `ALLOWED_HOSTS` and
+  `CORS_ALLOWED_ORIGINS`. Tunnel hosts (`*.trycloudflare.com`, `*.ngrok-free.app`)
+  are already allowed by regex in `settings.py`.

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import generics, status
@@ -29,6 +31,20 @@ from .serializers import (
     WorkflowStatusUpdateSerializer,
 )
 from .services import record_activity
+
+# How far back the live dashboard map reaches by default, and the windows the
+# operator can switch between. Everything older is still on the All Reports
+# page; this only decides what the operations view draws.
+MAP_RECENT_HOURS = 1
+MAP_RECENT_HOURS_CHOICES = (1, 6, 24)
+
+# A fire someone is currently working stays on the live map however long ago it
+# came in -- "current" is about the response, not the timestamp. A report merely
+# sitting in Submitted or Under Review is not that, and ages out of the window.
+ONGOING_STATUSES = (
+    WorkflowStatus.VERIFIED,
+    WorkflowStatus.RESPONDING,
+)
 
 ACTIVE_STATUSES = (
     WorkflowStatus.SUBMITTED,
@@ -381,7 +397,7 @@ class IncidentTimelineView(generics.ListAPIView):
 
 
 class DashboardMapView(APIView):
-    """Points for the live operations map.
+    """Points for the operations map.
 
     Two marker families are returned separately so the frontend can style them
     differently: unverified civilian reports, and canonical verified incidents.
@@ -389,14 +405,37 @@ class DashboardMapView(APIView):
     Only HIGH and MEDIUM geocoding confidence reports are included. LOW
     confidence records are counted in ``withheld`` instead of being drawn at a
     coordinate the underlying data does not support.
+
+    Two scopes share this endpoint so both maps stay consistent by construction:
+
+    ``recent`` (default)
+        What the live dashboard draws -- open cases from the last
+        ``MAP_RECENT_HOURS``. A wall of months-old pins buries the fire that
+        started ten minutes ago, which is the one an operator is looking for.
+    ``all``
+        Every report and incident regardless of age or status, for the All
+        Reports page. Resolved records are included: that page is the archive.
     """
 
     permission_classes = [IsBFPPersonnel]
 
     def get(self, request):
+        scope = 'all' if request.query_params.get('scope') == 'all' else 'recent'
+        hours = self._recent_hours(request)
+
+        # Q rather than kwargs: "recent" is an OR of two rules, not a set of
+        # ANDed columns -- new enough, or still being responded to.
+        window = Q()
+        if scope == 'recent':
+            since = timezone.now() - timedelta(hours=hours)
+            window = (
+                Q(created_at__gte=since, workflow_status__in=ACTIVE_STATUSES)
+                | Q(workflow_status__in=ONGOING_STATUSES)
+            )
+
         reports = (
             IncidentReport.objects.filter(
-                workflow_status__in=ACTIVE_STATUSES,
+                window,
                 geocoding_confidence__in=[GeocodingConfidence.HIGH, GeocodingConfidence.MEDIUM],
             )
             .exclude(duplicate_status=DuplicateStatus.CONFIRMED)
@@ -408,17 +447,17 @@ class DashboardMapView(APIView):
         # the legend's "withheld" count is directly comparable to what is drawn.
         withheld = (
             IncidentReport.objects.filter(
-                workflow_status__in=ACTIVE_STATUSES,
+                window,
                 geocoding_confidence=GeocodingConfidence.LOW,
             )
             .exclude(duplicate_status=DuplicateStatus.CONFIRMED)
             .count()
         )
 
-        # Annotated rather than counted per row: this endpoint is polled every
-        # 15 seconds, so one query beats one-per-marker.
+        # Annotated rather than counted per row: this endpoint is refetched on
+        # every dashboard event, so one query beats one-per-marker.
         incidents = (
-            Incident.objects.filter(workflow_status__in=ACTIVE_STATUSES)
+            Incident.objects.filter(window)
             .annotate(report_count=Count('source_reports'))
             .order_by('-created_at')[:250]
         )
@@ -459,4 +498,19 @@ class DashboardMapView(APIView):
                 for i in incidents
             ],
             'withheld_low_confidence': withheld,
+            'scope': scope,
+            'recent_hours': hours if scope == 'recent' else None,
+            'recent_hours_choices': MAP_RECENT_HOURS_CHOICES,
         })
+
+    def _recent_hours(self, request):
+        """Window size from ?hours=, restricted to the offered choices.
+
+        Clamped rather than trusted: an arbitrary value would let a client turn
+        the live map back into the unbounded query this filter exists to avoid.
+        """
+        try:
+            hours = int(request.query_params.get('hours', MAP_RECENT_HOURS))
+        except (TypeError, ValueError):
+            return MAP_RECENT_HOURS
+        return hours if hours in MAP_RECENT_HOURS_CHOICES else MAP_RECENT_HOURS

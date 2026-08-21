@@ -56,12 +56,52 @@ ALLOWED_HOSTS = env.list(
     default=['localhost', '127.0.0.1', '.trycloudflare.com', '.ngrok-free.app'],
 )
 
+# Phone testing hits this machine by its LAN IP, which changes with the DHCP
+# lease and would otherwise have to be pasted into .env after every change.
+# Django rejects an unlisted Host with a bare 400, which reads on the phone as
+# "the server is down", so resolve our own addresses and trust them in DEBUG.
+# CORS already trusts the same private ranges by regex further down.
+if DEBUG:
+    import socket
+
+    try:
+        _local_ips = socket.gethostbyname_ex(socket.gethostname())[2]
+    except OSError:
+        _local_ips = []
+    ALLOWED_HOSTS += [ip for ip in _local_ips if ip not in ALLOWED_HOSTS]
+
 AUTH_USER_MODEL = 'accounts.User'
+
+# Real-time dashboard transport. ASGI_APPLICATION points at the router in
+# asgi.py, which sends /ws/ to the consumer and everything else to Django.
+ASGI_APPLICATION = 'FireTrace.asgi.application'
+
+# The in-memory layer keeps every subscriber inside one process, which is
+# exactly what `runserver` is. It needs no Redis, and Redis is not installed on
+# this machine. It is *not* production-safe: with two or more worker processes
+# a broadcast only reaches the clients attached to the process that sent it.
+#
+# For production, install channels-redis (already in the Pipfile), run a Redis
+# server and swap in:
+#
+#   CHANNEL_LAYERS = {
+#       'default': {
+#           'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#           'CONFIG': {'hosts': [('127.0.0.1', 6379)]},
+#       },
+#   }
+CHANNEL_LAYERS = {
+    'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'},
+}
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    # daphne must precede staticfiles: it replaces runserver with an ASGI one,
+    # which is what lets the dev server speak WebSocket as well as HTTP.
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

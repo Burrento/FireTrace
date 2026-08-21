@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
@@ -6,7 +6,13 @@ import BottomNav from '../../components/BottomNav';
 
 function IncidentDetailsStep() {
 
+    const navigate = useNavigate();
     const { draft, updateDraft } = useReportDraft();
+
+    // Both are required by the server. Gating here, the same way step 2 gates on
+    // its pin, means a missing one is caught on the step that owns the field --
+    // not three screens later as an anonymous "may not be blank" at submit.
+    const canContinue = Boolean(draft.incident_type) && draft.description.trim() !== '';
 
     // Captured once when the step opens, rather than in an effect that
     // sets state synchronously on mount.
@@ -32,7 +38,7 @@ function IncidentDetailsStep() {
                 <div className="brand-identity">
                     <div className="app-name">
                         <span className="fire-txt">STEP</span>
-                        <span className="trace-txt">1 OF 4</span>
+                        <span className="trace-txt">1 OF 3</span>
                     </div>
                 </div>
                 <div style={{width: 48}}></div>
@@ -88,7 +94,12 @@ function IncidentDetailsStep() {
             </div>
             <div className="backcontinue-container">
                 <button className="backbtn"><Link to="/dashboard">Back</Link></button>
-                <button className="continuebtn"><Link to="/continue2">Continue</Link></button>
+                {/* onClick rather than a nested <Link>: an anchor inside a
+                    button is invalid markup, and only the text itself was
+                    clickable -- the rest of the button was a dead zone. */}
+                <button className="continuebtn" disabled={!canContinue} onClick={() => navigate('/continue2')}>
+                    Continue
+                </button>
             </div>
             <BottomNav active="report" />
         </center>

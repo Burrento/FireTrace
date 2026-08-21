@@ -1,24 +1,21 @@
 """The one place the dashboard finds out that something changed.
 
-Right now the dashboard polls, so this is a no-op that only logs. It exists so
-that turning on Django Channels later is a change to *this file* and nothing
-else: every view that mutates a record already calls
-``broadcast_dashboard_event``.
+Every view that mutates a record calls ``broadcast_dashboard_event``; this
+module turns those calls into a WebSocket push to the BFP dashboard group,
+which ``realtime.consumers.DashboardConsumer`` relays to each connected
+operator. The frontend treats a push as "refetch now" rather than as data, so
+the REST endpoints remain the only thing that reads the database.
 
-To switch to WebSockets:
-
-1. ``pipenv install channels channels-redis daphne`` and add ``channels`` to
-   ``INSTALLED_APPS``.
-2. Point ``ASGI_APPLICATION`` at a ``ProtocolTypeRouter`` and set
-   ``CHANNEL_LAYERS`` to the Redis backend.
-3. Replace the body of ``broadcast_dashboard_event`` with a
-   ``group_send`` to the ``DASHBOARD_GROUP`` group.
-4. Swap the frontend's polling hook for a WebSocket subscription.
-
-No call site has to change.
+The channel layer is configured in ``settings.CHANNEL_LAYERS``. In development
+that is the in-process in-memory layer, which needs no Redis but only reaches
+clients attached to the same process -- fine for ``runserver``, not for a
+multi-worker deployment. See the note in settings.py for the Redis swap.
 """
 
 import logging
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +31,16 @@ def broadcast_dashboard_event(event_type, payload=None):
     """
     logger.debug('dashboard event %s %s', event_type, payload or {})
 
-    # Channels implementation, for step 3 above:
-    #
-    # from asgiref.sync import async_to_sync
-    # from channels.layers import get_channel_layer
-    #
-    # layer = get_channel_layer()
-    # if layer is None:
-    #     return
-    # async_to_sync(layer.group_send)(
-    #     DASHBOARD_GROUP,
-    #     {'type': 'dashboard.event', 'event': event_type, 'payload': payload or {}},
-    # )
+    try:
+        layer = get_channel_layer()
+        if layer is None:
+            return
+        async_to_sync(layer.group_send)(
+            DASHBOARD_GROUP,
+            {'type': 'dashboard.event', 'event': event_type, 'payload': payload or {}},
+        )
+    except Exception:
+        # Fire-and-forget, as the docstring above promises: a dashboard that
+        # missed a nudge still catches up on its next poll, but a report that
+        # failed to save because the socket layer hiccuped is data lost.
+        logger.exception('failed to broadcast dashboard event %s', event_type)
