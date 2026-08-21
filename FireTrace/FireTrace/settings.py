@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-!0&pf9ou#qb=**h%+#+r71e1i2@)f=r)@ck208f=w65aj%^z6*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.2.103', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['192.168.2.102', 'localhost', '127.0.0.1']
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -150,8 +150,9 @@ MAILERS = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5175",
-    "http://192.168.2.103:5175",
-    "http://192.168.2.103:8000",
+    "http://192.168.2.102:5175",
+    
+    "http://192.168.2.102:8000",
 ]
 
 REST_FRAMEWORK = {

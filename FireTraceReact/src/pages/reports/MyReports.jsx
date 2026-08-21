@@ -33,10 +33,28 @@ function MyReports() {
             .catch(() => setError('Could not load your reports.'));
     }, [navigate]);
 
+    function handleLogout() {
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+        navigate('/login');
+    }
+
     return(
         <center>
             <header className="top-bar">
-                <h2 className="firetraceheader">FIRETRACE</h2>
+                <div className="brand-identity">
+                    <div className="app-logo">
+                        <i className="fa-solid fa-fire-flame-simple"></i>
+                        <div className="logo-glow"/>
+                    </div>
+                    <div className="app-name">
+                        <span className="fire-txt">FIRE</span>
+                        <span className="trace-txt">TRACE</span>
+                    </div>
+                </div>
+                <button className="LogOut" onClick={handleLogout}>
+                    <i className="fa-solid fa-right-from-bracket"></i> Log Out
+                </button>
             </header>
             <div className="search-container">
                 <input className="searchInput" type="text" placeholder="Search..."></input>
@@ -74,12 +92,27 @@ function MyReports() {
                 ))}
             </div>
             <nav className="bottom-nav">
-            <Link className="bottom-btn" to="/dashboard">Home</Link>
-            <Link className="bottom-btn" to="/report">Report</Link>
-            <Link className="bottom-btn-active" to="/myreport">My Report</Link>
-            <Link className="bottom-btn" to="/">Notifications</Link>
-            <Link className="bottom-btn" to="/">Account</Link>
-        </nav>
+                <Link className="bottom-btn" to="/dashboard">
+                    <i className="fa-solid fa-house"></i>
+                    <span>Home</span>
+                </Link>
+                <Link className="bottom-btn" to="/report">
+                    <i className="fa-solid fa-bullhorn"></i>
+                    <span>Report</span>
+                </Link>
+                <Link className="bottom-btn-active" to="/myreport">
+                    <i className="fa-solid fa-list-check"></i>
+                    <span>My Reports</span>
+                </Link>
+                <Link className="bottom-btn" to="/dashboard">
+                    <i className="fa-solid fa-bell"></i>
+                    <span>Alerts</span>
+                </Link>
+                <Link className="bottom-btn" to="/dashboard">
+                    <i className="fa-solid fa-user-gear"></i>
+                    <span>Profile</span>
+                </Link>
+            </nav>
         </center>
     );
 }
