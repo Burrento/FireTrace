@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import '../../style.css';
+import PasswordInput from '../../components/PasswordInput';
 
 function ForgotPasswordReset() {
     const navigate = useNavigate();
@@ -58,23 +59,21 @@ function ForgotPasswordReset() {
                     <div className="form-fields">
                         <div className="input-group">
                             <label className="label">New Password</label>
-                            <input 
-                                type="password" 
-                                value={newPassword} 
+                            <PasswordInput
+                                value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Enter new password"
-                                required 
+                                autoComplete="new-password"
                             />
                         </div>
 
                         <div className="input-group">
                             <label className="label">Confirm Password</label>
-                            <input 
-                                type="password" 
-                                value={confirmPassword} 
+                            <PasswordInput
+                                value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder="Confirm your password"
-                                required 
+                                autoComplete="new-password"
                             />
                         </div>
 

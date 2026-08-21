@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
+import PasswordInput from '../../components/PasswordInput';
 
 function CreateAccount() {
   const navigate = useNavigate();
@@ -66,7 +67,11 @@ function CreateAccount() {
 
           <div className="input-group" style={{ marginBottom: '24px' }}>
             <label className="label">Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
           </div>
 
           <div className="terms-container">

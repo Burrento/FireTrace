@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
+import { isLoggedIn } from '../../auth';
 import { useReportDraft } from '../../context/useReportDraft';
 import BottomNav from '../../components/BottomNav';
 
@@ -16,15 +17,13 @@ function ConfirmationStep() {
         if (submitted.current) return;
         submitted.current = true;
 
-        const access = localStorage.getItem('access');
-        if (!access) {
+        if (!isLoggedIn()) {
             navigate('/login');
             return;
         }
 
         apiFetch('/incidents/', {
             method: 'POST',
-            headers: { Authorization: 'Bearer ' + access },
             body: JSON.stringify(draft),
         })
             .then((data) => {

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -181,3 +182,16 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+SIMPLE_JWT = {
+    # The access token is short-lived on purpose; the frontend silently swaps in
+    # a new one using the refresh token, so the user never sees it expire.
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    # Normal login: the session lasts a day.
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+}
+
+# Issued instead of REFRESH_TOKEN_LIFETIME when the user ticks "remember me",
+# so revisiting the site within this window skips the login screen.
+REMEMBER_ME_REFRESH_LIFETIME = timedelta(days=30)

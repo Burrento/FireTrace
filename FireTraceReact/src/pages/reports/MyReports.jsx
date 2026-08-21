@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import '../../style.css';
-import { API_BASE_URL } from '../../api';
+import { apiFetch } from '../../api';
+import { clearTokens, isLoggedIn } from '../../auth';
 import BottomNav from '../../components/BottomNav';
 import ThemeToggle from '../../components/ThemeToggle';
 
@@ -31,26 +32,18 @@ function MyReports() {
     const [search, setSearch] = useState('');
 
     useEffect(() => {
-        const access = localStorage.getItem('access');
-        if (!access) {
+        if (!isLoggedIn()) {
             navigate('/login');
             return;
         }
-        fetch(`${API_BASE_URL}/incidents/`, {
-            headers: { Authorization: 'Bearer ' + access },
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error('Session expired');
-                return res.json();
-            })
+        apiFetch('/incidents/')
             .then((data) => setReports(Array.isArray(data) ? data : []))
             .catch(() => setError('Could not load your reports.'))
             .finally(() => setLoading(false));
     }, [navigate]);
 
     function handleLogout() {
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
+        clearTokens();
         navigate('/login');
     }
 
