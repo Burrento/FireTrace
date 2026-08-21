@@ -1,4 +1,7 @@
-export const API_BASE_URL = 'http://192.168.2.102:8000';
+// Set VITE_API_BASE_URL in FireTraceReact/.env when the backend is not on
+// localhost — your LAN IP for phone testing, or a tunnel URL. Restart Vite
+// after changing it; .env is only read at startup.
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 export async function apiFetch(path, options = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,

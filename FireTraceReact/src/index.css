@@ -1,7 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&family=Oswald:wght@500;700&display=swap');
 
 :root {
-  /* FireTrace theme tokens — light values, overridden below for dark devices */
+  /* FireTrace theme tokens — light values. The dark set lives in the
+     [data-theme='dark'] block below. ThemeProvider (and the inline boot script
+     in index.html) always writes data-theme on <html>, resolving the device
+     preference when the user has not picked one, so these two blocks are the
+     only source of truth. */
   --ft-bg: #ffffff;
   --ft-backdrop: #f1f1f3;
   --ft-surface: #ffffff;
@@ -22,6 +26,36 @@
   --ft-neutral-btn-hover: #979696;
   --ft-neutral-btn-text: #000000;
   --ft-shadow: rgba(0, 0, 0, 0.1);
+
+  /* Civilian app shell (dashboard, my reports, report details) */
+  --civ-bg: #f2f3f6;
+  --civ-surface: #ffffff;
+  --civ-surface-2: #f7f8fa;
+  --civ-surface-sunken: #eceef2;
+  --civ-header-from: #ffffff;
+  --civ-header-to: #f7f8fa;
+  --civ-text: #14151a;
+  --civ-text-muted: #5b6270;
+  --civ-text-faint: #8b929f;
+  --civ-border: rgba(0, 0, 0, 0.10);
+  --civ-border-soft: rgba(0, 0, 0, 0.06);
+  --civ-chip-bg: rgba(0, 0, 0, 0.06);
+  --civ-shadow: rgba(0, 0, 0, 0.08);
+  --civ-shadow-strong: rgba(0, 0, 0, 0.12);
+  --civ-skeleton-from: #e7e9ee;
+  --civ-skeleton-to: #f2f3f6;
+
+  /* Status accents — tuned per theme for contrast against --civ-surface */
+  --civ-status-submitted: #2563eb;
+  --civ-status-submitted-bg: rgba(37, 99, 235, 0.12);
+  --civ-status-review: #c2620c;
+  --civ-status-review-bg: rgba(194, 98, 12, 0.12);
+  --civ-status-verified: #15803d;
+  --civ-status-verified-bg: rgba(21, 128, 61, 0.12);
+  --civ-status-responding: #7e22ce;
+  --civ-status-responding-bg: rgba(126, 34, 206, 0.12);
+  --civ-status-resolved: #047857;
+  --civ-status-resolved-bg: rgba(4, 120, 87, 0.10);
 
   /* Brand — identical in both themes */
   --ft-red: #d7192a;
@@ -53,8 +87,9 @@
 
   font: 16px/145% var(--sans);
   letter-spacing: 0.18px;
-  /* keep light dark so native controls follow the device theme too */
-  color-scheme: light dark;
+  /* Follows the resolved theme, so native controls (scrollbars, date pickers)
+     match the manual choice rather than the device setting. */
+  color-scheme: light;
   color: var(--ft-text);
   background: var(--ft-bg);
   font-synthesis: none;
@@ -63,8 +98,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
     --ft-bg: #16171d;
     --ft-backdrop: #0e0f13;
     --ft-surface: #1f2028;
@@ -93,11 +129,39 @@
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+    /* Civilian app shell */
+    --civ-bg: #0a0a0f;
+    --civ-surface: #1f2028;
+    --civ-surface-2: #23242c;
+    --civ-surface-sunken: #16171d;
+    --civ-header-from: #1a1a24;
+    --civ-header-to: #0f1015;
+    --civ-text: #f3f4f6;
+    --civ-text-muted: #9ca3af;
+    --civ-text-faint: #6b7280;
+    --civ-border: rgba(255, 255, 255, 0.08);
+    --civ-border-soft: rgba(255, 255, 255, 0.05);
+    --civ-chip-bg: rgba(255, 255, 255, 0.08);
+    --civ-shadow: rgba(0, 0, 0, 0.3);
+    --civ-shadow-strong: rgba(0, 0, 0, 0.4);
+    --civ-skeleton-from: #1f2028;
+    --civ-skeleton-to: #23242c;
+
+    --civ-status-submitted: #60a5fa;
+    --civ-status-submitted-bg: rgba(96, 165, 250, 0.2);
+    --civ-status-review: #fb923c;
+    --civ-status-review-bg: rgba(251, 146, 60, 0.2);
+    --civ-status-verified: #22c55e;
+    --civ-status-verified-bg: rgba(34, 197, 94, 0.2);
+    --civ-status-responding: #a855f7;
+    --civ-status-responding-bg: rgba(168, 85, 247, 0.2);
+    --civ-status-resolved: #86efac;
+    --civ-status-resolved-bg: rgba(34, 197, 94, 0.15);
+}
+
+:root[data-theme='dark'] #social .button-icon {
+  filter: invert(1) brightness(2);
 }
 
 body {

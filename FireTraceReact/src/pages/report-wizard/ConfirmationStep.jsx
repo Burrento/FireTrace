@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
 import { useReportDraft } from '../../context/useReportDraft';
+import BottomNav from '../../components/BottomNav';
 
 function ConfirmationStep() {
     const navigate = useNavigate();
@@ -67,15 +68,7 @@ function ConfirmationStep() {
             <button className="view-status-button"><Link to="/myreport">VIEW REPORT STATUS</Link></button><br />
             <button className="contact-bfp-button">&#128222; CONTACT BFP FOR URGENT HELP</button>
 
-            <nav className="bottom-nav">
-
-                <Link className="bottom-btn" to="/dashboard">Home</Link>
-                <Link className="bottom-btn-active" to="/report">Report</Link>
-                <Link className="bottom-btn" to="/myreport">My Report</Link>
-                <Link className="bottom-btn" to="/">Notifications</Link>
-                <Link className="bottom-btn" to="/">Account</Link>
-
-            </nav>
+            <BottomNav active="report" />
         </center>
     );
 }

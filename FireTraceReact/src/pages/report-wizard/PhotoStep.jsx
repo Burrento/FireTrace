@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import '../../style.css';
+import BottomNav from '../../components/BottomNav';
 
 function PhotoStep() {
     return(
@@ -20,15 +21,7 @@ function PhotoStep() {
             <button className="backbtn"><Link to="/continue2">Back</Link></button>
             <button className="continuebtn"><Link to="/continue4">Continue</Link></button>
             </div>
-            <nav className="bottom-nav">
-
-                <Link className="bottom-btn" to="/dashboard">Home</Link>
-                <Link className="bottom-btn-active" to="/report">Report</Link>
-                <Link className="bottom-btn" to="/myreport">My Report</Link>
-                <Link className="bottom-btn" to="/">Notifications</Link>
-                <Link className="bottom-btn" to="/">Account</Link>
-
-            </nav>
+            <BottomNav active="report" />
         </center>
     );
 }

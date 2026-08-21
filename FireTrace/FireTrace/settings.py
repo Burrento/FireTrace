@@ -32,7 +32,12 @@ SECRET_KEY = 'django-insecure-!0&pf9ou#qb=**h%+#+r71e1i2@)f=r)@ck208f=w65aj%^z6*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.2.102', 'localhost', '127.0.0.1']
+# Comma-separated in .env. A leading dot matches every subdomain, which is how
+# tunnels (.trycloudflare.com) stay usable as their hostname changes per run.
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=['localhost', '127.0.0.1', '.trycloudflare.com', '.ngrok-free.app'],
+)
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -148,12 +153,28 @@ MAILERS = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5175",
-    "http://192.168.2.102:5175",
-    
-    "http://192.168.2.102:8000",
+# Exact origins, comma-separated in .env. Add your LAN origin here when testing
+# from a phone, e.g. http://192.168.1.22:5173
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ALLOWED_ORIGINS',
+    default=['http://localhost:5173', 'http://127.0.0.1:5173'],
+)
+
+# Tunnel and LAN hostnames change per run, so match them by pattern instead of
+# listing each one. Private-network ranges only, not the whole internet.
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://.*\.trycloudflare\.com$',
+    r'^https://.*\.ngrok-free\.app$',
+    r'^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$',
+    r'^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$',
 ]
+
+# Django 4+ checks the Origin header on unsafe requests; tunnels are https and
+# would otherwise fail CSRF on the admin login.
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=['https://*.trycloudflare.com', 'https://*.ngrok-free.app'],
+)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

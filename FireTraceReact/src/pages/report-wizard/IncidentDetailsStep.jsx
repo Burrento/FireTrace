@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
+import BottomNav from '../../components/BottomNav';
 
 function IncidentDetailsStep() {
 
@@ -89,28 +90,7 @@ function IncidentDetailsStep() {
                 <button className="backbtn"><Link to="/dashboard">Back</Link></button>
                 <button className="continuebtn"><Link to="/continue2">Continue</Link></button>
             </div>
-            <nav className="bottom-nav">
-                <Link className="bottom-btn" to="/dashboard">
-                    <i className="fa-solid fa-house"></i>
-                    <span>Home</span>
-                </Link>
-                <Link className="bottom-btn-active" to="/report">
-                    <i className="fa-solid fa-bullhorn"></i>
-                    <span>Report</span>
-                </Link>
-                <Link className="bottom-btn" to="/myreport">
-                    <i className="fa-solid fa-list-check"></i>
-                    <span>My Reports</span>
-                </Link>
-                <Link className="bottom-btn" to="/dashboard">
-                    <i className="fa-solid fa-bell"></i>
-                    <span>Alerts</span>
-                </Link>
-                <Link className="bottom-btn" to="/dashboard">
-                    <i className="fa-solid fa-user-gear"></i>
-                    <span>Profile</span>
-                </Link>
-            </nav>
+            <BottomNav active="report" />
         </center>
     );
 }

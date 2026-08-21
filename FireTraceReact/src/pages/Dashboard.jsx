@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../style.css';
 import { API_BASE_URL } from '../api';
+import BottomNav from '../components/BottomNav';
+import ThemeToggle from '../components/ThemeToggle';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -81,6 +83,7 @@ function Dashboard() {
           </div>
         </div>
         <div className="civ-header-right">
+          <ThemeToggle />
           <div className="civ-notification-icon">
             <i className="fa-solid fa-bell"></i>
             <span className="civ-notification-badge"></span>
@@ -288,28 +291,7 @@ function Dashboard() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="civ-bottom-nav">
-        <Link className="civ-nav-item civ-nav-active" to="/dashboard">
-          <i className="fa-solid fa-house"></i>
-          <span>Home</span>
-        </Link>
-        <Link className="civ-nav-item" to="/report">
-          <i className="fa-solid fa-pen"></i>
-          <span>Report</span>
-        </Link>
-        <Link className="civ-nav-item" to="/myreport">
-          <i className="fa-solid fa-file-lines"></i>
-          <span>My Reports</span>
-        </Link>
-        <Link className="civ-nav-item" to="/dashboard">
-          <i className="fa-solid fa-bell"></i>
-          <span>Alerts</span>
-        </Link>
-        <Link className="civ-nav-item" to="/dashboard">
-          <i className="fa-solid fa-circle-user"></i>
-          <span>Profile</span>
-        </Link>
-      </nav>
+      <BottomNav />
     </div>
   );
 }
