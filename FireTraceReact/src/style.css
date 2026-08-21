@@ -3823,3 +3823,24 @@ input.searchInput {
 .remember-me:hover {
     color: var(--ft-text);
 }
+
+/* Barangay auto-detection feedback under the select on LocationStep */
+.barangay-hint {
+    width: 100%;
+    max-width: var(--ft-max-width);
+    box-sizing: border-box;
+    margin: 6px auto 0;
+    padding: 0 2px;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: left;
+    color: var(--ft-text-faint);
+}
+
+.barangay-hint-ok {
+    color: var(--ft-text-muted);
+}
+
+.barangay-hint-warn {
+    color: var(--ft-red);
+}
