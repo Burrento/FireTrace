@@ -24,6 +24,22 @@ environ.Env.read_env(BASE_DIR.parent / '.env')
 GOOGLE_MAPS_API_KEY = env('GOOGLE_MAPS_API_KEY', default='')
 
 
+# Duplicate flagging
+# Two reports are flagged as possible duplicates when they sit within
+# DUPLICATE_RADIUS_METERS of each other AND were submitted within
+# DUPLICATE_TIME_WINDOW_MINUTES of each other. Both conditions must hold.
+# Exposed as settings so the rule can be calibrated during field testing
+# without a code change — and so the thresholds in force are always auditable.
+DUPLICATE_RADIUS_METERS = env.int('DUPLICATE_RADIUS_METERS', default=150)
+DUPLICATE_TIME_WINDOW_MINUTES = env.int('DUPLICATE_TIME_WINDOW_MINUTES', default=30)
+
+# Geocoding confidence bands, in metres of reported GPS accuracy.
+# A fix at or under HIGH is graded High; at or under MEDIUM, Medium; beyond
+# that, Low — and Low is never plotted as a precise point on the map.
+GEO_HIGH_ACCURACY_M = env.int('GEO_HIGH_ACCURACY_M', default=50)
+GEO_MEDIUM_ACCURACY_M = env.int('GEO_MEDIUM_ACCURACY_M', default=200)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
@@ -142,6 +158,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# Uploaded report photos. Served by Django only while DEBUG is on.
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Email

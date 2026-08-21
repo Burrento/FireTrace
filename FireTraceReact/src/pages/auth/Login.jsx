@@ -35,7 +35,9 @@ function Login() {
         { skipAuth: true },
       );
       saveTokens(tokens, remember);
-      navigate('/dashboard');
+      // The login response carries user_type so the first screen is the right
+      // one, with no intermediate redirect through the civilian dashboard.
+      navigate(tokens.user_type === 'bfp' ? '/bfp' : '/dashboard');
     } catch {
       setError('Invalid email or password');
     } finally {

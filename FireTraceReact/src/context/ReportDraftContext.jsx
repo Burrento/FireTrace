@@ -11,6 +11,11 @@ const emptyDraft = {
   latitude: null,
   longitude: null,
   location_confirmed: false,
+  /* How the coordinate was captured. The backend grades geocoding confidence
+     from this (a pin the reporter placed beats a coarse GPS fix), and only
+     high/medium confidence reports are plotted on the BFP map. */
+  location_source: 'map_pin',
+  gps_accuracy_m: null,
 };
 
 function loadDraft() {
