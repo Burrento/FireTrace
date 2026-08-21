@@ -3746,3 +3746,80 @@ input.searchInput {
         max-width: 520px;
     }
 }
+
+/* ============================================
+   PASSWORD FIELD (show/hide toggle)
+   ============================================ */
+
+.password-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+/* Leaves room for the eye button so long passwords do not run under it. */
+.password-field input {
+    padding-right: 46px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ft-text-faint);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.password-toggle:hover {
+    color: var(--ft-red);
+    background: rgba(215, 25, 42, 0.1);
+}
+
+/* ============================================
+   LOGIN OPTIONS ROW (remember me + forgot)
+   ============================================ */
+
+.login-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    margin: 12px 0 16px;
+    font-size: 12px;
+}
+
+.remember-me {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ft-text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.remember-me input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--ft-red);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.remember-me:hover {
+    color: var(--ft-text);
+}

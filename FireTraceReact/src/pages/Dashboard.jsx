@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../style.css';
-import { API_BASE_URL } from '../api';
+import { apiFetch } from '../api';
+import { clearTokens, isLoggedIn } from '../auth';
 import BottomNav from '../components/BottomNav';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -14,41 +15,24 @@ function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const access = localStorage.getItem('access');
-    if (!access) {
+    if (!isLoggedIn()) {
       navigate('/login');
       return;
     }
 
     // Fetch user data
-    fetch(`${API_BASE_URL}/accounts/me`, {
-      headers: { Authorization: 'Bearer ' + access },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Session expired');
-        return res.json();
-      })
+    apiFetch('/accounts/me')
       .then(setUser)
       .catch(() => {
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
+        clearTokens();
         navigate('/login');
       });
 
     // Fetch reports
-    fetch(`${API_BASE_URL}/incidents/`, {
-      headers: { Authorization: 'Bearer ' + access },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          setReportsError('Unable to load your latest reports');
-          setReports([]);
-        } else {
-          return res.json().then((data) => {
-            setReports(Array.isArray(data) ? data : []);
-            setReportsError('');
-          });
-        }
+    apiFetch('/incidents/')
+      .then((data) => {
+        setReports(Array.isArray(data) ? data : []);
+        setReportsError('');
       })
       .catch(() => {
         setReportsError('Unable to load your latest reports');

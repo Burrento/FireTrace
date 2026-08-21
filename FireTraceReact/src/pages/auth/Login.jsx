@@ -1,32 +1,54 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
+import { isLoggedIn, saveTokens } from '../../auth';
+import PasswordInput from '../../components/PasswordInput';
 
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  /* Read once on mount: a remembered login leaves a refresh token behind, so
+     skip the form and let the dashboard verify it. */
+  const [hasSession] = useState(isLoggedIn);
+
+  useEffect(() => {
+    if (hasSession) navigate('/dashboard', { replace: true });
+  }, [hasSession, navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
-      const tokens = await apiFetch('/accounts/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: email, password }),
-      });
-      localStorage.setItem('access', tokens.access);
-      localStorage.setItem('refresh', tokens.refresh);
+      const tokens = await apiFetch(
+        '/accounts/login',
+        {
+          method: 'POST',
+          body: JSON.stringify({ username: email, password, remember_me: remember }),
+        },
+        { skipAuth: true },
+      );
+      saveTokens(tokens, remember);
       navigate('/dashboard');
     } catch {
       setError('Invalid email or password');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (hasSession) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+      </div>
+    );
   }
 
   return (
@@ -102,10 +124,24 @@ function Login() {
 
             <div className="input-group">
               <label className="label">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
             </div>
 
-            <p className="forgot"><Link className="ForgotPass" to="/forgotpass1">Forgot Password?</Link></p>
+            <div className="login-options">
+              <label className="remember-me">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                <span>Remember me for 30 days</span>
+              </label>
+              <Link className="ForgotPass" to="/forgotpass1">Forgot Password?</Link>
+            </div>
 
             {error && <p className="auth-error">{error}</p>}
 
