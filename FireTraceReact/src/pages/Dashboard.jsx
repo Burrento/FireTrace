@@ -22,7 +22,14 @@ function Dashboard() {
 
     // Fetch user data
     apiFetch('/accounts/me')
-      .then(setUser)
+      .then((profile) => {
+        // A remembered BFP session lands here first; send it to the portal.
+        if (profile.user_type === 'bfp') {
+          navigate('/bfp', { replace: true });
+          return;
+        }
+        setUser(profile);
+      })
       .catch(() => {
         clearTokens();
         navigate('/login');

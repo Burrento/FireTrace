@@ -49,6 +49,10 @@ function LocationStep() {
                 updateDraft({
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
+                    // Recorded so the backend can grade how precise this fix
+                    // was; a coarse fix is mapped less confidently than a pin.
+                    location_source: 'device_gps',
+                    gps_accuracy_m: position.coords.accuracy ?? null,
                 });
                 setRecenterKey((key) => key + 1);
             },
@@ -77,7 +81,14 @@ function LocationStep() {
                 <LocationPickerMap
                     latitude={draft.latitude}
                     longitude={draft.longitude}
-                    onChange={(lat, lng) => updateDraft({ latitude: lat, longitude: lng })}
+                    onChange={(lat, lng) => updateDraft({
+                        latitude: lat,
+                        longitude: lng,
+                        // Placing or dragging the pin supersedes any earlier
+                        // GPS fix: the reporter has corrected it by hand.
+                        location_source: 'map_pin',
+                        gps_accuracy_m: null,
+                    })}
                     onClear={handleClearPin}
                     onResolveLocation={handleResolveLocation}
                     recenterKey={recenterKey}

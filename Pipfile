@@ -12,6 +12,9 @@ django-cors-headers = "*"
 psycopg = {extras = ["binary"], version = "*"}
 django-environ = "*"
 djangorestframework-simplejwt = "*"
+channels = "*"
+channels-redis = "*"
+daphne = "*"
 
 [dev-packages]
 django-stubs = "*"

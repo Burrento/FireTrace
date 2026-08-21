@@ -5,6 +5,94 @@ Incidents - Incident/Report Models, duplicate detection
 Dispatch - Real-time updates via Channels/WebSocket
 Analytics - Descriptive operational intelligence module
 
+## Domain rules
+
+These four rules constrain the data model, and the code is written to make
+breaking them awkward. Tests in `incidents/tests.py` cover each one.
+
+**1. A report is not an incident.** `IncidentReport` is one civilian
+submission. `Incident` is the canonical event, and only exists because a person
+verified it. Several reports can evidence one incident; every report is kept
+verbatim regardless.
+
+**2. Workflow status and duplicate status are separate dimensions.** A report
+carries `workflow_status` (Submitted / Under Review / Verified / Responding /
+Resolved) *and* `duplicate_status` (Not Flagged / Possible Duplicate / Kept
+Separate / Confirmed Duplicate). Neither is derived from the other, they are
+updated through different endpoints, and every combination is legal.
+
+**3. Duplicates are flagged, never merged.** Two reports are flagged as
+possible duplicates when they are within `DUPLICATE_RADIUS_METERS` (Haversine)
+**and** `DUPLICATE_TIME_WINDOW_MINUTES` of each other — both conditions, or no
+flag. The distance and time difference that triggered it are stored on the
+report and shown in the queue, so personnel can see the reasoning. The system
+never merges or deletes a report; only a person can rule on the flag, and only
+to "Kept Separate" or "Confirmed Duplicate".
+
+**4. Analytics are descriptive only.** Counts, trends, and observed response
+times. No forecasting, no risk scoring, no automated resource allocation.
+
+## BFP Administrative Portal
+
+Sign in with a BFP account and you land on `/bfp`. Civilians who reach that URL
+are redirected; the API enforces the same rule independently.
+
+| Panel | What it shows |
+|---|---|
+| KPI cards | New Reports, Under Review, Duplicates (reports) · Responding, Resolved (incidents). Each card labels which record type it counts. |
+| Incoming Reports queue | Reference, submitted time, barangay, category, photo availability, workflow status, duplicate review — filterable and paginated. Flagged rows expose the Keep Separate / Confirm Duplicate ruling inline. |
+| Live incident map | Google Maps. Red = verified incident, amber = unverified report, violet = possible duplicate. Only High/Medium geocoding confidence is plotted; the withheld Low count is shown in the legend. |
+| System health | Application server, database and mapping service, each labelled `live` (actually probed) or `config` (configuration inspected). |
+| Recent activity | Personnel actions from `AUDIT_LOG`, plus system-raised entries from `INCIDENT_TIMELINE_EVENT`. |
+
+The dashboard polls every 15 seconds and pauses while the tab is hidden.
+Swapping in Channels/WebSockets is a change to `realtime/notify.py` and
+`useDashboardData.js` only — every view that mutates a record already calls
+`broadcast_dashboard_event`.
+
+### Geocoding confidence
+
+Graded server-side from how the coordinate was captured, so a client cannot
+assert its own confidence:
+
+| Capture method | Grade |
+|---|---|
+| Pin placed/dragged on the map | High |
+| Device GPS, accuracy ≤ `GEO_HIGH_ACCURACY_M` (50 m) | High |
+| Device GPS, accuracy ≤ `GEO_MEDIUM_ACCURACY_M` (200 m), or a geocoded address | Medium |
+| Barangay only, or GPS accuracy beyond 200 m | Low — kept and reviewable, but not mapped |
+
+### API surface
+
+```
+/api/reports/                             list + create civilian submissions
+/api/reports/queue/                       filterable, paginated dashboard queue
+/api/reports/<id>/status/                 move along the workflow dimension
+/api/reports/<id>/duplicate-review/       record a manual duplicate ruling
+/api/reports/<id>/timeline/               history of one report
+/api/incidents/                           canonical incidents (BFP only)
+/api/incidents/verify/                    create an incident from report(s)
+/api/incidents/<id>/status/               dispatch / resolve
+/api/dashboard/kpis|map|activity|health/  dashboard panels
+/incidents/                               deprecated alias for /api/reports/
+```
+
+`/incidents/` still serves reports, and still exposes the `status` key, so the
+shipped civilian app keeps working. New clients should use `/api/reports/`.
+
+### Demo data
+
+```
+cd "FireTrace BackEnd/FireTrace"
+python manage.py seed_demo_data              # add to whatever is there
+python manage.py seed_demo_data --reset      # wipe incident data first
+```
+
+Seeds reports across Calapan barangays, including deliberate clusters that trip
+the duplicate rule, a few low-confidence locations the map withholds, and some
+verified incidents. Creates `bfp@firetrace.test` and civilian accounts, all with
+password `firetrace123`.
+
 ## Dependencies & How to Run
 
 FireTrace has two parts that both need to be running at once for the app to work: a Django backend (`FireTrace/`) and a React frontend (`FireTraceReact/`).
