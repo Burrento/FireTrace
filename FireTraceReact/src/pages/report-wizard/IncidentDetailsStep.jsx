@@ -24,10 +24,17 @@ function IncidentDetailsStep() {
 
     return (
         <center>
-
             <header className="top-bar">
-                <h2 className="firetraceheader">Fire Report Incident</h2>
-                <p>1 of 4</p>
+                <Link to="/dashboard" className="back-btn">
+                    <i className="fa-solid fa-arrow-left"></i>
+                </Link>
+                <div className="brand-identity">
+                    <div className="app-name">
+                        <span className="fire-txt">STEP</span>
+                        <span className="trace-txt">1 OF 4</span>
+                    </div>
+                </div>
+                <div style={{width: 48}}></div>
             </header>
 
             <p className="incident-text">Incident Type:</p>
@@ -79,19 +86,31 @@ function IncidentDetailsStep() {
 
             </div>
             <div className="backcontinue-container">
-            <button className="backbtn"><Link to="/dashboard">Back</Link></button>
-            <button className="continuebtn"><Link to="/continue2">Continue</Link></button>
+                <button className="backbtn"><Link to="/dashboard">Back</Link></button>
+                <button className="continuebtn"><Link to="/continue2">Continue</Link></button>
             </div>
             <nav className="bottom-nav">
-
-                <button className="bottom-btn"><Link to="/dashboard">Home</Link></button>
-                <button className="bottom-btn-active"><Link to="/report">Report</Link></button>
-                <button className="bottom-btn"><Link to="/myreport">My Report</Link></button>
-                <button className="bottom-btn"><Link to="/">Notifications</Link></button>
-                <button className="bottom-btn"><Link to="/">Account</Link></button>
-
+                <Link className="bottom-btn" to="/dashboard">
+                    <i className="fa-solid fa-house"></i>
+                    <span>Home</span>
+                </Link>
+                <Link className="bottom-btn-active" to="/report">
+                    <i className="fa-solid fa-bullhorn"></i>
+                    <span>Report</span>
+                </Link>
+                <Link className="bottom-btn" to="/myreport">
+                    <i className="fa-solid fa-list-check"></i>
+                    <span>My Reports</span>
+                </Link>
+                <Link className="bottom-btn" to="/dashboard">
+                    <i className="fa-solid fa-bell"></i>
+                    <span>Alerts</span>
+                </Link>
+                <Link className="bottom-btn" to="/dashboard">
+                    <i className="fa-solid fa-user-gear"></i>
+                    <span>Profile</span>
+                </Link>
             </nav>
-
         </center>
     );
 }
