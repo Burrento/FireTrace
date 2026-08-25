@@ -84,20 +84,12 @@ AUTH_USER_MODEL = 'accounts.User'
 # asgi.py, which sends /ws/ to the consumer and everything else to Django.
 ASGI_APPLICATION = 'FireTrace.asgi.application'
 
+# Redis when REDIS_HOST is set, in-memory otherwise.
+#
 # The in-memory layer keeps every subscriber inside one process, which is
-# exactly what `runserver` is. It needs no Redis, and Redis is not installed on
-# this machine. It is *not* production-safe: with two or more worker processes
-# a broadcast only reaches the clients attached to the process that sent it.
-#
-# For production, install channels-redis (already in the Pipfile), run a Redis
-# server and swap in:
-#
-#   CHANNEL_LAYERS = {
-#       'default': {
-#           'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#           'CONFIG': {'hosts': [('127.0.0.1', 6379)]},
-#       },
-#   }
+# exactly what `runserver` is, and needs no Redis on this machine. It is *not*
+# production-safe: with two or more worker processes a broadcast only reaches
+# the clients attached to the process that sent it.
 _REDIS_HOST = env('REDIS_HOST', default=None)
 
 if _REDIS_HOST:
@@ -112,18 +104,29 @@ if _REDIS_HOST:
     _REDIS_SCHEME = 'rediss' if env.bool('REDIS_SSL', default=True) else 'redis'
     _REDIS_PORT = env.int('REDIS_PORT', default=6380)
 
-    # Must stay comfortably above channels-redis's own `brpop_timeout`, which
-    # is 5 seconds. An idle consumer sits in a blocking bzpopmin(timeout=5);
-    # when socket_timeout is unset, redis-py uses the blocking timeout as the
-    # read deadline too, so the client gives up at exactly 5.000s while Azure
-    # returns its empty reply at ~5.2s. The client loses that race every time,
-    # the read raises, and the consumer dies -- the socket reconnects in a
-    # loop and the dashboard silently falls back to polling forever.
+    # A bounded read deadline, so a dead connection is noticed rather than hung
+    # on. It also matters if anyone ever moves back to the core layer below:
+    # that one parks idle consumers in a blocking bzpopmin(timeout=5), and with
+    # socket_timeout unset redis-py reuses the blocking timeout as the read
+    # deadline, giving up at exactly 5.000s while Azure answers at ~5.2s. Every
+    # idle consumer then dies and the dashboard reverts to polling. Whatever
+    # this is set to must stay clear of that 5 second floor.
     _REDIS_SOCKET_TIMEOUT = env.int('REDIS_SOCKET_TIMEOUT', default=30)
 
+    # The *pubsub* layer, not the default RedisChannelLayer. Azure Managed Redis
+    # is clustered, and the default layer pipelines commands across one key per
+    # channel; those keys hash to different slots, so every group_send with more
+    # than one subscriber aborts with ClusterCrossSlotError. It fails silently,
+    # because broadcast_dashboard_event swallows exceptions by design -- writes
+    # succeed and the dashboard just never hears about them.
+    #
+    # Pubsub suits this push anyway: it carries no data, only "refetch now", so
+    # there is nothing to persist or replay. The trade is that a momentarily
+    # disconnected operator misses that nudge rather than receiving it late,
+    # which the polling fallback in useDashboardData.js already covers.
     CHANNEL_LAYERS = {
         'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'BACKEND': 'channels_redis.pubsub.RedisPubSubChannelLayer',
             'CONFIG': {
                 'hosts': [
                     {
