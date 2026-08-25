@@ -30,8 +30,19 @@ jobs:
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           app_location: "./FireTraceReact" # App source code path
           api_location: "" # Api source code path - optional
-          output_location: "build" # Built app content directory - optional
+          # Vite builds to dist/. The portal's "React" preset defaults this to
+          # "build", which is Create React App's directory -- leaving it wrong
+          # fails the deploy with "could not find the build artifact folder".
+          output_location: "dist" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
+        # Vite inlines these at build time, so they have to be present here on
+        # the runner. Setting them as Static Web App application settings does
+        # nothing for a static build -- those are runtime config for the
+        # managed Functions API, which this app does not use.
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_MAPS_MAP_ID: ${{ secrets.VITE_GOOGLE_MAPS_MAP_ID }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
