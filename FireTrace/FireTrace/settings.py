@@ -50,7 +50,12 @@ SECRET_KEY = env(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+#
+# Defaults to off, so a deployment that forgets to set it is safe rather than
+# sorry. Set DEBUG=True in .env for local work: it is what serves uploaded
+# photos back (see MEDIA_URL below) and what auto-trusts this machine's LAN
+# addresses for phone testing.
+DEBUG = env.bool('DEBUG', default=False)
 
 # Comma-separated in .env. A leading dot matches every subdomain, which is how
 # tunnels (.trycloudflare.com) stay usable as their hostname changes per run.
@@ -232,18 +237,43 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Uploaded report photos.
+#
+# The container filesystem is ephemeral: anything written to MEDIA_ROOT is gone
+# on the next restart or revision, and there is no web server in front of
+# Django to serve it either (whitenoise handles STATIC_ROOT only, by design).
+# So when a blob account is configured, uploads go straight to Azure Blob
+# Storage and MEDIA_URL points at the container.
+#
+# Without it, the local FileSystemStorage keeps development working with no
+# Azure account and no credentials to leak.
+AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', default='')
+AZURE_ACCOUNT_KEY = env('AZURE_ACCOUNT_KEY', default='')
+AZURE_CONTAINER = env('AZURE_CONTAINER', default='media')
+
+# The blob container is private, so django-storages signs each URL with a SAS
+# token that expires. A report photograph can show a person's home, their
+# belongings and their neighbours, and a public container would make every one
+# of them readable by anyone who ever saw or guessed a link -- including long
+# after the incident is closed. An hour is long enough to load a queue page.
+AZURE_URL_EXPIRATION_SECS = env.int('AZURE_URL_EXPIRATION_SECS', default=3600)
+
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = 'media/'
+
+if AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY:
+    # AzureStorage builds its own absolute, signed URLs, so MEDIA_URL above is
+    # unused in this branch -- it stays for the local fallback below.
+    _default_storage = {'BACKEND': 'storages.backends.azure_storage.AzureStorage'}
+else:
+    _default_storage = {'BACKEND': 'django.core.files.storage.FileSystemStorage'}
+
 STORAGES = {
-    'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-    },
+    'default': _default_storage,
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
-# Uploaded report photos. Served by Django only while DEBUG is on.
-
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Email

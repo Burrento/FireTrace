@@ -46,7 +46,14 @@ function refreshAccessToken() {
 }
 
 function send(path, options, token) {
-  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  // A FormData body must set its own Content-Type: the browser appends the
+  // multipart boundary, and hardcoding application/json here leaves the server
+  // parsing a multipart payload as JSON and rejecting the whole request.
+  const isFormData = options.body instanceof FormData;
+  const headers = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...options.headers,
+  };
   if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(`${API_BASE_URL}${path}`, { ...options, headers });
 }
