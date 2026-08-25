@@ -114,19 +114,28 @@ to the same process, which is correct for `runserver` and wrong for a
 multi-worker deployment. With it, the Redis layer, which is what the deployment
 uses.
 
-Two things about that Redis config are load-bearing and easy to undo by tidying:
+Three things about that Redis config are load-bearing and easy to undo by
+tidying. Each one presents as "realtime just doesn't work" rather than as an
+error, because `broadcast_dashboard_event` swallows exceptions by design — a
+failed notification must never fail the write that triggered it. Diagnose from
+the container logs, not from whether reports save.
 
+- **It is the `pubsub` layer, not `channels_redis.core.RedisChannelLayer`.**
+  Azure Managed Redis is clustered, and the core layer pipelines commands across
+  one key per channel; with more than one subscriber those keys hash to
+  different slots and every `group_send` aborts with `ClusterCrossSlotError`.
+  Pubsub carries no multi-key pipelines. It also suits this push, which contains
+  no data and only means "refetch now" — there is nothing to persist or replay.
 - `address` must be a **URL string** (`rediss://host:port`). `channels-redis`
   passes a dict host straight to `ConnectionPool.from_url`, so a `(host, port)`
   tuple raises `'tuple' object has no attribute 'decode'` on the first
   `group_add` — which surfaces only as a 1011 close on the socket. TLS rides on
   the `rediss://` scheme; there is no `ssl` keyword here.
-- `socket_timeout` must stay **above `channels-redis`'s `brpop_timeout` of 5s**.
-  An idle consumer blocks in `bzpopmin(timeout=5)`, and with `socket_timeout`
-  unset redis-py reuses that as the read deadline, giving up at exactly 5.000s
-  while Azure replies at ~5.2s. The client loses that race every time: the read
-  raises, the consumer dies, the browser reconnects, and the dashboard falls
-  back to polling forever while looking merely quiet.
+- `socket_timeout` must stay **above 5 seconds**. The pubsub layer does not
+  block on `bzpopmin`, but the core layer does, and with `socket_timeout` unset
+  redis-py reuses that blocking timeout as the read deadline — giving up at
+  exactly 5.000s while Azure replies at ~5.2s. Every idle consumer then dies and
+  the dashboard reverts to polling.
 
 ### Geocoding confidence
 

@@ -352,15 +352,18 @@ Downgrading Python or Postgres means rebuilding the virtualenv and the database.
   Visual effects). Do not answer it with `animation: none` for the new-report pulse:
   it is the one alert on the screen that must not be missed, so the reduced-motion
   branch keeps a gentler in-place "breathe" instead. Decorative motion may stop.
-- **The Redis channel layer has two settings that look tidyable and are not.**
-  `address` must be a URL *string* — `channels-redis` hands a dict host straight
-  to `ConnectionPool.from_url`, so a `(host, port)` tuple raises `'tuple' object
-  has no attribute 'decode'` on the first `group_add`, visible only as a 1011
-  socket close. And `socket_timeout` must exceed `brpop_timeout` (5s): unset,
-  redis-py reuses the blocking timeout as the read deadline and gives up at
-  exactly 5.000s while Azure answers at ~5.2s, so every idle consumer dies and
-  the dashboard silently reverts to polling. Both failures look like "realtime
-  just doesn't work" rather than like an error.
+- **The Redis channel layer has three settings that look tidyable and are not.**
+  The backend is `channels_redis.pubsub.RedisPubSubChannelLayer`, *not* the
+  default `core.RedisChannelLayer`: Azure Managed Redis is clustered, and the
+  core layer pipelines across one key per channel, so with more than one
+  subscriber the keys land in different slots and every `group_send` aborts with
+  `ClusterCrossSlotError`. `address` must be a URL *string* — a `(host, port)`
+  tuple raises `'tuple' object has no attribute 'decode'` on the first
+  `group_add`, visible only as a 1011 socket close. And `socket_timeout` must
+  stay above 5s, or a core-layer consumer blocking in `bzpopmin(timeout=5)` dies
+  on every idle read (redis-py reuses the blocking timeout as the read deadline,
+  giving up at 5.000s while Azure answers at ~5.2s). All three look like
+  "realtime just doesn't work" rather than like an error.
 - **`broadcast_dashboard_event` swallows every exception by design**, so a broken
   channel layer is silent on the write side. Diagnose realtime from the container
   logs and an actually-idle socket, not from whether reports save.
