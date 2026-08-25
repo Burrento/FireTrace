@@ -40,7 +40,7 @@ Three steps, and the third one files it:
 |---|---|---|
 | 1 of 3 | `/report` | Incident type + description |
 | 2 of 3 | `/continue2` | Map pin or device GPS; barangay and address are reverse-geocoded from the pin and stay editable |
-| 3 of 3 | `/continuethird` | Optional photograph, then **Submit Report** |
+| 3 of 3 | `/continuethird` | Optional photograph — camera or gallery — then **Submit Report** |
 
 The receipt at `/continue4` shows the reference number and status. It is not a
 step and submits nothing — refreshing it cannot file a second copy of the same
@@ -49,6 +49,13 @@ fire, and reaching it directly redirects to `/myreport`.
 Each step gates its own Continue button, so a missing field is caught on the step
 that owns it rather than surfacing as an unattributed validation error at submit
 time. The photograph is genuinely optional; a report with no photo submits fine.
+
+**Photographs.** *Take safe photo* opens the device camera, *Select from gallery*
+opens the picker, and the chosen image previews with a Remove button. Anything
+over 10 MB or not an image is refused on the spot. A report carrying a photo is
+sent as `multipart/form-data` instead of JSON; one without is unchanged. Uploads
+go to Azure Blob Storage in the deployment and to `MEDIA_ROOT` locally — see
+[Photo storage](#photo-storage).
 
 ## BFP Administrative Portal
 
@@ -101,9 +108,25 @@ survives as a fallback (60s once the socket is live), so a missed push means a
 stale minute rather than a frozen screen. The header reads **Live** with a green
 pulse only while the socket is genuinely connected, **Polling** otherwise.
 
-`CHANNEL_LAYERS` uses Channels' in-memory layer, which needs no Redis but only
-reaches clients attached to the same process — correct for `runserver`, not for a
-multi-worker deployment. `settings.py` carries the Redis swap in a comment.
+`CHANNEL_LAYERS` picks its backend from whether `REDIS_HOST` is set. Without it,
+Channels' in-memory layer — no Redis needed, but it only reaches clients attached
+to the same process, which is correct for `runserver` and wrong for a
+multi-worker deployment. With it, the Redis layer, which is what the deployment
+uses.
+
+Two things about that Redis config are load-bearing and easy to undo by tidying:
+
+- `address` must be a **URL string** (`rediss://host:port`). `channels-redis`
+  passes a dict host straight to `ConnectionPool.from_url`, so a `(host, port)`
+  tuple raises `'tuple' object has no attribute 'decode'` on the first
+  `group_add` — which surfaces only as a 1011 close on the socket. TLS rides on
+  the `rediss://` scheme; there is no `ssl` keyword here.
+- `socket_timeout` must stay **above `channels-redis`'s `brpop_timeout` of 5s**.
+  An idle consumer blocks in `bzpopmin(timeout=5)`, and with `socket_timeout`
+  unset redis-py reuses that as the read deadline, giving up at exactly 5.000s
+  while Azure replies at ~5.2s. The client loses that race every time: the read
+  raises, the consumer dies, the browser reconnects, and the dashboard falls
+  back to polling forever while looking merely quiet.
 
 ### Geocoding confidence
 
@@ -175,7 +198,9 @@ FireTrace has two parts that both need to be running at once for the app to work
 | `psycopg[binary]` | PostgreSQL driver |
 | `markdown` | Renders DRF's browsable API docs |
 | `channels` | ASGI/WebSocket layer behind the live dashboard |
-| `channels-redis` | Redis channel layer — installed, not used; see `CHANNEL_LAYERS` |
+| `channels-redis` | Redis channel layer — used whenever `REDIS_HOST` is set, which is how the deployment runs |
+| `django-storages[azure]` | Uploads to Azure Blob Storage when a storage account is configured |
+| `whitenoise` | Serves `STATIC_ROOT` in the deployment (static only — never user uploads) |
 | `daphne` | ASGI server; must be first in `INSTALLED_APPS` so `runserver` speaks WebSocket |
 | `django-stubs` *(dev only)* | Type stubs for Django, used by Pyright/Pyrefly |
 
@@ -208,6 +233,7 @@ There are **two** `.env` files.
 
 Backend — repo root, `FireTrace BackEnd/.env` (copy `.env.example`):
 ```
+DEBUG=True
 DB_NAME=firetrace_db
 DB_USER=postgres
 DB_PASSWORD=...
@@ -215,6 +241,22 @@ DB_HOST=localhost
 DB_PORT=5432
 GOOGLE_MAPS_API_KEY=...
 ```
+
+`DEBUG` defaults to **False** so a deployment that forgets to set it is safe
+rather than sorry. Turn it on locally: it is what registers the `MEDIA_URL`
+route that serves uploaded photographs back, and what auto-trusts this machine's
+LAN addresses for phone testing. Without it a photo uploads fine and then 404s
+when anything tries to display it.
+
+Optional backend settings, all with working defaults:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` / `REDIS_SSL` | unset | Switches the channel layer to Redis. Azure Managed Redis is port **10000**, not 6379/6380 |
+| `REDIS_SOCKET_TIMEOUT` | `30` | Must stay above `channels-redis`'s 5s `brpop_timeout` — see [Real-time](#real-time) |
+| `AZURE_ACCOUNT_NAME` / `AZURE_ACCOUNT_KEY` / `AZURE_CONTAINER` | unset | Switches uploads to Blob Storage. Unset uses the local filesystem |
+| `AZURE_URL_EXPIRATION_SECS` | `3600` | Lifetime of a signed photo URL |
+| `CSRF_TRUSTED_ORIGINS` | tunnels | Needs the deployed origins added; the admin login fails CSRF without them |
 
 Frontend — `FireTraceReact/.env`:
 ```
@@ -286,18 +328,107 @@ which the browser reports as a network failure rather than as a server error.
 
 ### Creating a BFP account
 
-Public registration (`/create`) creates a `civilian` account. To promote an existing account to BFP:
+Public registration (`/create`) always creates a `civilian`, and `user_type` is
+read-only on `RegisterSerializer`, so asking `POST /accounts/register` for
+`"bfp"` gets you a civilian regardless. Promotion is a deliberate act by an
+administrator, in either of two places.
+
+**Django admin** — the usual route. Open `/admin/`, **Accounts → Users**, pick
+the account, and set **User type** to `BFP` under *FireTrace role*. Note that
+`user_type` is not `is_staff`: `user_type` grants the operations dashboard,
+`is_staff` only grants the admin itself.
+
+**Shell** — when there is no superuser yet:
 ```
 cd "FireTrace BackEnd/FireTrace"
 python manage.py shell -c "from accounts.models import User; u = User.objects.get(username='the-email-they-registered-with'); u.user_type='bfp'; u.save()"
 ```
+
 Then log in again on `/login` to see the BFP dashboard view.
 
-> **Known gap:** `RegisterSerializer` currently exposes `user_type` as a writable
-> field, so a request made directly to `POST /accounts/register` can ask for
-> `"bfp"` and be granted it. "Registration always creates civilians" is true of
-> the form, not of the API. Close this before any deployment.
+Sign in with **either the username or the email address**, in any casing. For an
+account made through the site those are the same string; a superuser created by
+`createsuperuser` has a plain username and an unrelated email, and either works.
+Registration folds usernames to lowercase, so a phone keyboard capitalising the
+first letter cannot lock someone out.
 
-Sign-in is case-insensitive: the username *is* the email, and both registration
-and login fold it to lowercase, so a phone keyboard capitalising the first letter
-cannot lock someone out.
+## Photo storage
+
+Report photographs go to **Azure Blob Storage** whenever `AZURE_ACCOUNT_NAME` and
+`AZURE_ACCOUNT_KEY` are set, and to `MEDIA_ROOT` on the local filesystem
+otherwise — so local development needs no Azure account and no credentials.
+
+The blob container is **private**, and `django-storages` signs each URL with a
+SAS token that expires (`AZURE_URL_EXPIRATION_SECS`, default one hour). This is
+deliberate and worth keeping: a report photograph can show a person's home, their
+belongings and their neighbours, and a public container would leave all of that
+readable by anyone who ever saw a link, indefinitely and long after the incident
+closed.
+
+Two things this arrangement exists to survive:
+
+- The container filesystem is **ephemeral**. Anything written to `MEDIA_ROOT` in
+  the deployment is gone on the next restart or revision.
+- There is no web server in front of Django to serve uploads. WhiteNoise handles
+  `STATIC_ROOT` only, by design — it does not serve user media.
+
+Locally, uploads are served by Django itself, but *only while `DEBUG` is on*;
+`urls.py` registers the `MEDIA_URL` route under `if settings.DEBUG`.
+
+## Deployment (Azure)
+
+Everything lives in resource group `firetrace-rg`, region **East Asia**.
+
+| Piece | Resource | Notes |
+|---|---|---|
+| Backend | Container App `firetrace-backend` | Ingress external, target port 8000 |
+| Frontend | Static Web App `firetrace-web` | Free plan |
+| Database | PostgreSQL Flexible Server `firetrace-db` | Burstable B1ms, database `firetrace` |
+| Channel layer | Azure Managed Redis `firetrace-redis` | Balanced B0, **port 10000**, TLS |
+| Images | Container Registry `firetraceacr` | Basic, admin user enabled |
+| Uploads | Storage Account `firetracemedia` | Private container `media` |
+
+- Backend: <https://firetrace-backend.purplesmoke-aadd2cd7.eastasia.azurecontainerapps.io>
+- Frontend: <https://lively-meadow-0d7053600.7.azurestaticapps.net>
+
+### Shipping a change
+
+Both workflows fire on a push to `main`.
+
+- `.github/workflows/build-backend.yml` builds the image on a GitHub runner and
+  pushes it to ACR. Then roll the Container App onto it:
+  ```
+  d=$(az acr manifest list-metadata --registry firetraceacr --name firetrace-backend \
+        --query "[?tags[0]=='latest'].digest | [0]" -o tsv)
+  az containerapp update -n firetrace-backend -g firetrace-rg \
+     --image "firetraceacr.azurecr.io/firetrace-backend@$d" --revision-suffix <name>
+  ```
+- `.github/workflows/azure-static-web-apps-*.yml` builds and deploys the
+  frontend. Nothing further to run.
+
+### Things that will cost you an afternoon
+
+- **`az acr build` does not work on this subscription.** ACR Tasks are blocked on
+  Azure for Students (`TasksOperationsNotAllowed`). That is why the image is
+  built on a GitHub runner. This is not fixable per-account.
+- **`az containerapp update --set-env-vars` replaces the entire environment**, it
+  does not merge. Always resend every variable, or the ones you omit vanish.
+- **Classic Azure Cache for Redis cannot be created**, separately from the above.
+  Hence Azure Managed Redis, and hence port 10000.
+- **"Southeast Asia" is blocked** by an Allowed-locations policy. East Asia works.
+- **Resource providers may need registering first.** Creating the storage account
+  failed with `SubscriptionNotFound` — a thoroughly misleading error — until
+  `az provider register -n Microsoft.Storage` had completed.
+- **The Static Web App wizard's "React" preset sets `output_location: build`**,
+  which is Create React App's directory. Vite writes to `dist`, and the deploy
+  fails looking for artifacts that were built correctly and put elsewhere.
+- **`VITE_*` variables must be set on the build**, not in the Static Web App's
+  Configuration blade. Vite inlines them at build time on the runner; the
+  Configuration blade is runtime settings for the managed Functions API, which
+  this app does not use. They are GitHub secrets referenced as step `env:`.
+- **The frontend needs a `navigationFallback`** or every client-side route 404s
+  on refresh. It lives in `FireTraceReact/public/staticwebapp.config.json`, in
+  `public/` so Vite copies it into `dist/`.
+- **The Google Maps key ships inside the public JS bundle**, unavoidably. Restrict
+  it by HTTP referrer to the Static Web App domain, and keep a budget alert:
+  referrer restrictions are a speed bump, not authentication.
