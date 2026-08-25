@@ -1,7 +1,9 @@
 """Tests for the four domain rules the dashboard depends on."""
 
 from datetime import timedelta
+from tempfile import TemporaryDirectory
 
+from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -215,6 +217,34 @@ class DashboardAPITests(APITestCase):
 
         self.assertEqual(len(response.data['reports']), 1)
         self.assertEqual(response.data['withheld_low_confidence'], 1)
+
+    def test_map_carries_a_photo_url_only_when_there_is_a_photo(self):
+        """The popup shows the photograph, so the URL has to reach the map."""
+        # A saved upload is not rolled back with the transaction, so give this
+        # one a media root of its own rather than growing FireTrace/media/ by a
+        # file on every run.
+        with TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            with_photo = make_report(
+                self.civilian, geocoding_confidence=GeocodingConfidence.HIGH,
+            )
+            with_photo.photo.save('fire.png', ContentFile(b'not-really-a-png'), save=True)
+            make_report(
+                self.civilian, lat=BASE_LAT + 0.001,
+                geocoding_confidence=GeocodingConfidence.HIGH,
+            )
+
+            self.client.force_authenticate(self.bfp)
+            response = self.client.get('/api/dashboard/map/')
+
+        by_id = {row['id']: row for row in response.data['reports']}
+        self.assertTrue(by_id[with_photo.id]['has_photo'])
+        self.assertIn('fire', by_id[with_photo.id]['photo_url'])
+
+        bare = next(row for row in response.data['reports'] if row['id'] != with_photo.id)
+        self.assertFalse(bare['has_photo'])
+        # None rather than '' so the popup can tell "none attached" apart from
+        # "attached but the URL could not be built".
+        self.assertIsNone(bare['photo_url'])
 
     def test_map_separates_reports_from_canonical_incidents(self):
         make_report(self.civilian, geocoding_confidence=GeocodingConfidence.HIGH)
