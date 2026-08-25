@@ -96,15 +96,25 @@ ASGI_APPLICATION = 'FireTrace.asgi.application'
 _REDIS_HOST = env('REDIS_HOST', default=None)
 
 if _REDIS_HOST:
+    # channels-redis hands a dict host straight to `ConnectionPool.from_url`,
+    # so `address` must be a URL *string* -- a (host, port) tuple raises
+    # "'tuple' object has no attribute 'decode'" the first time a consumer
+    # calls group_add, which surfaces only as a 1011 close on the socket.
+    # TLS rides on the scheme (`rediss://`); there is no `ssl` kwarg here.
+    # The password stays a separate kwarg rather than URL userinfo so a key
+    # containing +, / or = needs no percent-encoding and never lands in a
+    # connection string that could be logged.
+    _REDIS_SCHEME = 'rediss' if env.bool('REDIS_SSL', default=True) else 'redis'
+    _REDIS_PORT = env.int('REDIS_PORT', default=6380)
+
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
                 'hosts': [
                     {
-                        'address': (_REDIS_HOST, env.int('REDIS_PORT', default=6380)),
+                        'address': f'{_REDIS_SCHEME}://{_REDIS_HOST}:{_REDIS_PORT}',
                         'password': env('REDIS_PASSWORD', default=None),
-                        'ssl': env.bool('REDIS_SSL', default=True),
                     },
                 ],
             },
