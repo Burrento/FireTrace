@@ -46,7 +46,7 @@ function Login() {
       // Only a 401 is actually a bad credential. A dead backend or a host the
       // API rejects used to land here too and read as "wrong password", which
       // sent people hunting for a typo that was never there.
-      if (err.status === 401) setError('Invalid email or password');
+      if (err.status === 401) setError('Invalid username or password');
       else if (!err.status) setError(`Cannot reach the server at ${API_BASE_URL}.`);
       else setError(err.message || 'Sign in failed. Please try again.');
     } finally {
@@ -129,8 +129,11 @@ function Login() {
 
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="input-group">
-              <label className="label">Email Address</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <label className="label">Username or Email</label>
+              {/* Deliberately type="text", not type="email": the field accepts
+                  a plain username too, and the browser's own email validation
+                  would reject one before it was ever submitted. */}
+              <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
 
             <div className="input-group">
