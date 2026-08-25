@@ -14,7 +14,7 @@ operational. This file covers architecture and what is **not** done.
 # backend (from FireTrace/)
 python manage.py runserver 0.0.0.0:8000     # 0.0.0.0 needed for LAN/phone testing
 python manage.py migrate
-python manage.py test                        # 23 tests, all in incidents/tests.py
+python manage.py test                        # 35 tests: incidents/tests.py + accounts/tests.py
 python manage.py test incidents.tests.DuplicateFlaggingTests.test_name   # single test
 python manage.py seed_demo_data [--reset]    # bfp@firetrace.test / firetrace123, then /bfp
 
@@ -32,12 +32,19 @@ to polling.
 `settings.py` reads `BASE_DIR.parent / '.env'`. The frontend has its own
 `FireTraceReact/.env` for `VITE_API_BASE_URL` and `VITE_GOOGLE_MAPS_*`.
 
-Promote a civilian account to BFP (public registration always creates civilians
-**by convention, not by enforcement** — see Known small issues):
+Promote a civilian account to BFP. Public registration creates civilians and
+this is now **enforced** — `user_type` is read-only on `RegisterSerializer`, so
+the API cannot grant it either. Use the admin (**Accounts → Users**, *FireTrace
+role*), or the shell when there is no superuser yet:
 
 ```
 python manage.py shell -c "from accounts.models import User; u=User.objects.get(username='email'); u.user_type='bfp'; u.save()"
 ```
+
+`user_type` is not `is_staff`: `user_type` grants the operations dashboard,
+`is_staff` only grants the admin. `accounts/admin.py` registers the custom user
+model — Django only auto-registers `auth.User`, which this project replaced, so
+without it the admin has no Users section at all.
 
 ---
 
@@ -63,6 +70,13 @@ username lookup is exact-match, so without the fold a phone keyboard capitalisin
 the first letter locks someone out of their own account. Register also rejects an
 email that already exists under any casing, which the model's own unique check
 (case-sensitive) would let through.
+
+Login accepts **either the username or the email**, resolving to the stored
+username before authenticating. For site-made accounts those are one string; a
+`createsuperuser` account has a plain username and an unrelated email and could
+otherwise never sign in on the site. An identifier matching nothing is passed
+through unchanged so authentication fails the ordinary way — a distinct error
+would let a caller probe which accounts exist.
 
 ### The two record types are the whole design
 
@@ -175,6 +189,14 @@ One draft accumulates in `ReportDraftContext`, persisted to `sessionStorage`.
 receipt is what stops a refresh filing a second copy of the same fire. Every step
 gates its own Continue, so a missing field is caught on the step that owns it.
 
+`PhotoStep` holds **two** hidden file inputs, not one: `capture="environment"`
+asks the phone for the camera directly and must be *absent* for a gallery pick,
+so one input cannot serve both buttons. A report with a photo is posted as
+`FormData`; `api.js`'s `send()` omits its hardcoded `Content-Type` for a
+`FormData` body so the browser can set the multipart boundary itself. The preview
+URL is derived with `useMemo` and revoked on change, since object URLs live until
+revoked and a reporter retaking a shot would otherwise leak each attempt.
+
 `ReportDraftContext` rounds `latitude`/`longitude` to 6 dp on the way in **and** on
 restore from `sessionStorage`. The columns are `DecimalField(max_digits=9,
 decimal_places=6)`, and a raw Google Maps coordinate carries a dozen decimals — until
@@ -196,6 +218,36 @@ fallback poll, so a report is still pulsing when the refresh carrying it lands.
 reacts to an id it has not focused before (so manual panning is not fought) and never
 zooms *out*. The archive map passes `focusOnNew={false}`.
 
+The marker popup shows the reporter's photograph, from the signed `photo_url` the
+map endpoint returns beside `has_photo`. It is dismissed by a `pointerdown`
+listener on the **map container**, not by `<Map onClick>`: an open InfoWindow
+lays a wrapper over the map much larger than the visible bubble, and a press on
+that wrapper never reaches the map — which is most of where "just outside the
+bubble" actually is. `pointerdown` rather than `click` so it runs before a
+marker's own handler, letting a press on a different pin close the old popup and
+open the new one instead of the two fighting over the same state.
+
+---
+
+## Deployment
+
+Live on Azure, resource group `firetrace-rg`, region **East Asia**. Backend is
+Container App `firetrace-backend`; frontend is Static Web App `firetrace-web`;
+Postgres `firetrace-db`; Azure Managed Redis `firetrace-redis` (port **10000**,
+TLS); registry `firetraceacr`; uploads in storage account `firetracemedia`.
+README has the URLs and the deploy commands.
+
+Both GitHub workflows fire on a push to `main`. The frontend deploys itself; the
+backend only builds an image, so rolling the Container App onto it is a separate
+`az containerapp update`.
+
+**This subscription is Azure for Students and blocks things.** `az acr build` /
+ACR Tasks are refused, which is why images build on a GitHub runner. Classic
+Azure Cache for Redis cannot be created, hence Managed Redis and its unusual
+port. "Southeast Asia" is blocked by policy while East Asia is fine. Resource
+providers may need `az provider register` first — creating the storage account
+failed as `SubscriptionNotFound`, which is not what that means.
+
 ---
 
 ## Unfinished work
@@ -204,12 +256,6 @@ zooms *out*. The archive map passes `focusOnNew={false}`.
 complete but the queue has no row selection and nothing calls
 `POST /api/incidents/verify/`. Consequence: the Responding and Resolved KPI cards
 read 0 forever in real use, since only `seed_demo_data` or the admin creates any.
-
-**Photo capture is a stub.** `report-wizard/PhotoStep.jsx`'s two buttons do nothing,
-and they now sit on the final screen where they are more prominent. The backend
-accepts `photo` on `POST /api/reports/` and the queue's Photo column works, but real
-submissions always show "no photo". Uploading needs `multipart/form-data`, so
-`apiFetch` needs a path that doesn't force a JSON content type.
 
 **Timeline endpoints are unused.** `/api/reports/<id>/timeline/` and
 `/api/incidents/<id>/timeline/` are built and tested; no screen consumes them, and
@@ -220,23 +266,29 @@ clicking a queue row does nothing.
 for `workflow_status`. Both can be deleted once the civilian pages move over.
 
 ### Testing gaps
-No frontend tests. `analytics/tests.py`, `realtime/tests.py`, `accounts/tests.py`
-are empty — KPI/activity/health views, the consumer, the map `scope`/`hours`
-filtering and the username fold are all uncovered by tests. The dashboard, the
-wizard and the WebSocket push have been verified by hand in a browser, not by a
-suite.
+No frontend tests. `analytics/tests.py` and `realtime/tests.py` are still empty —
+KPI/activity/health views and the consumer are uncovered. `accounts/tests.py` now
+covers registration, the privilege-escalation attempt, the username/email login
+split and the case fold. The dashboard and the wizard have been verified by hand
+in a browser, not by a suite.
+
+**A passing end-to-end check is not proof the feature works.** The realtime
+socket was verified end to end and still failed in real use: that test received
+its broadcast within seconds, before the first idle blocking read could time out.
+Anything long-lived needs to be observed *idle*, not just exercised once.
 
 ### Known small issues
-- **`RegisterSerializer` exposes `user_type` as writable.** Anyone can
-  `POST /accounts/register` with `user_type: "bfp"` and get full personnel access.
-  The "public registration always creates civilians" rule is convention only.
-- `CreateAccount.jsx` posts `first_name`, but it is not in `RegisterSerializer.Meta.
-  fields`, so it is silently dropped — which is *why* `Dashboard.jsx`'s
-  `user.first_name` is always `undefined` and falls back to `username`. Fixing the
-  display alone will not help; the name is never stored.
 - Two pre-existing ESLint errors: unused `err` in `ForgotPasswordRequest.jsx` and
   `ForgotPasswordReset.jsx`.
-- `SECRET_KEY` hardcoded in `settings.py`, `DEBUG = True`.
+- `SECRET_KEY` is hardcoded as a fallback in `settings.py`; the deployment
+  overrides it from a secret. `DEBUG` is env-driven and defaults to False.
+- `ALLOWED_HOSTS` is `"*"` in the deployment. Tightening it means adding the
+  Static Web App origin too — `asgi.py` validates the **WebSocket** Origin
+  against `ALLOWED_HOSTS`, since CORS does not apply to sockets, so narrowing it
+  carelessly silently drops realtime back to polling. Container Apps health
+  probes also send the container IP as `Host`.
+- 26 `.pyc` files are tracked in git, including `settings.cpython-314.pyc`, which
+  shows as modified after every run.
 - Email backend is console-only, so password reset mails print to the terminal.
 - `django-filter` is installed and in the `Pipfile` but never imported — queue
   filtering is hand-written in `ReportQueueView.get_queryset`. Use it or drop it.
@@ -247,15 +299,21 @@ suite.
 
 Nothing below is needed for current code to run.
 
-- **Redis** — only for a multi-process deployment. `CHANNEL_LAYERS` uses
-  `InMemoryChannelLayer`, which needs no server but only reaches clients on the
-  same process (fine for `runserver`). `channels-redis` is installed; swap the
-  backend per the comment in `settings.py` when there is a Redis to point at.
-  Nothing on this machine can run one today — no Docker, and `wsl` is a stub.
+- **Redis, locally.** `CHANNEL_LAYERS` falls back to `InMemoryChannelLayer` when
+  `REDIS_HOST` is unset — no server needed, but it only reaches clients on the
+  same process (fine for `runserver`). The deployment sets `REDIS_HOST` and uses
+  the Redis layer. Nothing on this machine can run a Redis today — no Docker, and
+  `wsl` is a stub — so the Redis path is only exercised against Azure.
 - **Pillow** — only if `IncidentReport.photo` switches `FileField` → `ImageField`.
   It is a `FileField` specifically to avoid the dependency; the Pillow wheel on
-  Python 3.14 is untested.
+  Python 3.14 is untested. Photo uploads work without it.
+- **An Azure storage account, locally.** Uploads fall back to `FileSystemStorage`
+  when `AZURE_ACCOUNT_NAME`/`AZURE_ACCOUNT_KEY` are unset.
 - **Frontend: nothing.** The dashboard uses only what is already in `package.json`.
+
+`django-storages[azure]` **is** installed and in the `Pipfile`. Editing the
+`Pipfile` means running `pipenv lock` — the Dockerfile installs with
+`--deploy`, which refuses a lock file whose hash does not match.
 
 ### Installed vs. thesis-specified versions — unresolved
 
@@ -265,7 +323,7 @@ Nothing below is needed for current code to run.
 | Django / DRF | 5.2 / 3.16 | 6.0.6 / 3.18 |
 | Node / PostgreSQL | 22 LTS / 17 | 24.16 / 18.6 |
 | React | 19 | 19.2.8 ✓ |
-| Channels / Redis | 4.2 / 7.2 | 4.3.2 + daphne 4.2.3 / no Redis (in-memory layer) |
+| Channels / Redis | 4.2 / 7.2 | 4.3.2 + daphne 4.2.3 / Azure Managed Redis in the deployment, in-memory locally |
 
 Downgrading Python or Postgres means rebuilding the virtualenv and the database.
 
@@ -294,13 +352,36 @@ Downgrading Python or Postgres means rebuilding the virtualenv and the database.
   Visual effects). Do not answer it with `animation: none` for the new-report pulse:
   it is the one alert on the screen that must not be missed, so the reduced-motion
   branch keeps a gentler in-place "breathe" instead. Decorative motion may stop.
+- **The Redis channel layer has two settings that look tidyable and are not.**
+  `address` must be a URL *string* — `channels-redis` hands a dict host straight
+  to `ConnectionPool.from_url`, so a `(host, port)` tuple raises `'tuple' object
+  has no attribute 'decode'` on the first `group_add`, visible only as a 1011
+  socket close. And `socket_timeout` must exceed `brpop_timeout` (5s): unset,
+  redis-py reuses the blocking timeout as the read deadline and gives up at
+  exactly 5.000s while Azure answers at ~5.2s, so every idle consumer dies and
+  the dashboard silently reverts to polling. Both failures look like "realtime
+  just doesn't work" rather than like an error.
+- **`broadcast_dashboard_event` swallows every exception by design**, so a broken
+  channel layer is silent on the write side. Diagnose realtime from the container
+  logs and an actually-idle socket, not from whether reports save.
+- **`az containerapp update --set-env-vars` replaces the whole environment**, it
+  does not merge. Resend every variable each time.
 - Bash heredocs (`<<'EOF'`) into files fail on CRLF here — use the Write tool for
   multi-line source files.
 - `manage.py shell < script.py` swallows output; use `shell -c "$(cat script.py)"`.
 - `IncidentReport.reference_number` is a **property, not a field** — it cannot be used
   in a `filter()`. Query by `id` or `created_at` instead.
 - Uploaded photos land in `MEDIA_ROOT` and are **not** rolled back by a transaction —
-  clean `FireTrace/media/` after a rolled-back seed run.
+  clean `FireTrace/media/` after a rolled-back seed run, and give any test that
+  saves an upload its own `MEDIA_ROOT` (see the map photo test) or it grows the
+  directory by a file per run.
+- **`DEBUG` defaults to False, including locally.** `urls.py` registers the
+  `MEDIA_URL` route under `if settings.DEBUG`, so without `DEBUG=True` in `.env`
+  a photo uploads fine and then 404s on display. It also gates the LAN-IP
+  auto-trust used for phone testing.
+- **Photo URLs are SAS-signed and expire** (default 1h) when Blob Storage is
+  configured. A URL captured in a fixture or left open in a stale tab stops
+  working; that is the signature ageing out, not a broken upload.
 - Phone testing: the LAN IP must match `VITE_API_BASE_URL`, `ALLOWED_HOSTS` and
   `CORS_ALLOWED_ORIGINS`. Tunnel hosts (`*.trycloudflare.com`, `*.ngrok-free.app`)
   are already allowed by regex in `settings.py`.
