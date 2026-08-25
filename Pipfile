@@ -15,6 +15,7 @@ djangorestframework-simplejwt = "*"
 channels = "*"
 channels-redis = "*"
 daphne = "*"
+whitenoise = "*"
 
 [dev-packages]
 django-stubs = "*"

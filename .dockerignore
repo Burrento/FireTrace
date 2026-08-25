@@ -1,0 +1,25 @@
+# Place this file at the repo root: FireTrace BackEnd/.dockerignore
+
+# Frontend — built and deployed separately to Static Web Apps
+FireTraceReact/
+
+# Never ship secrets or local dev artifacts into the image
+.env
+.env.example
+db.sqlite3
+media/
+
+# Tooling / editor / AI assistant clutter — irrelevant to the build,
+# and node_modules in particular would make every build painfully slow
+.git
+.gitignore
+.claude/
+.vscode/
+CLAUDE.md
+README.md
+pyrefly.toml
+pyrightconfig.json
+
+__pycache__/
+*.pyc
+.pytest_cache/
