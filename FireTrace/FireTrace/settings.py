@@ -44,10 +44,13 @@ GEO_MEDIUM_ACCURACY_M = env.int('GEO_MEDIUM_ACCURACY_M', default=200)
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!0&pf9ou#qb=**h%+#+r71e1i2@)f=r)@ck208f=w65aj%^z6*'
+SECRET_KEY = env(
+    'SECRET_KEY',
+    default='django-insecure-!0&pf9ou#qb=**h%+#+r71e1i2@)f=r)@ck208f=w65aj%^z6*',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Comma-separated in .env. A leading dot matches every subdomain, which is how
 # tunnels (.trycloudflare.com) stay usable as their hostname changes per run.
@@ -90,9 +93,27 @@ ASGI_APPLICATION = 'FireTrace.asgi.application'
 #           'CONFIG': {'hosts': [('127.0.0.1', 6379)]},
 #       },
 #   }
-CHANNEL_LAYERS = {
-    'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'},
-}
+_REDIS_HOST = env('REDIS_HOST', default=None)
+
+if _REDIS_HOST:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [
+                    {
+                        'address': (_REDIS_HOST, env.int('REDIS_PORT', default=6380)),
+                        'password': env('REDIS_PASSWORD', default=None),
+                        'ssl': env.bool('REDIS_SSL', default=True),
+                    },
+                ],
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'},
+    }
 
 
 # Application definition
@@ -126,6 +147,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'FireTrace.urls'
@@ -198,8 +220,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 # Uploaded report photos. Served by Django only while DEBUG is on.
 
 MEDIA_URL = 'media/'
