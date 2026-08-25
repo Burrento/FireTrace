@@ -169,6 +169,17 @@ function DashboardMap({
   const markers = [...incidents, ...reports];
   const fresh = useFreshReports(reports);
 
+  // Escape closes the details too, which is what an operator reaches for
+  // before hunting the small X. Registered only while something is open.
+  useEffect(() => {
+    if (!selected) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setSelected(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selected]);
+
   // The newest still-pulsing report drives the camera. `reports` arrives
   // newest-first from the server, so the first match is the latest.
   const newestFresh = focusOnNew ? reports.find((r) => fresh.has(r.id)) : undefined;
@@ -237,6 +248,10 @@ function DashboardMap({
             streetViewControl={false}
             mapTypeControl={false}
             fullscreenControl
+            /* Clicking the map dismisses the details. Google raises marker
+               clicks separately from map clicks, so this never fires when a
+               pin is what was hit -- selecting a different pin still works. */
+            onClick={() => setSelected(null)}
           >
             {newestFresh && <FocusOnNewReport report={newestFresh} />}
 

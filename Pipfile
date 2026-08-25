@@ -16,6 +16,7 @@ channels = "*"
 channels-redis = "*"
 daphne = "*"
 whitenoise = "*"
+django-storages = {extras = ["azure"], version = "*"}
 
 [dev-packages]
 django-stubs = "*"
