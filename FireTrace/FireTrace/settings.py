@@ -112,6 +112,15 @@ if _REDIS_HOST:
     _REDIS_SCHEME = 'rediss' if env.bool('REDIS_SSL', default=True) else 'redis'
     _REDIS_PORT = env.int('REDIS_PORT', default=6380)
 
+    # Must stay comfortably above channels-redis's own `brpop_timeout`, which
+    # is 5 seconds. An idle consumer sits in a blocking bzpopmin(timeout=5);
+    # when socket_timeout is unset, redis-py uses the blocking timeout as the
+    # read deadline too, so the client gives up at exactly 5.000s while Azure
+    # returns its empty reply at ~5.2s. The client loses that race every time,
+    # the read raises, and the consumer dies -- the socket reconnects in a
+    # loop and the dashboard silently falls back to polling forever.
+    _REDIS_SOCKET_TIMEOUT = env.int('REDIS_SOCKET_TIMEOUT', default=30)
+
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -120,6 +129,7 @@ if _REDIS_HOST:
                     {
                         'address': f'{_REDIS_SCHEME}://{_REDIS_HOST}:{_REDIS_PORT}',
                         'password': env('REDIS_PASSWORD', default=None),
+                        'socket_timeout': _REDIS_SOCKET_TIMEOUT,
                     },
                 ],
             },
