@@ -90,6 +90,60 @@ class LoginTests(TestCase):
         self.assertIn('access', response.data)
         self.assertEqual(response.data['user_type'], User.UserType.CIVILIAN)
 
+    def test_login_with_email_when_it_differs_from_username(self):
+        """A createsuperuser account has a plain username and its own email."""
+        User.objects.create_user(
+            username='admin',
+            email='chief@bfp.example.com',
+            password='sample-password-123',
+        )
+
+        response = self.client.post(
+            '/accounts/login',
+            {'username': 'chief@bfp.example.com', 'password': 'sample-password-123'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('access', response.data)
+
+    def test_login_with_unfolded_username(self):
+        """createsuperuser does not fold, so "Admin" must accept "admin"."""
+        User.objects.create_user(username='Admin', password='sample-password-123')
+
+        response = self.client.post(
+            '/accounts/login',
+            {'username': 'admin', 'password': 'sample-password-123'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_unknown_identifier_still_rejected(self):
+        response = self.client.post(
+            '/accounts/login',
+            {'username': 'nobody@example.com', 'password': 'sample-password-123'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_wrong_password_still_rejected_for_known_email(self):
+        """Resolving the identifier must not skip the password check."""
+        User.objects.create_user(
+            username='admin',
+            email='chief@bfp.example.com',
+            password='sample-password-123',
+        )
+
+        response = self.client.post(
+            '/accounts/login',
+            {'username': 'chief@bfp.example.com', 'password': 'wrong-password'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 401)
+
     def test_promoted_user_reports_bfp_on_login(self):
         """Promotion happens server-side; login must reflect it."""
         user = User.objects.get(username='juan@example.com')

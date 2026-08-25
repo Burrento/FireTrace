@@ -52,11 +52,25 @@ class LoginSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         remember_me = attrs.pop('remember_me', False)
 
-        # Usernames are stored folded (see RegisterSerializer), so fold the
-        # submitted one too — otherwise "Juan@..." fails against "juan@...".
+        # Accept either the username or the email address. For accounts made
+        # through public registration the two are the same string, but a
+        # superuser created with `createsuperuser` can have a plain username
+        # and an unrelated email, and could otherwise never sign in here.
+        #
+        # Resolving to the *stored* username also covers casing: registration
+        # folds usernames, `createsuperuser` does not, so "Admin" has to match
+        # a typed "admin" without relying on the fold alone.
         submitted = attrs.get(self.username_field)
         if isinstance(submitted, str):
-            attrs[self.username_field] = submitted.strip().lower()
+            submitted = submitted.strip().lower()
+            match = (
+                User.objects.filter(username__iexact=submitted).first()
+                or User.objects.filter(email__iexact=submitted).first()
+            )
+            # No match falls through unchanged so authentication fails the
+            # ordinary way -- a distinct error here would let a caller probe
+            # which accounts exist.
+            attrs[self.username_field] = match.username if match else submitted
 
         data = super().validate(attrs)
 
