@@ -477,6 +477,11 @@ class DashboardMapView(APIView):
                     'duplicate_status': r.duplicate_status,
                     'geocoding_confidence': r.geocoding_confidence,
                     'has_photo': r.has_photo,
+                    # Signing is a local HMAC, not a call to Azure, so doing it
+                    # per marker costs nothing worth avoiding. Absent rather
+                    # than empty when there is no photo, so the popup can tell
+                    # "none attached" from "attached but unreadable".
+                    'photo_url': r.photo.url if r.photo else None,
                     'created_at': r.created_at,
                 }
                 for r in reports
