@@ -591,6 +591,28 @@ body[data-shell='bfp'] #root {
 .bfp-iw-line { font-size: 12px; margin: 2px 0; text-transform: capitalize; }
 .bfp-iw-time { font-size: 11px; color: #6b7280; margin-top: 4px; }
 
+/* The reporter's photograph inside the marker popup. Constrained hard: the
+   InfoWindow sizes itself to its content, and an unbounded phone photo would
+   grow a bubble taller than the map it is anchored to. */
+.bfp-iw-photo { display: block; margin-top: 8px; }
+
+.bfp-iw-photo img {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.bfp-iw-photo-failed {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
 /* ---------- Queue table ---------- */
 
 .bfp-filters {

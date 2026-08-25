@@ -115,6 +115,34 @@ function MapLegend({ withheld, pulsing }) {
   );
 }
 
+/* Closes the details popup on any press that is not inside it.
+
+   The Map's own onClick is not enough: an open InfoWindow lays a wrapper over
+   the map that is much larger than the visible bubble, and a press landing on
+   that wrapper never reaches the map at all -- which is exactly the "clicked
+   away and it stayed open" case. Listening on the map container catches both.
+
+   `pointerdown` rather than `click` so this runs *before* a marker's own click
+   handler: pressing a different pin closes the old popup and then opens the new
+   one, instead of the two fighting over the same state. */
+function DismissDetailsOnOutsidePress({ onDismiss }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map?.getDiv();
+    if (!container) return undefined;
+
+    const onPointerDown = (event) => {
+      if (!event.target.closest?.('.gm-style-iw')) onDismiss();
+    };
+
+    container.addEventListener('pointerdown', onPointerDown);
+    return () => container.removeEventListener('pointerdown', onPointerDown);
+  }, [map, onDismiss]);
+
+  return null;
+}
+
 function MarkerDetails({ marker, onClose }) {
   const isIncident = marker.kind === 'incident';
 
@@ -143,8 +171,36 @@ function MarkerDetails({ marker, onClose }) {
         ) : (
           <p className="bfp-iw-line">
             Confidence: {marker.geocoding_confidence}
-            {marker.has_photo ? ' · photo attached' : ''}
+            {marker.has_photo && !marker.photo_url ? ' · photo attached' : ''}
           </p>
+        )}
+        {/* The reporter's photograph, when there is one. Shown rather than
+            described: an operator deciding whether to dispatch wants to see
+            the fire, and "Photo Attached" made them open the record to do it.
+            The URL is SAS-signed and expires, so a popup left open overnight
+            can find it stale -- say so instead of showing a broken image. */}
+        {marker.photo_url && (
+          <a
+            className="bfp-iw-photo"
+            href={marker.photo_url}
+            target="_blank"
+            rel="noreferrer"
+            title="Open full size"
+          >
+            <img
+              src={marker.photo_url}
+              alt={`Reported at ${marker.barangay}`}
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.replaceWith(
+                  Object.assign(document.createElement('span'), {
+                    className: 'bfp-iw-photo-failed',
+                    textContent: 'Photo unavailable — refresh to reload',
+                  }),
+                );
+              }}
+            />
+          </a>
         )}
         <p className="bfp-iw-time">{new Date(marker.created_at).toLocaleString()}</p>
       </div>
@@ -248,11 +304,11 @@ function DashboardMap({
             streetViewControl={false}
             mapTypeControl={false}
             fullscreenControl
-            /* Clicking the map dismisses the details. Google raises marker
-               clicks separately from map clicks, so this never fires when a
-               pin is what was hit -- selecting a different pin still works. */
-            onClick={() => setSelected(null)}
           >
+            {selected && (
+              <DismissDetailsOnOutsidePress onDismiss={() => setSelected(null)} />
+            )}
+
             {newestFresh && <FocusOnNewReport report={newestFresh} />}
 
             {/* Drawn as their own markers under the pins so the ring stays
