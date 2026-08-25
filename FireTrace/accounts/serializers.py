@@ -10,7 +10,16 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'user_type')
+        # first_name is accepted: the signup form has always posted it, and
+        # while it was absent here DRF dropped it silently, which is why the
+        # dashboard greeting had no name to show and fell back to the username.
+        fields = ('id', 'username', 'email', 'first_name', 'password', 'user_type')
+        # Public registration creates civilians, and this is what enforces it.
+        # While user_type was writable, anyone could POST user_type="bfp" and
+        # grant themselves the whole personnel dashboard. Promotion to BFP is a
+        # deliberate act performed through the admin or the shell, never
+        # something the applicant gets to assert about themselves.
+        read_only_fields = ('user_type',)
 
     # The username *is* the email address here, and email is case-insensitive in
     # practice while Django's username lookup is not. Store it folded so a phone
