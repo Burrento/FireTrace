@@ -13,6 +13,7 @@ function IncidentMap({ latitude, longitude }) {
           defaultCenter={position}
           defaultZoom={16}
           gestureHandling="greedy"
+          disableDefaultUI={false}
           mapTypeControl={false}
           streetViewControl={false}
           fullscreenControl={false}
