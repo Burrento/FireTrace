@@ -1,0 +1,932 @@
+/* ============================================================
+   BFP Administrative Portal
+   Desktop-first operations dashboard. Reuses the app's existing
+   theme tokens (--civ-*, --ft-*) so it follows light/dark with
+   everything else.
+   ============================================================ */
+
+/* The app shell is a phone-width column by default. BfpDashboard sets
+   data-shell="bfp" on <body> while it is mounted so this one route can use
+   the full viewport, and releases it on unmount. */
+body[data-shell='bfp'] #root {
+  max-width: none;
+  text-align: left;
+  border-inline: 0;
+  background: var(--civ-bg);
+}
+
+.bfp-dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  background: var(--civ-bg);
+  color: var(--civ-text);
+  font-family: var(--sans);
+}
+
+.bfp-boot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 60svh;
+  color: var(--civ-text-muted);
+}
+
+/* ---------- Header ---------- */
+
+.bfp-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, var(--civ-header-from), var(--civ-header-to));
+  border-bottom: 1px solid var(--civ-border);
+  box-shadow: 0 1px 3px var(--civ-shadow);
+}
+
+.bfp-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bfp-brand-icon {
+  font-size: 26px;
+  color: var(--ft-red);
+}
+
+.bfp-brand-name {
+  font-family: var(--heading);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.bfp-brand-fire { color: var(--ft-red); }
+.bfp-brand-trace { color: var(--civ-text); }
+
+.bfp-brand-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--civ-text-faint);
+}
+
+/* ---------- Portal tabs ---------- */
+
+.bfp-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  padding-left: 18px;
+}
+
+.bfp-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--civ-text-muted);
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bfp-nav-link:hover {
+  background: var(--civ-surface-2);
+  color: var(--civ-text);
+}
+
+.bfp-nav-link.active {
+  background: var(--civ-surface);
+  color: var(--ft-red);
+  box-shadow: inset 0 0 0 1px var(--civ-border);
+}
+
+.bfp-nav-link i { font-size: 12px; }
+
+@media (max-width: 900px) {
+  .bfp-nav { padding-left: 0; width: 100%; order: 3; }
+  .bfp-nav-link span { display: none; }
+}
+
+.bfp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bfp-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--civ-text-muted);
+  white-space: nowrap;
+}
+
+.bfp-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--civ-status-verified);
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  animation: bfp-pulse 2.4s ease-out infinite;
+}
+
+@keyframes bfp-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45); }
+  70% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* Fallback timer rather than a live socket: no pulse, no green. */
+.bfp-live-dot.is-polling {
+  background: var(--civ-text-faint);
+  box-shadow: none;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bfp-live-dot { animation: none; }
+}
+
+.bfp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--civ-border);
+  border-radius: 10px;
+  background: var(--civ-surface);
+  color: var(--civ-text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bfp-icon-btn:hover {
+  background: var(--civ-surface-2);
+  color: var(--civ-text);
+}
+
+.bfp-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 10px;
+  border-left: 1px solid var(--civ-border);
+}
+
+.bfp-user-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ft-red), var(--ft-red-dark));
+  color: #fff;
+  font-weight: 700;
+}
+
+.bfp-user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.bfp-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bfp-user-role {
+  font-size: 11px;
+  color: var(--civ-text-faint);
+}
+
+/* ---------- Layout ---------- */
+
+.bfp-main {
+  flex: 1;
+  padding: 20px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bfp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 18px;
+  align-items: start;
+}
+
+.bfp-col-main,
+.bfp-col-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* Sidebar drops below the main column before the table gets cramped. */
+@media (max-width: 1180px) {
+  .bfp-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .bfp-header { padding: 10px 14px; }
+  .bfp-main { padding: 14px 14px 30px; }
+  .bfp-user-text { display: none; }
+}
+
+/* ---------- KPI cards ---------- */
+
+.bfp-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1180px) {
+  .bfp-kpi-row { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+}
+
+.bfp-kpi-card {
+  position: relative;
+  padding: 16px 16px 14px;
+  border: 1px solid var(--civ-border);
+  border-radius: 14px;
+  background: var(--civ-surface);
+  box-shadow: 0 1px 3px var(--civ-shadow);
+  overflow: hidden;
+}
+
+/* The accent stripe is the card's only colour cue, so each KPI stays
+   distinguishable without relying on the icon alone. */
+.bfp-kpi-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--civ-text-faint);
+}
+
+.bfp-kpi-new_reports::before { background: var(--civ-status-submitted); }
+.bfp-kpi-under_review::before { background: var(--civ-status-review); }
+.bfp-kpi-duplicates::before { background: #8b5cf6; }
+.bfp-kpi-responding::before { background: var(--civ-status-responding); }
+.bfp-kpi-resolved::before { background: var(--civ-status-resolved); }
+
+.bfp-kpi-skeleton {
+  height: 108px;
+  background: linear-gradient(90deg, var(--civ-skeleton-from), var(--civ-skeleton-to), var(--civ-skeleton-from));
+  background-size: 200% 100%;
+  animation: bfp-shimmer 1.4s linear infinite;
+}
+
+@keyframes bfp-shimmer {
+  to { background-position: -200% 0; }
+}
+
+.bfp-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bfp-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--civ-text-muted);
+}
+
+.bfp-kpi-icon {
+  font-size: 14px;
+  color: var(--civ-text-faint);
+}
+
+.bfp-kpi-value {
+  margin-top: 6px;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--civ-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.bfp-kpi-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--civ-text-faint);
+}
+
+.bfp-kpi-scope {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--civ-chip-bg);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.bfp-kpi-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Panels ---------- */
+
+.bfp-panel {
+  border: 1px solid var(--civ-border);
+  border-radius: 14px;
+  background: var(--civ-surface);
+  box-shadow: 0 1px 3px var(--civ-shadow);
+  overflow: hidden;
+}
+
+.bfp-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--civ-border-soft);
+}
+
+.bfp-panel-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--civ-text);
+}
+
+.bfp-panel-sub,
+.bfp-panel-muted {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--civ-text-faint);
+}
+
+.bfp-panel-muted { padding: 14px 16px; }
+
+.bfp-panel-flag {
+  font-size: 12px;
+  color: var(--civ-text-faint);
+}
+
+.bfp-panel-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--civ-border-soft);
+  font-size: 11px;
+  color: var(--civ-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.bfp-inline-error {
+  margin: 10px 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--ft-alert-border);
+  border-radius: 8px;
+  background: var(--ft-alert-bg);
+  color: var(--ft-alert-text);
+  font-size: 12px;
+}
+
+/* ---------- Map ---------- */
+
+.bfp-map-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bfp-window-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--civ-border);
+  border-radius: 9px;
+  background: var(--civ-surface-2);
+}
+
+.bfp-window-switch button {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--civ-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bfp-window-switch button:hover { color: var(--civ-text); }
+
+.bfp-window-switch button.is-active {
+  background: var(--ft-red);
+  color: var(--ft-on-red);
+}
+
+.bfp-map-canvas {
+  height: 420px;
+  width: 100%;
+}
+
+.bfp-map-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 260px;
+  color: var(--civ-text-muted);
+  text-align: center;
+}
+
+.bfp-map-fallback i { font-size: 24px; color: var(--civ-status-review); }
+.bfp-map-fallback-hint { font-size: 12px; color: var(--civ-text-faint); }
+
+.bfp-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--civ-border-soft);
+  font-size: 12px;
+  color: var(--civ-text-muted);
+}
+
+.bfp-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bfp-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+/* A civilian report that arrived since the last refresh. The ring sits on the
+   coordinate itself (AdvancedMarker anchors custom content bottom-centre, hence
+   the translate) and fades out after 90s — see PULSE_WINDOW_MS.
+
+   Red for urgency, deliberately louder than the amber pin it surrounds: the
+   ring means "this just came in", the pin underneath still carries the
+   verified/unverified/duplicate colour. */
+.bfp-map-pulse {
+  position: relative;
+  display: block;
+  width: 26px;
+  height: 26px;
+  transform: translateY(50%);
+  pointer-events: none;
+}
+
+.bfp-map-pulse::before,
+.bfp-map-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(215, 25, 42, 0.95);
+  background: rgba(215, 25, 42, 0.28);
+  animation: bfp-map-pulse-ring 1.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+}
+
+.bfp-map-pulse::after {
+  animation-delay: 0.9s;
+}
+
+@keyframes bfp-map-pulse-ring {
+  0% { transform: scale(0.5); opacity: 0.95; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+.bfp-legend-dot-pulse {
+  background: rgba(215, 25, 42, 0.4);
+  border-color: rgba(215, 25, 42, 0.95);
+  animation: bfp-legend-pulse 1.8s ease-out infinite;
+}
+
+@keyframes bfp-legend-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(215, 25, 42, 0.6); }
+  70% { box-shadow: 0 0 0 7px rgba(215, 25, 42, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(215, 25, 42, 0); }
+}
+
+/* "Reduce", not "remove". A new fire is the one thing on this screen an
+   operator must not miss, so under reduced motion the ring stops sweeping
+   outward and breathes in place instead -- no travel, still unmistakable.
+   Purely decorative motion (.bfp-live-dot) stays switched off. */
+@media (prefers-reduced-motion: reduce) {
+  .bfp-map-pulse::before,
+  .bfp-map-pulse::after {
+    transform: scale(2.4);
+    animation: bfp-map-pulse-breathe 2.2s ease-in-out infinite;
+  }
+
+  .bfp-map-pulse::after { animation-delay: 1.1s; }
+
+  .bfp-legend-dot-pulse {
+    animation: bfp-map-pulse-breathe 2.2s ease-in-out infinite;
+  }
+}
+
+@keyframes bfp-map-pulse-breathe {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+.bfp-legend-note {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--civ-text-faint);
+}
+
+.bfp-infowindow { min-width: 200px; font-family: var(--sans); color: #14151a; }
+.bfp-iw-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.bfp-iw-kind {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.bfp-iw-kind.is-incident { background: rgba(215, 25, 42, 0.14); color: #990d1b; }
+.bfp-iw-kind.is-report { background: rgba(247, 179, 43, 0.22); color: #7a5300; }
+.bfp-iw-line { font-size: 12px; margin: 2px 0; text-transform: capitalize; }
+.bfp-iw-time { font-size: 11px; color: #6b7280; margin-top: 4px; }
+
+/* The reporter's photograph inside the marker popup. Constrained hard: the
+   InfoWindow sizes itself to its content, and an unbounded phone photo would
+   grow a bubble taller than the map it is anchored to. */
+.bfp-iw-photo { display: block; margin-top: 8px; }
+
+.bfp-iw-photo img {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.bfp-iw-photo-failed {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ---------- Queue table ---------- */
+
+.bfp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--civ-border-soft);
+  background: var(--civ-surface-2);
+}
+
+.bfp-filter-input,
+.bfp-filter-select {
+  padding: 7px 10px;
+  border: 1px solid var(--civ-border);
+  border-radius: 8px;
+  background: var(--ft-input-bg);
+  color: var(--civ-text);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.bfp-filter-input {
+  flex: 1 1 220px;
+  min-width: 160px;
+}
+
+.bfp-link-btn {
+  border: 0;
+  background: none;
+  color: var(--ft-red);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.bfp-table-wrap {
+  overflow-x: auto;
+}
+
+.bfp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.bfp-table thead th {
+  position: sticky;
+  top: 0;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--civ-text-faint);
+  background: var(--civ-surface-2);
+  border-bottom: 1px solid var(--civ-border);
+  white-space: nowrap;
+}
+
+.bfp-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--civ-border-soft);
+  vertical-align: top;
+  color: var(--civ-text);
+}
+
+.bfp-table tbody tr:hover { background: var(--civ-surface-2); }
+
+.bfp-row-flagged {
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.bfp-col-center { text-align: center; }
+
+.bfp-table-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--civ-text-faint);
+}
+
+.bfp-ref {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--civ-text);
+}
+
+.bfp-conf-warn {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--civ-status-review);
+}
+
+.bfp-time-abs { display: block; white-space: nowrap; }
+.bfp-time-rel { display: block; font-size: 11px; color: var(--civ-text-faint); }
+
+.bfp-photo-yes { color: var(--civ-status-verified); }
+.bfp-photo-no { color: var(--civ-text-faint); opacity: 0.6; }
+
+.bfp-status-select {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.bfp-status-select:disabled { opacity: 0.5; cursor: progress; }
+
+/* ---------- Status badges ---------- */
+
+.bfp-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bfp-badge-submitted { background: var(--civ-status-submitted-bg); color: var(--civ-status-submitted); }
+.bfp-badge-under-review { background: var(--civ-status-review-bg); color: var(--civ-status-review); }
+.bfp-badge-verified { background: var(--civ-status-verified-bg); color: var(--civ-status-verified); }
+.bfp-badge-responding { background: var(--civ-status-responding-bg); color: var(--civ-status-responding); }
+.bfp-badge-resolved { background: var(--civ-status-resolved-bg); color: var(--civ-status-resolved); }
+
+.bfp-badge-not-flagged { background: var(--civ-chip-bg); color: var(--civ-text-muted); }
+.bfp-badge-possible-duplicate { background: rgba(139, 92, 246, 0.16); color: #7c3aed; }
+.bfp-badge-kept-separate { background: var(--civ-status-verified-bg); color: var(--civ-status-verified); }
+.bfp-badge-confirmed-duplicate { background: rgba(215, 25, 42, 0.14); color: var(--ft-red); }
+
+:root[data-theme='dark'] .bfp-badge-possible-duplicate { color: #c4b5fd; }
+
+/* ---------- Duplicate disposition ---------- */
+
+.bfp-dup-detail { margin-top: 6px; }
+
+.bfp-dup-evidence {
+  display: block;
+  font-size: 11px;
+  color: var(--civ-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.bfp-dup-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.bfp-mini-btn {
+  padding: 4px 9px;
+  border: 1px solid var(--civ-border);
+  border-radius: 7px;
+  background: var(--civ-surface);
+  color: var(--civ-text-muted);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bfp-mini-btn:hover:enabled {
+  background: var(--civ-surface-2);
+  color: var(--civ-text);
+}
+
+.bfp-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.bfp-mini-btn-danger {
+  border-color: rgba(215, 25, 42, 0.4);
+  color: var(--ft-red);
+}
+
+.bfp-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--civ-border-soft);
+}
+
+.bfp-pager-label { font-size: 12px; color: var(--civ-text-faint); }
+
+/* ---------- System health ---------- */
+
+.bfp-health-overall {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.bfp-health-overall.is-operational { background: var(--civ-status-verified-bg); color: var(--civ-status-verified); }
+.bfp-health-overall.is-degraded { background: var(--civ-status-review-bg); color: var(--civ-status-review); }
+.bfp-health-overall.is-down { background: rgba(215, 25, 42, 0.14); color: var(--ft-red); }
+
+.bfp-health-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+
+.bfp-health-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+}
+
+.bfp-health-icon { font-size: 14px; }
+.bfp-health-icon.is-operational { color: var(--civ-status-verified); }
+.bfp-health-icon.is-degraded { color: var(--civ-status-review); }
+.bfp-health-icon.is-down { color: var(--ft-red); }
+
+.bfp-health-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.bfp-health-label { font-size: 13px; font-weight: 600; }
+
+.bfp-health-detail {
+  font-size: 11px;
+  color: var(--civ-text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Says whether the row was actually probed or only inspected in config. */
+.bfp-health-check {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--civ-chip-bg);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--civ-text-faint);
+}
+
+/* ---------- Activity feed ---------- */
+
+.bfp-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.bfp-activity-item {
+  display: flex;
+  gap: 10px;
+  padding: 9px 16px;
+}
+
+.bfp-activity-item + .bfp-activity-item {
+  border-top: 1px solid var(--civ-border-soft);
+}
+
+.bfp-activity-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--civ-chip-bg);
+  color: var(--civ-text-muted);
+  font-size: 11px;
+}
+
+.bfp-activity-body { min-width: 0; }
+
+.bfp-activity-summary {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--civ-text);
+}
+
+.bfp-activity-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--civ-text-faint);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bfp-activity-actor { font-weight: 600; color: var(--civ-text-muted); }
+
+/* System-raised entries are visually distinct from personnel actions, so the
+   audit trail never implies a person made a call the rule made. */
+.bfp-activity-actor.is-system {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--civ-text-faint);
+}
+
+.bfp-activity-dot { opacity: 0.6; }

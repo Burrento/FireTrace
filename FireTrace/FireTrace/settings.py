@@ -24,23 +24,133 @@ environ.Env.read_env(BASE_DIR.parent / '.env')
 GOOGLE_MAPS_API_KEY = env('GOOGLE_MAPS_API_KEY', default='')
 
 
+# Duplicate flagging
+# Two reports are flagged as possible duplicates when they sit within
+# DUPLICATE_RADIUS_METERS of each other AND were submitted within
+# DUPLICATE_TIME_WINDOW_MINUTES of each other. Both conditions must hold.
+# Exposed as settings so the rule can be calibrated during field testing
+# without a code change — and so the thresholds in force are always auditable.
+DUPLICATE_RADIUS_METERS = env.int('DUPLICATE_RADIUS_METERS', default=150)
+DUPLICATE_TIME_WINDOW_MINUTES = env.int('DUPLICATE_TIME_WINDOW_MINUTES', default=30)
+
+# Geocoding confidence bands, in metres of reported GPS accuracy.
+# A fix at or under HIGH is graded High; at or under MEDIUM, Medium; beyond
+# that, Low — and Low is never plotted as a precise point on the map.
+GEO_HIGH_ACCURACY_M = env.int('GEO_HIGH_ACCURACY_M', default=50)
+GEO_MEDIUM_ACCURACY_M = env.int('GEO_MEDIUM_ACCURACY_M', default=200)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!0&pf9ou#qb=**h%+#+r71e1i2@)f=r)@ck208f=w65aj%^z6*'
+SECRET_KEY = env(
+    'SECRET_KEY',
+    default='django-insecure-!0&pf9ou#qb=**h%+#+r71e1i2@)f=r)@ck208f=w65aj%^z6*',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#
+# Defaults to off, so a deployment that forgets to set it is safe rather than
+# sorry. Set DEBUG=True in .env for local work: it is what serves uploaded
+# photos back (see MEDIA_URL below) and what auto-trusts this machine's LAN
+# addresses for phone testing.
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = ['192.168.1.22', 'localhost', '127.0.0.1']
+# Comma-separated in .env. A leading dot matches every subdomain, which is how
+# tunnels (.trycloudflare.com) stay usable as their hostname changes per run.
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=['localhost', '127.0.0.1', '.trycloudflare.com', '.ngrok-free.app'],
+)
+
+# Phone testing hits this machine by its LAN IP, which changes with the DHCP
+# lease and would otherwise have to be pasted into .env after every change.
+# Django rejects an unlisted Host with a bare 400, which reads on the phone as
+# "the server is down", so resolve our own addresses and trust them in DEBUG.
+# CORS already trusts the same private ranges by regex further down.
+if DEBUG:
+    import socket
+
+    try:
+        _local_ips = socket.gethostbyname_ex(socket.gethostname())[2]
+    except OSError:
+        _local_ips = []
+    ALLOWED_HOSTS += [ip for ip in _local_ips if ip not in ALLOWED_HOSTS]
 
 AUTH_USER_MODEL = 'accounts.User'
+
+# Real-time dashboard transport. ASGI_APPLICATION points at the router in
+# asgi.py, which sends /ws/ to the consumer and everything else to Django.
+ASGI_APPLICATION = 'FireTrace.asgi.application'
+
+# Redis when REDIS_HOST is set, in-memory otherwise.
+#
+# The in-memory layer keeps every subscriber inside one process, which is
+# exactly what `runserver` is, and needs no Redis on this machine. It is *not*
+# production-safe: with two or more worker processes a broadcast only reaches
+# the clients attached to the process that sent it.
+_REDIS_HOST = env('REDIS_HOST', default=None)
+
+if _REDIS_HOST:
+    # channels-redis hands a dict host straight to `ConnectionPool.from_url`,
+    # so `address` must be a URL *string* -- a (host, port) tuple raises
+    # "'tuple' object has no attribute 'decode'" the first time a consumer
+    # calls group_add, which surfaces only as a 1011 close on the socket.
+    # TLS rides on the scheme (`rediss://`); there is no `ssl` kwarg here.
+    # The password stays a separate kwarg rather than URL userinfo so a key
+    # containing +, / or = needs no percent-encoding and never lands in a
+    # connection string that could be logged.
+    _REDIS_SCHEME = 'rediss' if env.bool('REDIS_SSL', default=True) else 'redis'
+    _REDIS_PORT = env.int('REDIS_PORT', default=6380)
+
+    # A bounded read deadline, so a dead connection is noticed rather than hung
+    # on. It also matters if anyone ever moves back to the core layer below:
+    # that one parks idle consumers in a blocking bzpopmin(timeout=5), and with
+    # socket_timeout unset redis-py reuses the blocking timeout as the read
+    # deadline, giving up at exactly 5.000s while Azure answers at ~5.2s. Every
+    # idle consumer then dies and the dashboard reverts to polling. Whatever
+    # this is set to must stay clear of that 5 second floor.
+    _REDIS_SOCKET_TIMEOUT = env.int('REDIS_SOCKET_TIMEOUT', default=30)
+
+    # The *pubsub* layer, not the default RedisChannelLayer. Azure Managed Redis
+    # is clustered, and the default layer pipelines commands across one key per
+    # channel; those keys hash to different slots, so every group_send with more
+    # than one subscriber aborts with ClusterCrossSlotError. It fails silently,
+    # because broadcast_dashboard_event swallows exceptions by design -- writes
+    # succeed and the dashboard just never hears about them.
+    #
+    # Pubsub suits this push anyway: it carries no data, only "refetch now", so
+    # there is nothing to persist or replay. The trade is that a momentarily
+    # disconnected operator misses that nudge rather than receiving it late,
+    # which the polling fallback in useDashboardData.js already covers.
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.pubsub.RedisPubSubChannelLayer',
+            'CONFIG': {
+                'hosts': [
+                    {
+                        'address': f'{_REDIS_SCHEME}://{_REDIS_HOST}:{_REDIS_PORT}',
+                        'password': env('REDIS_PASSWORD', default=None),
+                        'socket_timeout': _REDIS_SOCKET_TIMEOUT,
+                    },
+                ],
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'},
+    }
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    # daphne must precede staticfiles: it replaces runserver with an ASGI one,
+    # which is what lets the dev server speak WebSocket as well as HTTP.
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -66,6 +176,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'FireTrace.urls'
@@ -138,6 +249,45 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Uploaded report photos.
+#
+# The container filesystem is ephemeral: anything written to MEDIA_ROOT is gone
+# on the next restart or revision, and there is no web server in front of
+# Django to serve it either (whitenoise handles STATIC_ROOT only, by design).
+# So when a blob account is configured, uploads go straight to Azure Blob
+# Storage and MEDIA_URL points at the container.
+#
+# Without it, the local FileSystemStorage keeps development working with no
+# Azure account and no credentials to leak.
+AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME', default='')
+AZURE_ACCOUNT_KEY = env('AZURE_ACCOUNT_KEY', default='')
+AZURE_CONTAINER = env('AZURE_CONTAINER', default='media')
+
+# The blob container is private, so django-storages signs each URL with a SAS
+# token that expires. A report photograph can show a person's home, their
+# belongings and their neighbours, and a public container would make every one
+# of them readable by anyone who ever saw or guessed a link -- including long
+# after the incident is closed. An hour is long enough to load a queue page.
+AZURE_URL_EXPIRATION_SECS = env.int('AZURE_URL_EXPIRATION_SECS', default=3600)
+
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = 'media/'
+
+if AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY:
+    # AzureStorage builds its own absolute, signed URLs, so MEDIA_URL above is
+    # unused in this branch -- it stays for the local fallback below.
+    _default_storage = {'BACKEND': 'storages.backends.azure_storage.AzureStorage'}
+else:
+    _default_storage = {'BACKEND': 'django.core.files.storage.FileSystemStorage'}
+
+STORAGES = {
+    'default': _default_storage,
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 
 # Email
@@ -150,12 +300,28 @@ MAILERS = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://192.168.1.22:5173",
-    "http://192.168.1.22:8000",
+# Exact origins, comma-separated in .env. Add your LAN origin here when testing
+# from a phone, e.g. http://192.168.1.22:5173
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ALLOWED_ORIGINS',
+    default=['http://localhost:5173', 'http://127.0.0.1:5173'],
+)
 
+# Tunnel and LAN hostnames change per run, so match them by pattern instead of
+# listing each one. Private-network ranges only, not the whole internet.
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://.*\.trycloudflare\.com$',
+    r'^https://.*\.ngrok-free\.app$',
+    r'^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$',
+    r'^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$',
 ]
+
+# Django 4+ checks the Origin header on unsafe requests; tunnels are https and
+# would otherwise fail CSRF on the admin login.
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=['https://*.trycloudflare.com', 'https://*.ngrok-free.app'],
+)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -168,6 +334,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     # How long a normal ("remember me" unticked) session survives.
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
 }
 
 # Applied instead of REFRESH_TOKEN_LIFETIME when the user ticks "Remember me".
