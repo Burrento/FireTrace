@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL, apiFetch } from '../../api';
 import { getAccessToken } from '../../auth';
 
@@ -161,6 +162,28 @@ export function useDashboardPoll(intervalMs = 15000) {
   }, [intervalMs, live, refreshNow]);
 
   return { tick, lastRefresh, refreshNow, live };
+}
+
+/* The clock plus the bounce, which is what every portal page needs and all of
+   them were repeating.
+
+   `BfpShell` already redirects a civilian on mount, but that check races the
+   page's own first fetch; this is what handles the API refusing a request the
+   shell had not finished vetting. Navigation happens in an effect rather than
+   inside the fetch callback, because redirecting from a response handler
+   updates a component that may already have unmounted. */
+export function useBfpPage(intervalMs = 15000) {
+  const navigate = useNavigate();
+  const [accessDenied, setAccessDenied] = useState(false);
+  const poll = useDashboardPoll(intervalMs);
+
+  const onAuthError = useCallback(() => setAccessDenied(true), []);
+
+  useEffect(() => {
+    if (accessDenied) navigate('/dashboard');
+  }, [accessDenied, navigate]);
+
+  return { ...poll, onAuthError };
 }
 
 /* Fetches `path` on mount and on every tick.

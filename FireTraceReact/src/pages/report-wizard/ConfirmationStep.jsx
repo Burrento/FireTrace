@@ -33,7 +33,7 @@ function ConfirmationStep() {
                 <p className="submitted-value">{new Date(incident.created_at).toLocaleString()}</p>
 
                 <p className="submitted-label">Current Status</p>
-                <span className="submitted-status">{String(incident.status).toUpperCase()}</span>
+                <span className="submitted-status">{String(incident.status_display || incident.status).toUpperCase()}</span>
             </div>
 
             <button className="view-status-button"><Link to="/myreport">VIEW REPORT STATUS</Link></button><br />

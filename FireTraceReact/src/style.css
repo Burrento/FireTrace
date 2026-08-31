@@ -1,9 +1,14 @@
-﻿/* ============================================================
-   FireTrace â€” shared stylesheet
-   Mobile-first. All sizing is fluid with a phone-width cap
-   (--ft-max-width); all colors come from tokens in index.css so
-   the UI follows the device light/dark theme.
+/* ============================================================
+   FireTrace — shared stylesheet
+   Mobile-first: every page renders inside .page, which is fluid
+   with a phone-width cap. Colors come from the tokens defined in
+   index.css so the UI follows the device light/dark theme.
    ============================================================ */
+
+/* Global reset */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
 
 /* ---------- Auth Pages Styling ---------- */
 .auth-page {
@@ -338,115 +343,26 @@ center > br {
     display: none;
 }
 
-.body {
+
+html, body {
     margin: 0;
+    width: 100%;
+    overflow-x: hidden;
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
+/* #root's width/max-width/centering live in index.css — don't set
+   margin here, this file loads later and would override the auto. */
+#root {
+    overflow-x: hidden;
 }
 
-/* Shared: elements that should span the full device width even
-   though the shell has a side gutter. */
-.top-bar,
-.welcome-header {
-    width: calc(100% + 2 * var(--ft-gutter));
-    max-width: none;
-    margin-inline: calc(-1 * var(--ft-gutter));
-}
-
-/* Shared: section labels. These used to fake left-alignment with
-   `padding-right: 282px` inside <center>, which pushed them off
-   screen on a phone. They are now genuinely left-aligned blocks. */
-.report,
-.report2,
-.incident-text,
-.description-text,
-.barangay-text,
-.address-text,
-.addphoto,
-.email,
-.newpass,
-.newpass2,
-.label,
-.h3create,
-.logintext {
+.page {
     width: 100%;
     max-width: var(--ft-max-width);
-    box-sizing: border-box;
-    padding-right: 0;
-    text-align: left;
+    margin: 0 auto;
+    padding: 0 20px 90px;
+    text-align: center;
     color: var(--ft-text);
-}
-
-/* Shared: full-width action buttons */
-.started,
-.account,
-.create-button,
-.confirmemail,
-.CallBFP,
-.FireReport,
-.pinpointbtn,
-.takephoto,
-.selectphoto,
-.view-status-button,
-.contact-bfp-button,
-.view-details-button {
-    width: 100%;
-    max-width: var(--ft-max-width);
-    box-sizing: border-box;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-}
-
-button {
-    min-height: 44px;
-    cursor: pointer;
-}
-
-/* Buttons that wrap a <Link>: make the whole button tappable,
-   not just the text inside it. */
-button > a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-}
-
-/* Shared: form controls. 16px font-size keeps iOS from zooming
-   in when a field is focused. */
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="password"],
-select,
-textarea {
-    width: 100%;
-    max-width: var(--ft-max-width);
-    box-sizing: border-box;
-    padding: 10px 12px;
-    border: 1px solid var(--ft-border);
-    border-radius: 8px;
-    background-color: var(--ft-input-bg);
-    color: var(--ft-text);
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    margin-bottom: 10px;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="password"],
-select {
-    height: 45px;
-}
-
-textarea {
-    height: 100px;
-    resize: none;
 }
 
 /* ---------- Welcome Page (Premium Redesign) ---------- */
@@ -470,6 +386,131 @@ textarea {
     max-width: 740px;
     margin: 18px auto 6px;
     box-shadow: 0 10px 30px rgba(183, 28, 28, 0.18);
+}
+
+.geo{
+    font-family: Arial, sans-serif;
+    color: rgb(220, 210, 210);
+}
+.firetrace1 {
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0px;
+    color: rgb(231, 231, 231);
+    margin-bottom: 50px;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Buttons that wrap a <Link>: make the whole button tappable,
+   not just the text inside it. */
+button > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.started {
+    border: none;
+    border-radius: 10px;
+    color: var(--ft-on-red);
+    background-color: rgb(177, 26, 26);
+    padding: 10px 20px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 250px;
+    margin-top: 40px;
+    transition: 0.4s;
+}
+
+.started:hover {
+    background-color: rgb(221, 0, 0);
+    transition: background-color 0.3s ease;
+}
+
+.account {
+    border: none;
+    border-radius: 10px;
+    color: var(--ft-neutral-btn-text);
+    background-color: var(--ft-neutral-btn);
+    padding: 10px 20px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 250px;
+    transition: 0.4s;
+}
+
+.account:hover {
+    background-color: var(--ft-neutral-btn-hover);
+    transition: background-color 0.3s ease;
+}
+
+.sentence1{
+    font-family: Arial, sans-serif;
+    color: var(--ft-text-faint);
+    font-size: 13px;
+}
+
+/* CreateAccount.jsx css */
+.top-bar {
+    /* Full-bleed inside .page's side padding */
+    width: calc(100% + 40px);
+    margin-inline: -20px;
+    min-height: 56px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px;
+    background-color: var(--ft-surface);
+    border-bottom: 1px solid var(--ft-border);
+    font-family: Arial, sans-serif;
+    color: var(--ft-text);
+}
+
+.back-button {
+    grid-column: 1;
+    justify-self: start;
+    border: none;
+    background: none;
+    color: var(--ft-text);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.top-bar h1 {
+    grid-column: 2;
+    justify-self: center;
+    font-size: 22px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.top-bar > p {
+    grid-column: 3;
+    justify-self: end;
+    margin: 0;
+    font-size: 13px;
+    color: var(--ft-text-muted);
+    white-space: nowrap;
 }
 
 .dashboard-hero-inner {
@@ -770,7 +811,8 @@ textarea {
     100% { transform: scale(1); opacity: 1; }
 }
 
-/* ---------- Page shell ----------
+/* ---------- Page shell (BFP portal top bar) ---------- */
+.top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -807,26 +849,53 @@ textarea {
 
 /* Labels */
 .label {
-    font-size: 14px;
+    width: 100%;
+    max-width: 340px;
+    font-family: Arial, sans-serif;
     color: var(--ft-text-muted);
+    font-size: 14px;
+    text-align: left;
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: -8px;
+}
+
+/* Text boxes — 16px font-size keeps iOS from zooming in on focus */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"] {
+    width: 100%;
+    max-width: 350px;
+    height: 45px;
+    padding: 10px;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    background-color: var(--ft-input-bg);
+    color: var(--ft-text);
+    font-size: 16px;
+    margin-bottom: 10px;
 }
 
 /* Create Account button */
 .create-button {
+    width: 100%;
+    max-width: 350px;
     height: 50px;
     background-color: var(--ft-red);
     color: var(--ft-on-red);
     border: none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
     font-size: 16px;
     font-weight: bold;
+    cursor: pointer;
     margin-top: 10px;
     transition: 0.4s;
 }
 
 .create-button:hover:enabled {
     background-color: var(--ft-red-hover);
+    transition: background-color 0.3s ease;
 }
 
 .create-button:disabled {
@@ -835,9 +904,7 @@ textarea {
 }
 
 /* Privacy Names & Terms and Login */
-.Terms,
-.Privacy,
-.login2 {
+.Terms, .Privacy, .login2 {
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
@@ -852,56 +919,82 @@ textarea {
 
 /* Login.jsx css */
 .h3create {
-    margin: 24px auto 16px;
+    width: 100%;
+    max-width: 350px;
+    margin: 30px auto 25px;
     font-family: Arial, sans-serif;
+    text-align: left;
     font-size: 22px;
 }
-
 .logintext {
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
     font-family: Arial, sans-serif;
     color: var(--ft-text-muted);
     font-size: 14px;
-    padding-bottom: 24px;
+    text-align: left;
+    padding-bottom: 40px;
 }
 
 .forgot {
     width: 100%;
-    max-width: var(--ft-max-width);
+    max-width: 350px;
+    margin: 0 auto;
     text-align: right;
 }
 
-.ForgotPass {
+.remember-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 350px;
+    margin: 12px auto 0;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: var(--ft-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+.remember-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    margin: 0;
+    accent-color: var(--ft-red);
+    cursor: pointer;
+}
+
+.ForgotPass{
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
     color: var(--ft-red-hover);
 }
 
-.register {
+.register{
     font-family: Arial, sans-serif;
     font-size: 15px;
     font-weight: bold;
     color: var(--ft-text);
     text-align: center;
-    margin-top: 16px;
 }
 
 .fire-icon2 {
-    align-self: flex-start;
     color: var(--ft-red-hover);
     font-size: 35px;
-    margin-top: 20px;
 }
 
 .emergency-alert {
     width: 100%;
-    max-width: var(--ft-max-width);
+    max-width: 350px;
     min-height: 70px;
-    box-sizing: border-box;
     display: flex;
     align-items: center;
-    padding: 10px 16px;
-    margin: 16px auto 0;
+    padding: 10px 20px;
+    margin: 0 auto;
     background-color: var(--ft-alert-bg);
     border: 1px solid var(--ft-alert-border);
     border-radius: 10px;
@@ -910,7 +1003,7 @@ textarea {
 
 .emergency-icon {
     font-size: 30px;
-    margin-right: 16px;
+    margin-right: 20px;
     color: var(--ft-red);
 }
 
@@ -924,68 +1017,75 @@ textarea {
 
 /* Forgotpass1.jsx css */
 .email {
+    width: 100%;
+    text-align: left;
     font-size: 15px;
     padding-top: 20px;
-    padding-bottom: 8px;
 }
 
 .confirmemail {
+    width: 100%;
+    max-width: 350px;
     height: 45px;
     border: none;
+    border-radius: 10px;
     font-size: 15px;
     font-weight: bold;
     color: var(--ft-on-red);
     background-color: var(--ft-red);
     transition: 0.3s ease;
+    cursor: pointer;
 }
 
-.confirmemail:hover {
+.confirmemail:hover{
     background-color: var(--ft-red-dark);
 }
 
 /* Forgotpass2.jsx css */
-.firetraceheader2 {
+.firetraceheader2{
+    grid-column: 2;
+    justify-self: center;
+    min-width: 0;
     font-family: Arial, sans-serif;
     color: var(--ft-text);
-    font-size: clamp(18px, 5vw, 28px);
-    min-height: 40px;
+    font-size: clamp(17px, 5.4vw, 28px);
     font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1 1 auto;
-    min-width: 0;
     margin: 0;
+    white-space: nowrap;
 }
-
-.newpass,
-.newpass2 {
+.newpass {
+    width: 100%;
+    text-align: left;
     font-size: 15px;
     padding-top: 20px;
-    padding-bottom: 8px;
+}
+
+.newpass2 {
+    width: 100%;
+    text-align: left;
+    font-size: 15px;
+    padding-top: 20px;
 }
 
 /* Dashboard.jsx css */
 .firetraceheader {
+    grid-column: 2;
+    justify-self: center;
+    min-width: 0;
     font-family: Arial, sans-serif;
     color: var(--ft-text);
-    font-size: clamp(18px, 5vw, 28px);
-    min-height: 40px;
+    /* Shrinks on narrow phones so the step indicator ("2 of 4") keeps its own
+       line instead of being squeezed into a wrapped column. */
+    font-size: clamp(17px, 5.4vw, 28px);
     font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1 1 auto;
-    min-width: 0;
     margin: 0;
+    white-space: nowrap;
 }
 
 .LogOut {
-    flex: none;
-    width: auto;
-    min-height: 36px;
-    padding: 8px 14px;
-    white-space: nowrap;
+    grid-column: 3;
+    justify-self: flex-end;
+    height: 32px;
     background-color: var(--ft-red);
     color: var(--ft-on-red);
     border: none;
@@ -993,23 +1093,32 @@ textarea {
     font-family: Arial, sans-serif;
     font-size: 14px;
     font-weight: bold;
+    padding: 0 14px;
+    white-space: nowrap;
+    cursor: pointer;
     transition: 0.4s;
     margin: 0;
 }
 
 .LogOut:hover {
     background-color: var(--ft-red-hover);
+    transition: background-color 0.3s ease;
 }
 
-.dashboard-text {
+.dashboard-text{
+    width: 100%;
+    text-align: left;
     font-family: Arial, sans-serif;
     color: var(--ft-text);
     font-size: 17px;
-    padding: 20px 0 10px;
+    padding-top: 20px;
+    padding-bottom: 10px;
     margin: 0;
 }
 
-.dashboard-text2 {
+.dashboard-text2{
+    width: 100%;
+    text-align: left;
     font-family: Arial, sans-serif;
     color: var(--ft-text-muted);
     font-size: 15px;
@@ -1017,38 +1126,73 @@ textarea {
     margin: 0;
 }
 
-.report,
-.report2 {
+.report{
+    width: 100%;
+    text-align: left;
     font-family: Arial, sans-serif;
+    color: var(--ft-text);
     font-weight: bold;
     font-size: 17px;
     margin: 0;
     padding-top: 20px;
-    padding-bottom: 8px;
 }
 
-.CallBFP,
-.FireReport {
-    min-height: 50px;
+.report2{
+    width: 100%;
+    text-align: left;
+    font-family: Arial, sans-serif;
+    color: var(--ft-text);
+    font-weight: bold;
+    font-size: 17px;
+    margin: 0;
+    padding-top: 20px;
+}
+
+.CallBFP {
+    width: 100%;
+    height: 50px;
     background-color: var(--ft-red);
     color: var(--ft-on-red);
     border: none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
     font-size: 16px;
     font-weight: bold;
     text-align: center;
+    cursor: pointer;
     transition: 0.4s;
     margin: 0;
 }
 
-.CallBFP:hover,
+.CallBFP:hover {
+    background-color: var(--ft-red-hover);
+    transition: background-color 0.3s ease;
+}
+
+.FireReport {
+    width: 100%;
+    height: 50px;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
+    border: none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.4s;
+    margin: 0;
+}
+
 .FireReport:hover {
     background-color: var(--ft-red-hover);
+    transition: background-color 0.3s ease;
 }
 
 .incident-card {
     width: 100%;
-    max-width: var(--ft-max-width);
-    box-sizing: border-box;
+    max-width: 500px;
     padding: 14px 16px;
     background-color: var(--ft-surface);
     border: 1px solid var(--ft-border-soft);
@@ -1091,144 +1235,485 @@ textarea {
     margin-bottom: 10px;
 }
 
-.view-details-button {
-    min-height: 45px;
+.view-details-button{
+    width: 100%;
+    height: 45px;
     background-color: transparent;
     border: 2px solid var(--ft-red);
+    border-radius: 11px;
     color: var(--ft-red);
     font-size: 15px;
     font-weight: bold;
+    cursor: pointer;
     transition: 0.4s;
 }
 
 .view-details-button:hover {
     color: var(--ft-on-red);
     background-color: var(--ft-red);
+    transition: background-color 0.3s ease;
 }
 
-/* Bottom Navigation Bar */
+/* Hamburger + Side Navigation */
+.hamburger-btn {
+    position: absolute;
+    top: 8px;
+    left: 14px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    background-color: #D7192A;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    z-index: 1100;
+    transition: background-color 0.3s ease;
+}
+
+.hamburger-btn:hover {
+    background-color: #990d1b;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background-color: #ffffff;
+    border-radius: 2px;
+}
+
+.side-nav-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1150;
+}
+
+.side-nav-overlay-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.side-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    max-width: 80%;
+    background-color: #D7192A;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 60px 16px 16px;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1200;
+}
+
+.side-nav-open {
+    transform: translateX(0);
+}
+
+.side-nav-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #ffffff;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.side-nav-btn {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    text-decoration: none;
+    height: 48px;
+    border: none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    color: #000000;
+    padding: 8px 14px;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.side-nav-btn:hover {
+    color: #ffffff;
+    background-color: #990d1b;
+}
+
+.side-nav-btn.side-nav-btn-active {
+    color: #ffffff;
+    background-color: #990d1b;
+}
+
 .bottom-nav {
     position: fixed;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     width: 100%;
     max-width: var(--ft-max-width);
-    box-sizing: border-box;
+    margin: 0 auto;
     min-height: var(--ft-nav-height);
-    display: flex;
-    align-items: stretch;
     background-color: var(--ft-red);
-    box-shadow: 0 -2px 5px var(--ft-shadow);
+    display: flex;
+    justify-content: space-around;
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-    gap: 4px;
+    box-shadow: 0 -2px 5px var(--ft-shadow);
+    align-items: stretch;
     z-index: 10;
 }
 
-/* Targets the classes rather than `button`, because LocationStep,
-   PhotoStep, ConfirmationStep and ReportDetail render the nav with
-   <Link> anchors instead of <button>. */
-.bottom-nav .bottom-btn,
-.bottom-nav .bottom-btn-active {
+.bottom-nav button,
+.bottom-nav a {
     flex: 1 1 0;
     min-width: 0;
     min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     border: none;
     border-radius: 10px;
-    padding: 6px 2px;
     font-family: Arial, sans-serif;
     font-size: clamp(9px, 2.6vw, 12px);
     line-height: 1.2;
     text-align: center;
     white-space: nowrap;
     color: var(--ft-on-red);
+    padding: 6px 2px;
     background-color: var(--ft-red);
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     transition: background-color 0.3s ease;
 }
 
-.bottom-nav .bottom-btn:hover {
+.bottom-nav button:hover,
+.bottom-nav a:hover {
     background-color: var(--ft-red-dark);
 }
 
-.bottom-nav .bottom-btn-active {
+.bottom-nav button.bottom-btn-active,
+.bottom-nav a.bottom-btn-active {
     color: var(--ft-on-red);
     background-color: var(--ft-red-dark);
 }
 
 /* Report.jsx css */
-.incident-text,
-.description-text {
+
+.incident-text{
+    width: 100%;
+    text-align: left;
     font-family: Arial, sans-serif;
+    color: var(--ft-text);
     font-size: 17px;
     padding-top: 20px;
     padding-bottom: 10px;
     margin: 0;
 }
 
+.description-text{
+    width: 100%;
+    text-align: left;
+    font-family: Arial, sans-serif;
+    color: var(--ft-text);
+    font-size: 17px;
+    padding-top: 20px;
+    padding-bottom: 10px;
+    margin: 0;
+}
+
+select {
+    width: 100%;
+    max-width: 500px;
+    height: 45px;
+    padding: 0 12px;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    background-color: var(--ft-input-bg);
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: var(--ft-text);
+    cursor: pointer;
+    margin: 0;
+}
+
+textarea{
+    width: 100%;
+    max-width: 480px;
+    height: 100px;
+    padding: 10px 12px;
+    resize: none;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    background-color: var(--ft-input-bg);
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: var(--ft-text);
+    margin: 0;
+}
 .date-time-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
     width: 100%;
-    max-width: var(--ft-max-width);
     margin-bottom: 24px;
 }
 
 .date-time-container input {
     flex: 1 1 140px;
-    width: auto;
     min-width: 0;
+    height: 45px;
+    padding: 0 10px;
+    border: 1px solid var(--ft-border);
+    border-radius: 10px;
+    background-color: var(--ft-input-bg);
+    color: var(--ft-text);
+    font-family: Arial, sans-serif;
+    font-size: 16px;
     margin-bottom: 0;
 }
 
-.backcontinue-container,
+.backcontinue-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin: 24px 0;
+}
+
+.backbtn {
+    flex: 1 1 140px;
+    max-width: 240px;
+    height: 50px;
+    border:none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    background-color: var(--ft-neutral-btn);
+    color: var(--ft-neutral-btn-text);
+    font-size: 18px;
+    transition: 0.4s ease;
+    cursor: pointer;
+    margin: 0;
+}
+
+.backbtn:hover{
+    background-color: var(--ft-neutral-btn-hover);
+}
+
+.continuebtn {
+    flex: 1 1 140px;
+    max-width: 240px;
+    height: 50px;
+    border:none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
+    font-size: 18px;
+    transition: 0.4s ease;
+    cursor: pointer;
+    margin: 0;
+}
+
+.continuebtn:hover:enabled {
+    background-color: var(--ft-red-dark);
+}
+
+/* Continue2.jsx css*/
+.pinpointbtn {
+    width: 100%;
+    max-width: 500px;
+    height: 45px;
+    border:none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    background-color: var(--ft-red);
+    color: var(--ft-on-red);
+    font-size: 16px;
+    font-weight: bold;
+    transition: 0.4s ease;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.pinpointbtn:hover {
+    background-color: var(--ft-red-dark);
+}
+
+.barangay-text{
+    width: 100%;
+    text-align: left;
+    font-family: Arial, sans-serif;
+    color: var(--ft-text);
+    font-size: 17px;
+    padding-top: 20px;
+    padding-bottom: 10px;
+    margin: 0;
+}
+
+.address-text{
+    width: 100%;
+    text-align: left;
+    font-family: Arial, sans-serif;
+    color: var(--ft-text);
+    font-size: 17px;
+    padding-top: 20px;
+    padding-bottom: 10px;
+    margin: 0;
+}
+
+.addresstxt {
+    width: 100%;
+    max-width: 480px;
+    height: 60px;
+    padding: 10px 12px;
+    resize: none;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    background-color: var(--ft-input-bg);
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: var(--ft-text);
+    margin: 0;
+}
+
+/* Map (LocationPickerMap / IncidentMap) */
+.map-frame {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    height: 260px;
+    margin: 12px auto 0;
+    border: 1px solid var(--ft-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.map-clear-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    padding: 7px 12px;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    /* Sits on top of the map tiles, which stay light in both themes. */
+    background-color: #ffffff;
+    color: #d7192a;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    transition: 0.3s ease;
+}
+
+.map-clear-btn:hover {
+    background-color: #d7192a;
+    color: #ffffff;
+}
+
+.map-hint {
+    width: 100%;
+    max-width: 500px;
+    margin: 6px auto 0;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: var(--ft-text-faint);
+    text-align: left;
+}
+
+.latnlng{
+    width: 100%;
+    font-family: Arial, sans-serif;
+    color: var(--ft-text-muted);
+    font-size: 14px;
+    padding-top: 20px;
+    margin: 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    margin-top: 12px;
+    text-align: left;
+}
+
+.checkbox-txt{
+    font-family: Arial, sans-serif;
+    color: var(--ft-text);
+    font-size: 14px;
+    padding-left: 5px;
+    margin: 0;
+}
+
 .backcontinue2-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
     width: 100%;
-    max-width: var(--ft-max-width);
     margin: 24px 0;
 }
 
-.backbtn,
-.continuebtn,
-.backbtn2,
-.continuebtn2 {
+.backbtn2 {
     flex: 1 1 140px;
-    min-height: 50px;
-    border: none;
+    max-width: 240px;
+    height: 50px;
+    border:none;
     border-radius: 10px;
     font-family: Arial, sans-serif;
-    font-size: 18px;
-    transition: 0.4s ease;
-    margin: 0;
-}
-
-.backbtn,
-.backbtn2 {
     background-color: var(--ft-neutral-btn);
     color: var(--ft-neutral-btn-text);
+    font-size: 18px;
+    transition: 0.4s ease;
+    cursor: pointer;
+    margin-bottom: 20px;
 }
 
-.backbtn:hover,
-.backbtn2:hover {
+.backbtn2:hover{
     background-color: var(--ft-neutral-btn-hover);
 }
 
-.continuebtn,
 .continuebtn2 {
+    flex: 1 1 140px;
+    max-width: 240px;
+    height: 50px;
+    border:none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
     background-color: var(--ft-red);
     color: var(--ft-on-red);
+    font-size: 18px;
+    transition: 0.4s ease;
+    cursor: pointer;
+    margin-bottom: 20px;
 }
 
-.continuebtn:hover:enabled,
 .continuebtn2:hover:enabled {
     background-color: var(--ft-red-dark);
 }
@@ -1239,106 +1724,20 @@ textarea {
     cursor: default;
 }
 
-/* Continue2.jsx css */
-.pinpointbtn {
-    min-height: 45px;
-    border: none;
-    background-color: var(--ft-red);
-    color: var(--ft-on-red);
-    font-size: 16px;
-    font-weight: bold;
-    transition: 0.4s ease;
-    margin-top: 20px;
-}
-
-.pinpointbtn:hover {
-    background-color: var(--ft-red-dark);
-}
-
-.map-container {
-    width: 100%;
-    max-width: var(--ft-max-width);
-    margin: 12px 0;
-}
-
-.map-frame {
-    width: 100%;
-    height: 260px;
-    border: 1px solid var(--ft-border);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.removepinbtn {
-    width: 100%;
-    min-height: 40px;
-    margin-top: 8px;
-    border: 1px solid var(--ft-border);
-    border-radius: 10px;
-    background-color: var(--ft-surface);
-    color: var(--ft-text);
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    transition: 0.3s ease;
-}
-
-.removepinbtn:hover {
-    background-color: var(--ft-red);
-    border-color: var(--ft-red);
-    color: var(--ft-on-red);
-}
-
-.barangay-text,
-.address-text {
-    font-family: Arial, sans-serif;
-    font-size: 17px;
-    padding-top: 20px;
-    padding-bottom: 10px;
-    margin: 0;
-}
-
-.addresstxt {
-    height: 60px;
-}
-
-.latnlng {
-    font-family: Arial, sans-serif;
-    color: var(--ft-text-muted);
-    font-size: 14px;
-    padding-top: 12px;
-    margin: 0;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: flex-start;
-    gap: 4px;
-    width: 100%;
-    max-width: var(--ft-max-width);
-    margin-top: 12px;
-    text-align: left;
-}
-
-.checkbox-txt {
-    font-family: Arial, sans-serif;
-    color: var(--ft-text);
-    font-size: 14px;
-    padding-left: 5px;
-    margin: 0;
-}
-
 /* ContinueThird.jsx css */
-.addphoto {
+
+.addphoto{
+    width: 100%;
+    text-align: left;
     font-size: 18px;
     font-weight: bold;
+    color: var(--ft-text);
     margin-top: 20px;
 }
 
 .photo-warning {
     width: 100%;
-    max-width: var(--ft-max-width);
-    box-sizing: border-box;
+    max-width: 480px;
     display: flex;
     align-items: center;
     padding: 12px 16px;
@@ -1362,14 +1761,20 @@ textarea {
     line-height: 1.4;
 }
 
+
 .takephoto {
-    min-height: 45px;
-    border: none;
+    width: 100%;
+    max-width: 480px;
+    height: 45px;
+    border:none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
     background-color: var(--ft-red);
     color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
+    cursor: pointer;
     margin-top: 20px;
 }
 
@@ -1378,13 +1783,18 @@ textarea {
 }
 
 .selectphoto {
-    min-height: 45px;
-    border: none;
+    width: 100%;
+    max-width: 480px;
+    height: 45px;
+    border:none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
     background-color: var(--ft-neutral-btn);
     color: var(--ft-neutral-btn-text);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
+    cursor: pointer;
     margin-top: 10px;
 }
 
@@ -1443,6 +1853,7 @@ textarea {
 }
 
 /* Continue4.jsx css */
+
 .submitted-icon {
     width: 70px;
     height: 70px;
@@ -1452,8 +1863,7 @@ textarea {
     color: #ffffff;
     font-size: 32px;
     font-weight: bold;
-    margin-top: 40px;
-    margin-bottom: 15px;
+    margin: 50px auto 15px;
 }
 
 .submitted-title {
@@ -1466,16 +1876,17 @@ textarea {
 
 .submitted-subtitle {
     width: 100%;
-    max-width: var(--ft-max-width);
+    max-width: 320px;
     font-family: Arial, sans-serif;
     color: var(--ft-text-faint);
     font-size: 14px;
     text-align: center;
-    margin-top: 8px;
-    margin-bottom: 25px;
+    margin: 8px auto 25px;
 }
 
 .submitted-card {
+    width: 100%;
+    max-width: 350px;
     text-align: left;
     padding: 18px 20px;
     margin-bottom: 25px;
@@ -1485,7 +1896,8 @@ textarea {
     font-family: Arial, sans-serif;
     color: var(--ft-text-faint);
     font-size: 13px;
-    margin: 10px 0 0;
+    margin: 0;
+    margin-top: 10px;
 }
 
 .submitted-label:first-child {
@@ -1520,13 +1932,18 @@ textarea {
 }
 
 .view-status-button {
-    min-height: 50px;
+    width: 100%;
+    max-width: 350px;
+    height: 50px;
     border: none;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
     background-color: var(--ft-red);
     color: var(--ft-on-red);
     font-size: 16px;
     font-weight: bold;
     transition: 0.4s ease;
+    cursor: pointer;
     margin-bottom: 12px;
 }
 
@@ -1535,13 +1952,18 @@ textarea {
 }
 
 .contact-bfp-button {
-    min-height: 50px;
+    width: 100%;
+    max-width: 350px;
+    height: 50px;
     border: 1px solid var(--ft-border);
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
     background-color: var(--ft-surface);
     color: var(--ft-text);
     font-size: 15px;
     font-weight: bold;
     transition: 0.4s ease;
+    cursor: pointer;
     margin-bottom: 30px;
 }
 
@@ -1553,15 +1975,16 @@ textarea {
 .search-container {
     display: flex;
     width: 100%;
-    max-width: var(--ft-max-width);
-    margin: 20px auto 0;
+    max-width: 420px;
+    margin: 0 auto;
+    padding-top: 20px;
 }
 
 input.searchInput {
     flex: 1 1 auto;
     min-width: 0;
+    max-width: none;
     margin-bottom: 0;
-    border-right: none;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-top-left-radius: 10px;
@@ -1573,14 +1996,15 @@ input.searchInput {
     flex: none;
     width: 48px;
     height: 45px;
-    min-height: 45px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     background-color: var(--ft-input-bg);
     border: 1px solid var(--ft-border);
+    border-left: none;
     color: var(--ft-text-muted);
+    cursor: pointer;
     transition: 0.4s ease;
 }
 
@@ -1597,38 +2021,40 @@ input.searchInput {
     gap: 8px;
     padding: 12px 0 0;
     width: 100%;
-    max-width: var(--ft-max-width);
+    max-width: 420px;
     margin: 0 auto;
 }
 
-.filter-btn,
-.filter-btn-active {
-    min-height: 32px;
+.filter-btn {
     height: 32px;
     padding: 0 14px;
+    border: 1px solid var(--ft-border);
     border-radius: 20px;
+    background-color: var(--ft-surface);
+    color: var(--ft-text-faint);
     font-size: 11px;
     font-weight: bold;
     cursor: pointer;
     transition: 0.2s ease;
 }
 
-.filter-btn {
-    border: 1px solid var(--ft-border);
-    background-color: var(--ft-surface);
-    color: var(--ft-text-faint);
-}
-
 .filter-btn:hover {
     background-color: var(--ft-red);
     border-color: var(--ft-red);
     color: var(--ft-on-red);
+    transition: 0.3s ease;
 }
 
 .filter-btn-active {
+    height: 32px;
+    padding: 0 14px;
     background-color: #dc2f2f;
     border: 1px solid #dc2f2f;
+    border-radius: 20px;
     color: #ffffff;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 .report-list {
@@ -1636,10 +2062,9 @@ input.searchInput {
     flex-direction: column;
     gap: 12px;
     width: 100%;
-    max-width: var(--ft-max-width);
+    max-width: 420px;
     margin: 0 auto;
     padding: 16px 0 0;
-    box-sizing: border-box;
 }
 
 .report-card {
@@ -1727,11 +2152,477 @@ input.searchInput {
     transition: 0.2s ease;
 }
 
+/* Notifications.jsx css */
+
+.notif-list {
+    width: 100%;
+    padding: 8px 16px 24px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.notif-group {
+    margin-bottom: 8px;
+}
+
+.notif-group-title {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    color: #6b7280;
+    margin: 18px 0 6px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.notif-icon {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.notif-icon-warning {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.notif-icon-verified {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.notif-icon-resolved {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.notif-icon-thanks {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.notif-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.notif-title {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: #111827;
+    margin: 0;
+}
+
+.notif-sub {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.notif-sub-solo {
+    align-self: center;
+}
+
 .view-details-btn:hover {
     background-color: #dc2f2f;
     color: #ffffff;
 }
 
+/* Profile.jsx css */
+.profile-menu {
+    width: 100%;
+    padding: 8px 16px 24px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    padding: 14px 4px;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: Arial, sans-serif;
+}
+
+.profile-menu-icon {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background-color: #f3f4f6;
+}
+
+/* Personal.jsx css*/
+
+.Personal{
+    width: 450px;
+    height: 50px;
+    margin-top: 10px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.profile-subtext{
+    font-size: 12px;
+    color: #888;
+    transition: 0.3s ease;
+}
+
+.Personal:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Change{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Change:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.ContactInfo{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.ContactInfo:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.PrivacyNotice{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.PrivacyNotice:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Consent{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Consent:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Help{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Help:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.OfficialBFP{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.OfficialBFP:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Logout2{
+    width: 450px;
+    height: 50px;
+    border: none;
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    background-color: transparent;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Logout2:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+.Personal:hover .profile-subtext,
+.Change:hover .profile-subtext,
+.ContactInfo:hover .profile-subtext,
+.PrivacyNotice:hover .profile-subtext,
+.Consent:hover .profile-subtext,
+.Help:hover .profile-subtext,
+.OfficialBFP:hover .profile-subtext,
+.Logout2:hover .profile-subtext{
+    color: white;
+}
+
+.edit-profile-form {
+    text-align: left;
+}
+
+.edit-profile-form p {
+    margin: 16px 0 4px;
+    font-size: 14px;
+    color: black;
+}
+
+.edit-profile-form p:first-child {
+    margin-top: 10px;
+}
+
+.edit-profile-form input {
+    margin-bottom: 0;
+}
+
+.SaveChanges-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.SaveChanges-btn:hover{
+    color: black;
+    background-color: #990d1b;
+}
+
+.Cancel-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: rgb(0, 0, 0);
+    background-color: #cac0c0;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.Cancel-btn:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+/* ChangePass.jsx css*/
+.UpdatePass-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.UpdatePass-btn:hover{
+    color: black;
+    background-color: #990d1b;
+}
+
+/* ContactInfo.jsx css */
+.UpdateNumber-btn{
+    width: 80%;
+    height: 40px;
+    margin-top: 30px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.UpdateNumber-btn:hover{
+    color: black;
+    background-color: #990d1b;
+}
+
+.otp-row{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.OTP-btn{
+    width: 60px;
+    height: 40px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 10px;
+    color: black;
+    background-color: #D7192A;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.OTP-btn:hover{
+    color: white;
+    background-color: #990d1b;
+}
+
+/* HelpReport.jsx css */
+.help-guide-list {
+    width: 100%;
+    padding: 8px 0 24px;
+    box-sizing: border-box;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.help-guide-card {
+    background: var(--ft-surface);
+    border: 1px solid var(--ft-border-soft);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 3px var(--ft-shadow);
+}
+
+.help-guide-title {
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--ft-text);
+    margin: 0 0 4px;
+}
+
+.help-guide-desc {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: var(--ft-text-muted);
+    margin: 0;
+}
+
+/* OfficialBFP.jsx css*/
+.bfp-card {
+    width: 90%;
+    margin: 16px auto;
+    padding: 12px 16px;
+    text-align: left;
+}
+
+.bfp-station {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.bfp-contact {
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.bfp-contact:last-of-type {
+    border-bottom: none;
+}
+
+.bfp-label {
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0 0 4px;
+}
+
+.bfp-value {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+}
+
+.bfp-notice {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: #ffe3e3;
+    color: #D7192A;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* PrivacyNotice.jsx css */
 /* ---------- Dashboard Premium Redesign ---------- */
 .dashboard-container {
     padding-bottom: calc(var(--ft-nav-height) + 60px) !important;
@@ -3893,4 +4784,18 @@ input.searchInput {
 
 .barangay-hint-warn {
     color: var(--ft-red);
+}
+
+/* Confirmation counterpart to .auth-error, for the profile forms. Same shape
+   so a "saved" message and a failure occupy the same space and the layout does
+   not jump between them. Both dark and light themes read the colour from the
+   resolved-status variable rather than hardcoding a green. */
+.form-success {
+    color: var(--civ-status-resolved);
+    font-size: 13px;
+    margin: -4px 0 10px 0;
+    padding: 8px 12px;
+    background-color: var(--civ-status-resolved-bg);
+    border-radius: 8px;
+    border-left: 3px solid var(--civ-status-resolved);
 }

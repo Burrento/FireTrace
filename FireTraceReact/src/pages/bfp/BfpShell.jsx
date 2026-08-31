@@ -43,6 +43,18 @@ function LastUpdated({ at, live }) {
 function BfpShell({ live, lastRefresh, refreshNow, children }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  // Close the drawer on Escape while it is open.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    function onKey(e) {
+      if (e.key === 'Escape') setMenuOpen(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   // These are wide desktop layouts; the app shell is a phone-width column by
   // default, so opt the portal out of the cap while it is mounted.
@@ -90,6 +102,16 @@ function BfpShell({ live, lastRefresh, refreshNow, children }) {
   return (
     <div className="bfp-dashboard">
       <header className="bfp-header">
+        <button
+          type="button"
+          className="bfp-icon-btn bfp-menu-toggle"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          <i className={menuOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars'} />
+        </button>
+
         <div className="bfp-header-brand">
           <i className="fa-solid fa-fire-flame-curved bfp-brand-icon" />
           <div>
@@ -101,13 +123,45 @@ function BfpShell({ live, lastRefresh, refreshNow, children }) {
           </div>
         </div>
 
-        <nav className="bfp-nav">
+        {menuOpen && <div className="bfp-drawer-backdrop" onClick={closeMenu} />}
+        <nav className={menuOpen ? 'bfp-nav is-open' : 'bfp-nav'}>
+          <p className="bfp-nav-group">Monitoring</p>
           {/* `end` so /bfp does not stay highlighted on /bfp/reports. */}
-          <NavLink to="/bfp" end className="bfp-nav-link">
-            <i className="fa-solid fa-gauge-high" /> Overview
+          <NavLink to="/bfp" end className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-gauge-high" /> Dashboard
           </NavLink>
-          <NavLink to="/bfp/reports" className="bfp-nav-link">
+          <NavLink to="/bfp/reports" className="bfp-nav-link" onClick={closeMenu}>
             <i className="fa-solid fa-list" /> All Reports
+          </NavLink>
+          <NavLink to="/bfp/BfpIncidentMap" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-map" /> Incident Map
+          </NavLink>
+          <p className="bfp-nav-group">Analytics</p>
+          <NavLink to="/bfp/BfpOperational" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-chart-simple" /> Operational Overview
+          </NavLink>
+          <NavLink to="/bfp/BfpAnalyticReport" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-list" /> Reports
+          </NavLink>
+          <p className="bfp-nav-group">Administration</p>
+          <NavLink to="/bfp/BfpUsers" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-user" /> Users
+          </NavLink>
+          <NavLink to="/bfp/BfpReference" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-server" /> Reference Data
+          </NavLink>
+          <NavLink to="/bfp/BfpSettings" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-gear" /> Settings
+          </NavLink>
+          <p className="bfp-nav-group">System</p>
+          <NavLink to="/bfp/BfpAudit" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-clock" /> Audit Log
+          </NavLink>
+          <NavLink to="/bfp/BfpBackup" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-cloud-arrow-up" /> Backup and Restore
+          </NavLink>
+          <NavLink to="/bfp/BfpSystemHealth" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-shield-halved" /> System Health
           </NavLink>
         </nav>
 

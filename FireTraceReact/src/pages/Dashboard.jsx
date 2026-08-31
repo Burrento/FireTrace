@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../style.css';
 import { apiFetch } from '../api';
 import { clearTokens, isLoggedIn } from '../auth';
+import { humanize } from '../lib/incidentDisplay';
 import BottomNav from '../components/BottomNav';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -12,7 +13,6 @@ function Dashboard() {
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(true);
   const [reportsError, setReportsError] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -75,16 +75,13 @@ function Dashboard() {
         </div>
         <div className="civ-header-right">
           <ThemeToggle />
-          <div className="civ-notification-icon">
+          <Link to="/Notifications" className="civ-notification-icon">
             <i className="fa-solid fa-bell"></i>
             <span className="civ-notification-badge"></span>
-          </div>
-          <button 
-            className="civ-menu-btn"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
+          </Link>
+          <Link to="/profile" className="civ-menu-btn">
             <i className="fa-solid fa-bars"></i>
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -201,14 +198,14 @@ function Dashboard() {
                 >
                   <div className="civ-report-header">
                     <span className="civ-report-id">{report.reference_number}</span>
-                    <span className={`civ-status-badge status-${report.status.toLowerCase().replace(/_/g, '-')}`}>
-                      {report.status.replace('_', ' ').toUpperCase()}
+                    <span className={`civ-status-badge status-${String(report.status).toLowerCase().replace(/_/g, '-')}`}>
+                      {humanize(report.status_display, report.status).toUpperCase()}
                     </span>
                   </div>
                   <div className="civ-report-details">
                     <div className="civ-report-detail-row">
                       <i className="fa-solid fa-home"></i>
-                      <span>{report.incident_type}</span>
+                      <span>{humanize(report.incident_type_display, report.incident_type)}</span>
                     </div>
                     <div className="civ-report-detail-row">
                       <i className="fa-solid fa-map-pin"></i>

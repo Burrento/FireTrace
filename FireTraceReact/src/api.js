@@ -10,7 +10,7 @@ import { clearTokens, getAccessToken, getRefreshToken, setAccessToken } from './
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 /* Shared across callers so several parallel 401s trigger one refresh, not one
-   refresh each. */
+   refresh each. The dashboard fires two requests on mount, so this matters. */
 let refreshPromise = null;
 
 function refreshAccessToken() {
@@ -63,7 +63,7 @@ function send(path, options, token) {
 export async function apiFetch(path, options = {}, { skipAuth = false } = {}) {
   let res = await send(path, options, skipAuth ? null : getAccessToken());
 
-  // Access tokens last an hour; renew silently and retry once.
+  // Access tokens last a while; renew silently and retry once.
   if (!skipAuth && res.status === 401 && getRefreshToken()) {
     const access = await refreshAccessToken();
     if (access) res = await send(path, options, access);
@@ -79,6 +79,50 @@ export async function apiFetch(path, options = {}, { skipAuth = false } = {}) {
     throw error;
   }
   return data;
+}
+
+/**
+ * fetch() with the bearer token attached. On a 401 it refreshes the access
+ * token once and retries; if the refresh also fails the session is over, so
+ * the tokens are cleared and the 401 is handed back for the caller to
+ * redirect on.
+ */
+export async function authFetch(path, options = {}) {
+  let res = await send(path, options, getAccessToken());
+  if (res.status !== 401) return res;
+
+  const access = await refreshAccessToken();
+  if (!access) {
+    clearTokens();
+    return res;
+  }
+  return send(path, options, access);
+}
+
+/** authFetch + JSON parsing, mirroring apiFetch's error handling. */
+export async function authFetchJson(path, options = {}) {
+  const res = await authFetch(path, options);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(describeError(data));
+  }
+  return data;
+}
+
+/** Revokes the refresh token server-side, then drops the local copies. */
+export async function logout() {
+  const refresh = getRefreshToken();
+  if (refresh) {
+    try {
+      await authFetch('/accounts/logout', {
+        method: 'POST',
+        body: JSON.stringify({ refresh }),
+      });
+    } catch {
+      // Offline or server down: still clear locally so the device is logged out.
+    }
+  }
+  clearTokens();
 }
 
 /* DRF reports field errors as {field: ["message"]}. Flattening those to bare

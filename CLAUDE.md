@@ -59,10 +59,11 @@ without it the admin has no Users section at all.
 | `analytics` | `AuditLog` model + KPI / activity / health dashboard views |
 | `realtime` | `notify.broadcast_dashboard_event` → Channels `group_send`; `consumers.DashboardConsumer` serves `/ws/dashboard` |
 
-Routes: `/accounts/` auth · `/api/reports/` · `/api/incidents/` · `/api/dashboard/`
-(kpis, map, activity, health — `map/` is `incidents.views.DashboardMapView`, routed
-under analytics on purpose) · `/incidents/` deprecated alias for `/api/reports/` ·
-`/ws/dashboard` WebSocket.
+Routes: `/accounts/` auth (+ `me`, `me/password`, `users`, `users/<id>`) ·
+`/api/reports/` · `/api/incidents/` · `/api/dashboard/` (kpis, map, activity,
+audit, operational, reference, settings, backup/export, health — `map/` is
+`incidents.views.DashboardMapView`, routed under analytics on purpose) ·
+`/incidents/` deprecated alias for `/api/reports/` · `/ws/dashboard` WebSocket.
 
 **The username *is* the email address.** Registration sets `username = email`, and
 both `RegisterSerializer` and `LoginSerializer` fold it to lowercase. Django's
@@ -102,7 +103,20 @@ moves it to Kept Separate / Confirmed; a report already ruled on is never re-fla
 reviewable but withheld from the map, with the withheld count shown in the legend.
 
 **Analytics are descriptive only.** Counts, trends, observed response times. No
-forecasting, no risk scoring, no automated dispatch.
+forecasting, no risk scoring, no automated dispatch. Every rate the Operational
+page returns carries its own numerator and denominator, so a percentage can
+never be read without its sample size, and `percent` is `null` rather than `0`
+when nothing was counted — "no data" and "none of them" are different claims.
+
+**Two thresholds are runtime-editable, the rest are not.** `analytics.SystemSetting`
+is a `pk=1` singleton holding the duplicate radius, the duplicate window and the
+live map window. It seeds itself from the `settings.py` values on first read, so
+an installation nobody has touched behaves exactly as it did before it existed.
+`duplicates._thresholds()` and `DashboardMapView._recent_hours()` read it on
+every call rather than caching, so a change applies to the next report rather
+than the next restart, and every write is audited with the old and new value.
+The geocoding confidence bands stay in `settings.py` on purpose: retuning them
+from a form would silently re-grade what past reports meant.
 
 ### Map scope: one endpoint, two audiences
 
@@ -241,6 +255,22 @@ Both GitHub workflows fire on a push to `main`. The frontend deploys itself; the
 backend only builds an image, so rolling the Container App onto it is a separate
 `az containerapp update`.
 
+**That asymmetry is a trap.** A push to `main` ships the new React bundle
+immediately while the backend keeps serving the old image until you roll it by
+hand, so any page depending on a new endpoint shows its error state in between.
+Roll the container in the same sitting, or expect a window where the portal
+looks broken.
+
+**The container migrates itself on boot** — the `CMD` is
+`migrate --noinput && exec daphne ...`. This exists because a schema change must
+not be able to outlive the deploy that needs it: `duplicates._thresholds()`
+reads the `SystemSetting` row on *every* report submitted, so a container
+running ahead of its migrations would 500 on civilian report submission, not
+just on the admin screens that introduced the table. A failed migration aborts
+startup rather than serving against a mismatched schema. It assumes **one
+replica** — scaling `firetrace-backend` out means several replicas racing to
+migrate on boot, which needs a lock or a separate migration job first.
+
 **This subscription is Azure for Students and blocks things.** `az acr build` /
 ACR Tasks are refused, which is why images build on a GitHub runner. Classic
 Azure Cache for Redis cannot be created, hence Managed Redis and its unusual
@@ -261,16 +291,31 @@ read 0 forever in real use, since only `seed_demo_data` or the admin creates any
 `/api/incidents/<id>/timeline/` are built and tested; no screen consumes them, and
 clicking a queue row does nothing.
 
+**No restore endpoint, deliberately.** `/api/dashboard/backup/export/` produces a
+full JSON export (no password hashes) and audits itself. There is no import
+counterpart: replacing a live database from an uploaded file is destructive and
+all-or-nothing, and behind a form any signed-in operator can reach, one mis-click
+loses every fire reported so far. `BfpBackup.jsx` documents Azure Postgres
+point-in-time restore as the actual recovery path. There is also no scheduler in
+this application, so nothing claims to run scheduled backups — Azure does that.
+
+**`BfpAnalyticReport` duplicates `BfpReports`.** Both render `ReportsQueue`; the
+Analytics one just omits the map. Nav lists them under different groups. Worth
+collapsing or differentiating.
+
 **Civilian app still on the legacy path.** It posts to `/incidents/`
 (`incidents/legacy_urls.py`) and reads `report.status`, a read-only serializer alias
 for `workflow_status`. Both can be deleted once the civilian pages move over.
 
 ### Testing gaps
-No frontend tests. `analytics/tests.py` and `realtime/tests.py` are still empty —
-KPI/activity/health views and the consumer are uncovered. `accounts/tests.py` now
-covers registration, the privilege-escalation attempt, the username/email login
-split and the case fold. The dashboard and the wizard have been verified by hand
-in a browser, not by a suite.
+No frontend tests. `realtime/tests.py` is still empty — the consumer is
+uncovered. `analytics/tests.py` now covers the audit, operational, reference,
+settings, export and health endpoints, plus that a changed threshold actually
+changes what gets flagged. `accounts/tests.py` covers registration, the
+privilege-escalation attempt and the login split; `accounts/test_administration.py`
+covers profile editing, password change and the user-admin guards. 109 tests
+total. The dashboard and the wizard have been verified by hand in a browser, not
+by a suite.
 
 **A passing end-to-end check is not proof the feature works.** The realtime
 socket was verified end to end and still failed in real use: that test received
@@ -278,8 +323,13 @@ its broadcast within seconds, before the first idle blocking read could time out
 Anything long-lived needs to be observed *idle*, not just exercised once.
 
 ### Known small issues
-- Two pre-existing ESLint errors: unused `err` in `ForgotPasswordRequest.jsx` and
-  `ForgotPasswordReset.jsx`.
+- **Password reset is still a stub.** `ForgotPasswordRequest.jsx` and
+  `ForgotPasswordReset.jsx` navigate onward without calling any API — there is
+  no reset endpoint behind them. They lint clean, which is not the same as
+  working.
+- **Contact-number changes do not send an OTP.** The design called for one;
+  there is no SMS gateway configured, so `ContactInfo.jsx` saves the number
+  directly rather than pretending to text a code.
 - `SECRET_KEY` is hardcoded as a fallback in `settings.py`; the deployment
   overrides it from a secret. `DEBUG` is env-driven and defaults to False.
 - `ALLOWED_HOSTS` is `"*"` in the deployment. Tightening it means adding the
@@ -369,8 +419,16 @@ Downgrading Python or Postgres means rebuilding the virtualenv and the database.
   logs and an actually-idle socket, not from whether reports save.
 - **`az containerapp update --set-env-vars` replaces the whole environment**, it
   does not merge. Resend every variable each time.
-- Bash heredocs (`<<'EOF'`) into files fail on CRLF here — use the Write tool for
-  multi-line source files.
+- **Bash heredocs work; large ones do not.** A `<<'EOF'` heredoc writes a clean
+  LF file that Python parses fine. What fails is *size*: past roughly 20 KB the
+  whole command is rejected with `ENAMETOOLONG: uv_spawn` before the shell runs,
+  so use the Write tool for anything longer than a few hundred lines. (The old
+  note here blamed CRLF; that was the wrong diagnosis.)
+- **`/tmp` is not shared between Bash and Python here.** Git Bash resolves it
+  inside the MSYS root, while the Windows Python interpreter does not see that
+  path at all — a file written with `cat > /tmp/x` is a `FileNotFoundError` to
+  the very next `python -c "open('/tmp/x')"`. Stage scratch files in the repo
+  directory instead.
 - `manage.py shell < script.py` swallows output; use `shell -c "$(cat script.py)"`.
 - `IncidentReport.reference_number` is a **property, not a field** — it cannot be used
   in a `filter()`. Query by `id` or `created_at` instead.
