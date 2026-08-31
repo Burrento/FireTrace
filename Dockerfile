@@ -51,10 +51,11 @@ EXPOSE 8000
 # Container Apps' SIGTERM on scale-down or revision swap reaches the server and
 # it shuts down cleanly instead of being killed after the grace period.
 #
-# This assumes one replica. If firetrace-backend is ever scaled out, concurrent
-# replicas would each run `migrate` on boot and race; that needs a lock or a
-# separate migration job before this becomes a multi-replica deployment.
+# `migrate_with_lock`, not plain `migrate`: firetrace-backend scales 0..10, so
+# several replicas can cold-start together and Django holds no global migration
+# lock. The command takes a Postgres advisory lock so the second replica waits
+# rather than racing and dying on "relation already exists".
 #
 # Note the capitalized "FireTrace.asgi" — matches ASGI_APPLICATION in your
 # actual settings.py exactly (case-sensitive).
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec daphne -b 0.0.0.0 -p 8000 FireTrace.asgi:application"]
+CMD ["sh", "-c", "python manage.py migrate_with_lock && exec daphne -b 0.0.0.0 -p 8000 FireTrace.asgi:application"]

@@ -262,14 +262,27 @@ Roll the container in the same sitting, or expect a window where the portal
 looks broken.
 
 **The container migrates itself on boot** — the `CMD` is
-`migrate --noinput && exec daphne ...`. This exists because a schema change must
+`migrate_with_lock && exec daphne ...`. This exists because a schema change must
 not be able to outlive the deploy that needs it: `duplicates._thresholds()`
 reads the `SystemSetting` row on *every* report submitted, so a container
 running ahead of its migrations would 500 on civilian report submission, not
 just on the admin screens that introduced the table. A failed migration aborts
-startup rather than serving against a mismatched schema. It assumes **one
-replica** — scaling `firetrace-backend` out means several replicas racing to
-migrate on boot, which needs a lock or a separate migration job first.
+startup rather than serving against a mismatched schema.
+
+`migrate_with_lock` (in `analytics/management/commands/`) is `migrate` wrapped in
+a Postgres advisory lock. **`firetrace-backend` scales 0..10**, so several
+replicas can cold-start at once, and Django holds no global migration lock —
+two replicas would both find a migration unapplied, both apply it, and the loser
+would crash-loop on "relation already exists" until the winner finished. The
+lock makes it wait instead. It is session-scoped, so a replica killed
+mid-migration releases it rather than stranding every later boot. On SQLite the
+command falls through to a plain `migrate`.
+
+**The deployed revision is digest-pinned, not `:latest`.** `az containerapp show`
+returns `firetrace-backend@sha256:...`, so pushing a new `:latest` to ACR does
+**not** roll it — `az containerapp update --image` is always required. Passing
+only `--image` leaves the environment alone, which is what you want given
+`--set-env-vars` replaces rather than merges.
 
 **This subscription is Azure for Students and blocks things.** `az acr build` /
 ACR Tasks are refused, which is why images build on a GitHub runner. Classic
