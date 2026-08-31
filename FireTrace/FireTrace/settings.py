@@ -39,6 +39,17 @@ DUPLICATE_TIME_WINDOW_MINUTES = env.int('DUPLICATE_TIME_WINDOW_MINUTES', default
 GEO_HIGH_ACCURACY_M = env.int('GEO_HIGH_ACCURACY_M', default=50)
 GEO_MEDIUM_ACCURACY_M = env.int('GEO_MEDIUM_ACCURACY_M', default=200)
 
+# Live dashboard map window: how far back "recent" reaches, and the windows an
+# operator may switch between. ?hours= is clamped to the choices rather than
+# trusted, so an arbitrary value cannot turn the live map back into the
+# unbounded query the filter exists to prevent.
+#
+# These are the *defaults*. The window actually in force is the one on the
+# SystemSetting singleton, which seeds itself from here and is editable in the
+# portal — so this stays the value a fresh install starts from.
+MAP_RECENT_HOURS = env.int('MAP_RECENT_HOURS', default=1)
+MAP_RECENT_HOURS_CHOICES = (1, 6, 24)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/

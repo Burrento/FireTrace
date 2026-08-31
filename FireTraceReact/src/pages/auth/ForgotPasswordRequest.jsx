@@ -22,7 +22,7 @@ function ForgotPasswordRequest() {
             // Here you would call your API to verify the email
             // For now, we'll just proceed to the next step
             navigate('/forgotpass2');
-        } catch (err) {
+        } catch {
             setError('Error processing request. Please try again.');
         } finally {
             setSubmitting(false);

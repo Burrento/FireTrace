@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../../style.css';
-
 const GUIDE_ITEMS = [
     {
         title: 'How to Report Safely',
@@ -20,7 +18,6 @@ const GUIDE_ITEMS = [
         description: "Your report will be reviewed by BFP personnel. You'll be notified of updates.",
     },
 ];
-
 function HelpReport(){
     const navigate = useNavigate();
     return(
@@ -28,7 +25,6 @@ function HelpReport(){
             <header className="top-bar">
                 <h2 className="firetraceheader">Guidelines</h2>
             </header>
-
             <div className="help-guide-list">
                 {GUIDE_ITEMS.map((item) => (
                     <div className="help-guide-card" key={item.title}>
@@ -37,10 +33,8 @@ function HelpReport(){
                     </div>
                 ))}
             </div>
-
             <button className="Cancel-btn" onClick={() => navigate(-1)}>BACK</button>
          </div>
     );
 }
-
 export default HelpReport;

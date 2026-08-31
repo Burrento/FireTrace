@@ -1,83 +1,94 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import { apiFetch } from '../../api';
 import BfpShell from './BfpShell';
+import { useBfpPage, usePolledResource } from './useDashboardData';
 
-const INITIAL_BACKUPS = [
-  { id: 3, at: '2026-08-31T02:00:00', size: '4.2 MB', type: 'Scheduled', status: 'Complete' },
-  { id: 2, at: '2026-08-30T02:00:00', size: '4.1 MB', type: 'Scheduled', status: 'Complete' },
-  { id: 1, at: '2026-08-28T14:12:00', size: '3.9 MB', type: 'Manual', status: 'Complete' },
-];
+/* Backup, from /api/dashboard/backup/export/.
 
-function fmt(iso) {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-}
+   Export is real: the server assembles every report, incident, timeline event,
+   audit entry and account into one JSON file, records the export in the audit
+   log, and hands it back as a download. Password hashes are excluded.
+
+   Restore is deliberately not a button. Replacing a live database from an
+   uploaded file is destructive and all-or-nothing, and putting it behind a
+   form any signed-in operator can reach means one mis-click loses the record
+   of every fire reported so far. The recovery path is the platform's own
+   point-in-time restore, which is described below rather than faked. */
+
+const REFRESH_MS = 60000;
 
 function BfpBackup() {
-  const [backups, setBackups] = useState(INITIAL_BACKUPS);
-  const [creating, setCreating] = useState(false);
-  const [autoBackup, setAutoBackup] = useState(true);
-  const [frequency, setFrequency] = useState('daily');
-  const [restoreFile, setRestoreFile] = useState(null);
+  const { tick, lastRefresh, refreshNow, live, onAuthError } = useBfpPage(REFRESH_MS);
+  const health = usePolledResource('/api/dashboard/health/', tick, { onAuthError });
+
+  const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
-  const fileInput = useRef(null);
+  const [failed, setFailed] = useState(false);
+  const [lastExport, setLastExport] = useState(null);
 
-  function createBackup() {
-    setCreating(true);
+  const counts = health.data?.record_counts;
+
+  async function createBackup() {
+    setExporting(true);
     setMessage('');
-    // Fake the work so the button state is visible.
-    setTimeout(() => {
-      const now = new Date();
-      const entry = {
-        id: Date.now(),
-        at: now.toISOString(),
-        size: `${(3.8 + Math.random() * 0.6).toFixed(1)} MB`,
-        type: 'Manual',
-        status: 'Complete',
-      };
-      setBackups((b) => [entry, ...b]);
+    setFailed(false);
+    try {
+      const payload = await apiFetch('/api/dashboard/backup/export/');
 
-      const blob = new Blob(
-        [JSON.stringify({ createdAt: entry.at, note: 'FireTrace demo backup' }, null, 2)],
-        { type: 'application/json' },
-      );
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json',
+      });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `firetrace-backup-${now.toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const link = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+      link.href = url;
+      link.download = `firetrace-export-${stamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // Object URLs live until revoked; without this each export would leak
+      // the whole payload for the life of the tab.
       URL.revokeObjectURL(url);
 
-      setCreating(false);
-      setMessage('Backup created and downloaded.');
-    }, 900);
-  }
-
-  function restore() {
-    if (!restoreFile) return;
-    // eslint-disable-next-line no-alert
-    const ok = window.confirm(
-      `Restore from "${restoreFile.name}"? This would overwrite current data.`,
-    );
-    if (!ok) return;
-    setMessage(`Restore from "${restoreFile.name}" queued (demo — nothing changed).`);
-    setRestoreFile(null);
-    if (fileInput.current) fileInput.current.value = '';
+      const exported = payload.meta?.counts;
+      setLastExport({ at: new Date(), counts: exported });
+      setMessage(
+        `Exported ${exported?.reports ?? 0} reports, ${exported?.incidents ?? 0} incidents and ${
+          exported?.audit_entries ?? 0
+        } audit entries.`,
+      );
+      // The export writes an audit entry, so the rest of the portal has
+      // something new to show.
+      refreshNow();
+    } catch (err) {
+      setFailed(true);
+      setMessage(err.message || 'Export failed.');
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
-    <BfpShell>
+    <BfpShell live={live} lastRefresh={lastRefresh} refreshNow={refreshNow}>
       <h1 className="bfp-page-title">Backup &amp; Restore</h1>
 
-      {message && <div className="bfp-settings-saved" style={{ margin: '0 2px 4px' }}>{message}</div>}
+      {message && (
+        <div
+          className={failed ? 'bfp-inline-error' : 'bfp-settings-saved'}
+          style={{ margin: '0 2px 4px' }}
+        >
+          {message}
+        </div>
+      )}
 
       <section className="bfp-panel">
         <div className="bfp-panel-head">
-          <h2 className="bfp-panel-title">Create backup</h2>
-          <span className="bfp-panel-sub">Demo — no server call</span>
+          <h2 className="bfp-panel-title">Export data</h2>
+          <span className="bfp-panel-sub">
+            {counts
+              ? `${counts.reports} reports · ${counts.incidents} incidents · ${counts.audit_entries} audit entries`
+              : 'Counting…'}
+          </span>
         </div>
         <div className="bfp-backup-body">
           <div className="bfp-backup-row">
@@ -85,15 +96,58 @@ function BfpBackup() {
               type="button"
               className="bfp-btn-primary"
               onClick={createBackup}
-              disabled={creating}
+              disabled={exporting}
             >
               <i className="fa-solid fa-database" />
-              {creating ? 'Creating…' : 'Create backup now'}
+              {exporting ? 'Exporting…' : 'Export now'}
             </button>
+            {lastExport && (
+              <span className="bfp-file-name">
+                Last export {lastExport.at.toLocaleTimeString()}
+              </span>
+            )}
           </div>
           <p className="bfp-backup-note">
-            Includes reports, incidents, users and audit log. The file downloads to this
-            device.
+            One JSON file containing every report, incident, timeline event,
+            audit entry and account, plus the operational settings in force.
+            Password hashes are excluded. Uploaded photographs are not included:
+            they live in blob storage and are backed up with it. The export is
+            itself recorded in the audit log.
+          </p>
+        </div>
+      </section>
+
+      <section className="bfp-panel">
+        <div className="bfp-panel-head">
+          <h2 className="bfp-panel-title">Restore</h2>
+          <span className="bfp-panel-sub">Performed on the platform, not here</span>
+        </div>
+        <div className="bfp-danger-note">
+          <i className="fa-solid fa-triangle-exclamation" />
+          Restoring replaces every report on file. It is not exposed as a button
+          in this portal on purpose.
+        </div>
+        <div className="bfp-backup-body" style={{ paddingTop: 0 }}>
+          <p className="bfp-backup-note">
+            The database is Azure Database for PostgreSQL, which keeps automatic
+            backups and supports point-in-time restore. A restore creates a{' '}
+            <em>new</em> server from a chosen moment, so the current data is
+            still there if the decision turns out to be wrong — which a file
+            upload overwriting the live database in place could not offer.
+          </p>
+          <p className="bfp-backup-note">
+            Run it from the Azure portal, or:
+          </p>
+          <pre className="bfp-backup-note" style={{ whiteSpace: 'pre-wrap' }}>
+{`az postgres flexible-server restore \\
+  --resource-group firetrace-rg \\
+  --name firetrace-db-restored \\
+  --source-server firetrace-db \\
+  --restore-time "2026-09-01T09:00:00Z"`}
+          </pre>
+          <p className="bfp-backup-note">
+            The JSON export above is the archival copy, for records and for the
+            thesis. It is not the restore path.
           </p>
         </div>
       </section>
@@ -102,112 +156,14 @@ function BfpBackup() {
         <div className="bfp-panel-head">
           <h2 className="bfp-panel-title">Scheduled backups</h2>
         </div>
-        <div className="bfp-setting-list">
-          <label className="bfp-setting">
-            <span className="bfp-setting-text">
-              <span className="bfp-setting-label">Automatic backup</span>
-              <span className="bfp-setting-hint">Run a backup on a fixed schedule</span>
-            </span>
-            <span className={autoBackup ? 'bfp-switch is-on' : 'bfp-switch'}>
-              <input
-                type="checkbox"
-                checked={autoBackup}
-                onChange={(e) => setAutoBackup(e.target.checked)}
-              />
-              <span className="bfp-switch-knob" />
-            </span>
-          </label>
-          <label className="bfp-setting">
-            <span className="bfp-setting-text">
-              <span className="bfp-setting-label">Frequency</span>
-            </span>
-            <span className="bfp-setting-control">
-              <select
-                className="bfp-filter-select"
-                value={frequency}
-                disabled={!autoBackup}
-                onChange={(e) => setFrequency(e.target.value)}
-              >
-                <option value="daily">Every day at 12:00 AM</option>
-                <option value="weekly">Every Monday at 12:00 AM</option>
-                <option value="monthly">1st of the month at 12:00 AM</option>
-              </select>
-            </span>
-          </label>
-        </div>
-      </section>
-
-      <section className="bfp-panel">
-        <div className="bfp-panel-head">
-          <h2 className="bfp-panel-title">Restore</h2>
-        </div>
-        <div className="bfp-danger-note">
-          <i className="fa-solid fa-triangle-exclamation" />
-          Restoring replaces all current data with the contents of the backup file.
-        </div>
-        <div className="bfp-backup-body" style={{ paddingTop: 0 }}>
-          <div className="bfp-backup-row">
-            <button
-              type="button"
-              className="bfp-btn-ghost"
-              onClick={() => fileInput.current?.click()}
-            >
-              <i className="fa-solid fa-file-arrow-up" /> Choose backup file
-            </button>
-            <input
-              ref={fileInput}
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
-            />
-            {restoreFile && <span className="bfp-file-name">{restoreFile.name}</span>}
-            <button
-              type="button"
-              className="bfp-btn-primary"
-              onClick={restore}
-              disabled={!restoreFile}
-            >
-              Restore
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="bfp-panel">
-        <div className="bfp-panel-head">
-          <h2 className="bfp-panel-title">Backup history</h2>
-          <span className="bfp-panel-sub">{backups.length} entries · demo data</span>
-        </div>
-        <div className="bfp-table-wrap">
-          <table className="bfp-table">
-            <thead>
-              <tr>
-                <th>Created</th>
-                <th>Type</th>
-                <th>Size</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {backups.map((b) => (
-                <tr key={b.id}>
-                  <td>{fmt(b.at)}</td>
-                  <td>{b.type}</td>
-                  <td>{b.size}</td>
-                  <td>
-                    <span className="bfp-badge bfp-badge-resolved">{b.status}</span>
-                  </td>
-                  <td>
-                    <button type="button" className="bfp-link-btn">
-                      Download
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="bfp-backup-body">
+          <p className="bfp-backup-note">
+            Handled by the platform. Azure takes automatic PostgreSQL backups on
+            its own retention schedule, and uploaded photographs are held in the
+            <code> firetracemedia </code> storage account. There is no scheduler
+            in this application, so nothing here claims to run one — an
+            unattended job that silently stopped would be worse than none.
+          </p>
         </div>
       </section>
     </BfpShell>

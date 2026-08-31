@@ -1,37 +1,15 @@
 import BfpShell from './BfpShell';
+import { useBfpPage, usePolledResource } from './useDashboardData';
 
-const DEMO_BARANGAYS = [
-  { id: 1, name: 'Ibaba East', zone: 'Poblacion', station: 'Central' },
-  { id: 2, name: 'Ibaba West', zone: 'Poblacion', station: 'Central' },
-  { id: 3, name: 'Sta. Isabel', zone: 'North', station: 'Central' },
-  { id: 4, name: 'Canubing I', zone: 'South', station: 'Sub-station 2' },
-  { id: 5, name: 'Lalud', zone: 'North', station: 'Sub-station 1' },
-  { id: 6, name: 'Guinobatan', zone: 'Coastal', station: 'Central' },
-];
+/* Reference Data, from /api/dashboard/reference/.
 
-const DEMO_CATEGORIES = [
-  { id: 1, label: 'Residential Fire', code: 'RES' },
-  { id: 2, label: 'Commercial Fire', code: 'COM' },
-  { id: 3, label: 'Electrical Fire', code: 'ELE' },
-  { id: 4, label: 'Vehicular Fire', code: 'VEH' },
-  { id: 5, label: 'Grass / Rubbish Fire', code: 'GRS' },
-  { id: 6, label: 'Other', code: 'OTH' },
-];
+   Read-only, and derived rather than restated. The confidence table is built
+   by the server calling the real grading function, and the barangay list comes
+   from the reports actually on file, so neither can drift away from what the
+   system does. The rules panel shows the thresholds currently in force; the
+   editable ones live on the Settings page. */
 
-const DEMO_CONFIDENCE = [
-  { source: 'Device GPS', accuracy: '≤ 25 m', grade: 'High' },
-  { source: 'Device GPS', accuracy: '26 – 100 m', grade: 'Medium' },
-  { source: 'Map pin', accuracy: 'n/a', grade: 'Medium' },
-  { source: 'Typed address', accuracy: 'n/a', grade: 'Low' },
-  { source: 'Device GPS', accuracy: '> 100 m', grade: 'Low' },
-];
-
-const DEMO_RULES = [
-  { key: 'Duplicate radius', value: '150 m', note: 'Haversine distance between two reports' },
-  { key: 'Duplicate time window', value: '30 min', note: 'Both radius and window must hold' },
-  { key: 'Recent map window', value: '1 / 6 / 24 h', note: 'Live dashboard, default 1 h' },
-  { key: 'Photo URL lifetime', value: '1 h', note: 'SAS-signed, then re-issued' },
-];
+const REFRESH_MS = 60000;
 
 const GRADE_BADGE = {
   High: 'bfp-badge-resolved',
@@ -51,75 +29,118 @@ function Panel({ title, sub, children }) {
   );
 }
 
-function BfpReference() {
+function Empty({ colSpan, loading, message }) {
   return (
-    <BfpShell>
+    <tr>
+      <td colSpan={colSpan} className="bfp-table-empty">
+        {loading ? 'Loading…' : message}
+      </td>
+    </tr>
+  );
+}
+
+function BfpReference() {
+  const { tick, lastRefresh, refreshNow, live, onAuthError } = useBfpPage(REFRESH_MS);
+  const { data, loading, error } = usePolledResource('/api/dashboard/reference/', tick, {
+    onAuthError,
+  });
+
+  const barangays = data?.barangays ?? [];
+  const categories = data?.incident_types ?? [];
+  const confidence = data?.confidence_grading ?? [];
+  const rules = data?.rules ?? [];
+
+  return (
+    <BfpShell live={live} lastRefresh={lastRefresh} refreshNow={refreshNow}>
       <h1 className="bfp-page-title">Reference Data</h1>
 
-      <Panel title="Barangays" sub={`${DEMO_BARANGAYS.length} entries · demo data`}>
+      {error && <p className="bfp-inline-error">{error}</p>}
+
+      <Panel
+        title="Barangays"
+        sub={`${barangays.length} with reports on file`}
+      >
         <table className="bfp-table">
           <thead>
             <tr>
               <th>Barangay</th>
-              <th>Zone</th>
-              <th>Responding station</th>
+              <th>Reports</th>
             </tr>
           </thead>
           <tbody>
-            {DEMO_BARANGAYS.map((b) => (
-              <tr key={b.id}>
-                <td>{b.name}</td>
-                <td>{b.zone}</td>
-                <td>{b.station}</td>
+            {barangays.map((barangay) => (
+              <tr key={barangay.name}>
+                <td>{barangay.name}</td>
+                <td>{barangay.reports}</td>
               </tr>
             ))}
+            {barangays.length === 0 && (
+              <Empty
+                colSpan={2}
+                loading={loading}
+                message="No reports have been filed yet, so no barangay appears here."
+              />
+            )}
           </tbody>
         </table>
       </Panel>
 
-      <Panel title="Fire categories" sub={`${DEMO_CATEGORIES.length} entries · demo data`}>
+      <Panel title="Fire categories" sub={`${categories.length} entries`}>
         <table className="bfp-table">
           <thead>
             <tr>
               <th>Category</th>
-              <th>Code</th>
+              <th>Stored value</th>
             </tr>
           </thead>
           <tbody>
-            {DEMO_CATEGORIES.map((c) => (
-              <tr key={c.id}>
-                <td>{c.label}</td>
-                <td>{c.code}</td>
+            {categories.map((category) => (
+              <tr key={category.value}>
+                <td>{category.label}</td>
+                <td className="bfp-ref">{category.value}</td>
               </tr>
             ))}
+            {categories.length === 0 && (
+              <Empty colSpan={2} loading={loading} message="No categories." />
+            )}
           </tbody>
         </table>
       </Panel>
 
-      <Panel title="Location confidence grading" sub="Server-side · demo data">
+      <Panel
+        title="Location confidence grading"
+        sub="Graded server-side, from how the coordinate was captured"
+      >
         <table className="bfp-table">
           <thead>
             <tr>
               <th>Location source</th>
               <th>GPS accuracy</th>
               <th>Confidence</th>
+              <th>On the map</th>
             </tr>
           </thead>
           <tbody>
-            {DEMO_CONFIDENCE.map((r, i) => (
-              <tr key={i}>
-                <td>{r.source}</td>
-                <td>{r.accuracy}</td>
+            {confidence.map((row, index) => (
+              <tr key={`${row.source}-${row.accuracy_m ?? index}`}>
+                <td>{row.source}</td>
+                <td>{row.accuracy_note}</td>
                 <td>
-                  <span className={`bfp-badge ${GRADE_BADGE[r.grade]}`}>{r.grade}</span>
+                  <span className={`bfp-badge ${GRADE_BADGE[row.grade] ?? ''}`}>
+                    {row.grade}
+                  </span>
                 </td>
+                <td>{row.mappable ? 'Plotted' : 'Withheld'}</td>
               </tr>
             ))}
+            {confidence.length === 0 && (
+              <Empty colSpan={4} loading={loading} message="No grading rules." />
+            )}
           </tbody>
         </table>
       </Panel>
 
-      <Panel title="Detection rules" sub="Read-only · demo data">
+      <Panel title="Detection rules" sub="Values currently in force">
         <table className="bfp-table">
           <thead>
             <tr>
@@ -129,13 +150,21 @@ function BfpReference() {
             </tr>
           </thead>
           <tbody>
-            {DEMO_RULES.map((r) => (
-              <tr key={r.key}>
-                <td>{r.key}</td>
-                <td>{r.value}</td>
-                <td>{r.note}</td>
+            {rules.map((rule) => (
+              <tr key={rule.key}>
+                <td>{rule.label}</td>
+                <td>{rule.value}</td>
+                <td>
+                  {rule.note}
+                  {!rule.editable && (
+                    <span className="bfp-panel-sub"> · not editable in the portal</span>
+                  )}
+                </td>
               </tr>
             ))}
+            {rules.length === 0 && (
+              <Empty colSpan={3} loading={loading} message="No rules." />
+            )}
           </tbody>
         </table>
       </Panel>

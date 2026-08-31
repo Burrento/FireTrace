@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings as django_settings
 from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import generics, status
@@ -9,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsBFPPersonnel
-from analytics.models import AuditLog
+from analytics.models import AuditLog, SystemSetting
 from realtime.notify import broadcast_dashboard_event
 
 from .duplicates import flag_possible_duplicate
@@ -35,8 +36,12 @@ from .services import record_activity
 # How far back the live dashboard map reaches by default, and the windows the
 # operator can switch between. Everything older is still on the All Reports
 # page; this only decides what the operations view draws.
-MAP_RECENT_HOURS = 1
-MAP_RECENT_HOURS_CHOICES = (1, 6, 24)
+#
+# Re-exported from settings so the Settings page and this view cannot end up
+# offering different windows: the singleton that holds the live value is
+# validated against the same MAP_RECENT_HOURS_CHOICES tuple.
+MAP_RECENT_HOURS = django_settings.MAP_RECENT_HOURS
+MAP_RECENT_HOURS_CHOICES = django_settings.MAP_RECENT_HOURS_CHOICES
 
 # A fire someone is currently working stays on the live map however long ago it
 # came in -- "current" is about the response, not the timestamp. A report merely
@@ -514,8 +519,12 @@ class DashboardMapView(APIView):
         Clamped rather than trusted: an arbitrary value would let a client turn
         the live map back into the unbounded query this filter exists to avoid.
         """
+        # The default is the administrator's configured window, not the
+        # compiled-in one, so changing it in the portal actually changes what
+        # an operator sees on arrival rather than only what ?hours= falls back to.
+        default = SystemSetting.load().map_recent_hours
         try:
-            hours = int(request.query_params.get('hours', MAP_RECENT_HOURS))
+            hours = int(request.query_params.get('hours', default))
         except (TypeError, ValueError):
-            return MAP_RECENT_HOURS
-        return hours if hours in MAP_RECENT_HOURS_CHOICES else MAP_RECENT_HOURS
+            return default
+        return hours if hours in MAP_RECENT_HOURS_CHOICES else default
