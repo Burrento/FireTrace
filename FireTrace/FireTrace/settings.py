@@ -39,6 +39,17 @@ DUPLICATE_TIME_WINDOW_MINUTES = env.int('DUPLICATE_TIME_WINDOW_MINUTES', default
 GEO_HIGH_ACCURACY_M = env.int('GEO_HIGH_ACCURACY_M', default=50)
 GEO_MEDIUM_ACCURACY_M = env.int('GEO_MEDIUM_ACCURACY_M', default=200)
 
+# Live dashboard map window: how far back "recent" reaches, and the windows an
+# operator may switch between. ?hours= is clamped to the choices rather than
+# trusted, so an arbitrary value cannot turn the live map back into the
+# unbounded query the filter exists to prevent.
+#
+# These are the *defaults*. The window actually in force is the one on the
+# SystemSetting singleton, which seeds itself from here and is editable in the
+# portal — so this stays the value a fresh install starts from.
+MAP_RECENT_HOURS = env.int('MAP_RECENT_HOURS', default=1)
+MAP_RECENT_HOURS_CHOICES = (1, 6, 24)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
@@ -158,6 +169,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'accounts',
     'incidents',
@@ -329,14 +341,13 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    # The access token is short-lived on purpose; the frontend silently swaps in
-    # a new one using the refresh token, so the user never sees it expire.
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    # Normal login: the session lasts a day.
+    # Short-lived: the frontend silently refreshes it via authFetch().
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    # How long a normal ("remember me" unticked) session survives.
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
 }
 
-# Issued instead of REFRESH_TOKEN_LIFETIME when the user ticks "remember me",
-# so revisiting the site within this window skips the login screen.
+# Applied instead of REFRESH_TOKEN_LIFETIME when the user ticks "Remember me".
+# Fixed window: 30 days from login, not extended by activity.
 REMEMBER_ME_REFRESH_LIFETIME = timedelta(days=30)

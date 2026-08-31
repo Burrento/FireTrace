@@ -1,14 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 
 /* Single source of truth for the civilian bottom nav, so every page gets the
-   same bar as the home tab. Alerts and Profile have no routes yet, so they
-   point at the dashboard and never light up. */
+   same bar as the home tab. */
 const NAV_ITEMS = [
     { key: 'home', label: 'Home', icon: 'fa-house', to: '/dashboard', match: ['/dashboard'] },
     { key: 'report', label: 'Report', icon: 'fa-pen', to: '/report', match: ['/report', '/continue2', '/continuethird', '/continue4'] },
     { key: 'myreports', label: 'My Reports', icon: 'fa-file-lines', to: '/myreport', match: ['/myreport'] },
-    { key: 'alerts', label: 'Alerts', icon: 'fa-bell', to: '/dashboard', match: [] },
-    { key: 'profile', label: 'Profile', icon: 'fa-circle-user', to: '/dashboard', match: [] },
+    { key: 'alerts', label: 'Alerts', icon: 'fa-bell', to: '/Notifications', match: ['/Notifications'] },
+    { key: 'profile', label: 'Profile', icon: 'fa-circle-user', to: '/profile', match: ['/profile'] },
 ];
 
 function resolveActive(pathname) {

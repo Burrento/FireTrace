@@ -26,19 +26,31 @@ class UserAdmin(BaseUserAdmin):
     # own section rather than burying it among the Django permission flags it
     # is easily confused with -- user_type drives IsBFPPersonnel, while
     # is_staff only controls access to this admin.
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('FireTrace role', {
-            'fields': ('user_type',),
-            'description': (
-                'BFP grants access to the operations dashboard and every '
-                'personnel-only endpoint. This is separate from staff status, '
-                'which only controls access to this admin.'
-            ),
-        }),
+    #
+    # Built by unpacking rather than with `+`. ModelAdmin declares fieldsets as
+    # list-or-tuple-or-None, and concatenation has to commit to one of those:
+    # `list + tuple` is a type error even though UserAdmin happens to supply a
+    # tuple at runtime. Unpacking accepts either, and `or ()` covers the None
+    # arm, which is the plain ModelAdmin default rather than anything UserAdmin
+    # does.
+    fieldsets = (
+        *(BaseUserAdmin.fieldsets or ()),
+        (
+            'FireTrace role',
+            {
+                'fields': ('user_type',),
+                'description': (
+                    'BFP grants access to the operations dashboard and every '
+                    'personnel-only endpoint. This is separate from staff status, '
+                    'which only controls access to this admin.'
+                ),
+            },
+        ),
     )
 
     # Offered on the create form too, so a personnel account can be made in one
     # step instead of created and then edited.
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+    add_fieldsets = (
+        *(BaseUserAdmin.add_fieldsets or ()),
         ('FireTrace role', {'fields': ('user_type',)}),
     )

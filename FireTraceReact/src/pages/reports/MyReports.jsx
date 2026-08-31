@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
 import { clearTokens, isLoggedIn } from '../../auth';
+import { humanize } from '../../lib/incidentDisplay';
 import BottomNav from '../../components/BottomNav';
 import ThemeToggle from '../../components/ThemeToggle';
 
@@ -14,14 +15,6 @@ const FILTERS = [
     { key: 'responding', label: 'Responding' },
     { key: 'resolved', label: 'Resolved' },
 ];
-
-function statusClass(status) {
-    return `civ-status-badge status-${status.toLowerCase().replace(/_/g, '-')}`;
-}
-
-function statusLabel(status) {
-    return status.replace(/_/g, ' ').toUpperCase();
-}
 
 function MyReports() {
     const navigate = useNavigate();
@@ -181,12 +174,14 @@ function MyReports() {
                                 <Link key={report.id} to={`/report/${report.id}`} className="civ-report-item">
                                     <div className="civ-report-header">
                                         <span className="civ-report-id">{report.reference_number}</span>
-                                        <span className={statusClass(report.status)}>{statusLabel(report.status)}</span>
+                                        <span className={`civ-status-badge status-${String(report.status).toLowerCase().replace(/_/g, '-')}`}>
+                                            {humanize(report.status_display, report.status).toUpperCase()}
+                                        </span>
                                     </div>
                                     <div className="civ-report-details">
                                         <div className="civ-report-detail-row">
                                             <i className="fa-solid fa-house-fire"></i>
-                                            <span>{report.incident_type}</span>
+                                            <span>{humanize(report.incident_type_display, report.incident_type)}</span>
                                         </div>
                                         <div className="civ-report-detail-row">
                                             <i className="fa-solid fa-map-pin"></i>

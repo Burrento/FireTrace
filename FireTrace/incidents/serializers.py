@@ -17,6 +17,8 @@ class IncidentReportSerializer(serializers.ModelSerializer):
 
     reference_number = serializers.ReadOnlyField()
     reporter = serializers.PrimaryKeyRelatedField(read_only=True)
+    incident_type_display = serializers.CharField(source='get_incident_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_workflow_status_display', read_only=True)
     has_photo = serializers.ReadOnlyField()
     is_mappable = serializers.ReadOnlyField()
     duplicate_of_reference = serializers.CharField(
@@ -32,11 +34,11 @@ class IncidentReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = IncidentReport
         fields = (
-            'id', 'reference_number', 'reporter', 'incident_type', 'description',
-            'barangay', 'address', 'latitude', 'longitude', 'location_confirmed',
-            'photo', 'has_photo', 'location_source', 'gps_accuracy_m',
+            'id', 'reference_number', 'reporter', 'incident_type', 'incident_type_display',
+            'description', 'barangay', 'address', 'latitude', 'longitude',
+            'location_confirmed', 'photo', 'has_photo', 'location_source', 'gps_accuracy_m',
             'geocoding_confidence', 'is_mappable',
-            'workflow_status', 'status',
+            'workflow_status', 'status', 'status_display',
             'duplicate_status', 'duplicate_of', 'duplicate_of_reference',
             'duplicate_distance_m', 'duplicate_time_delta_seconds',
             'duplicate_reviewed_at',

@@ -63,6 +63,8 @@ function LocationStep() {
         );
     }
 
+    // Removing the pin also drops the confirmation — there is no longer a
+    // location for the user to be confirming.
     function handleClearPin() {
         updateDraft({ latitude: null, longitude: null, location_confirmed: false });
         setLookup('');

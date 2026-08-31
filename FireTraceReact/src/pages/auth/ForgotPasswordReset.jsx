@@ -34,7 +34,7 @@ function ForgotPasswordReset() {
             // Here you would call your API to reset the password
             // For now, we'll just proceed to login
             navigate('/login');
-        } catch (err) {
+        } catch {
             setError('Error resetting password. Please try again.');
         } finally {
             setSubmitting(false);

@@ -6,6 +6,7 @@ import { isLoggedIn } from '../../auth';
 import IncidentMap from '../../components/IncidentMap';
 import BottomNav from '../../components/BottomNav';
 import ThemeToggle from '../../components/ThemeToggle';
+import { humanize } from '../../lib/incidentDisplay';
 
 /* Mirrors Incident.Status in the backend, in order, so the tracker can show
    how far along a report is. */
@@ -93,11 +94,11 @@ function ReportDetail() {
                 <section className="civ-detail-card">
                     <div className="civ-report-header">
                         <span className="civ-report-id">{incident.reference_number}</span>
-                        <span className={`civ-status-badge status-${incident.status.toLowerCase().replace(/_/g, '-')}`}>
-                            {incident.status.replace(/_/g, ' ').toUpperCase()}
+                        <span className={`civ-status-badge status-${String(incident.status).toLowerCase().replace(/_/g, '-')}`}>
+                            {humanize(incident.status_display, incident.status).toUpperCase()}
                         </span>
                     </div>
-                    <h1 className="civ-detail-title">{incident.incident_type}</h1>
+                    <h1 className="civ-detail-title">{humanize(incident.incident_type_display, incident.incident_type)}</h1>
                     <p className="civ-detail-location">
                         <i className="fa-solid fa-location-dot"></i>
                         Barangay {incident.barangay}
@@ -131,7 +132,7 @@ function ReportDetail() {
                             <i className="fa-solid fa-house-fire"></i>
                             <div>
                                 <span className="civ-detail-label">Type</span>
-                                <span className="civ-detail-value">{incident.incident_type}</span>
+                                <span className="civ-detail-value">{humanize(incident.incident_type_display, incident.incident_type)}</span>
                             </div>
                         </div>
                         <div className="civ-detail-row">

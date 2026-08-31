@@ -83,21 +83,64 @@ body[data-shell='bfp'] #root {
 
 /* ---------- Portal tabs ---------- */
 
-.bfp-nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: auto;
-  padding-left: 18px;
+/* The nav is a hamburger-triggered slide-out drawer on every width. The
+   header brand takes the leftover space so the action cluster stays right. */
+.bfp-header-brand { margin-right: auto; }
+
+.bfp-menu-toggle { font-size: 16px; }
+
+.bfp-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.45);
+  animation: bfp-fade-in 0.15s ease;
 }
 
+@keyframes bfp-fade-in {
+  from { opacity: 0; }
+}
+
+.bfp-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 31;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 260px;
+  max-width: 82vw;
+  height: 100svh;
+  padding: 18px 14px;
+  background: var(--civ-surface);
+  border-right: 1px solid var(--civ-border);
+  box-shadow: 2px 0 16px var(--civ-shadow);
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+  overflow-y: auto;
+}
+
+.bfp-nav.is-open { transform: translateX(0); }
+
+.bfp-nav-group {
+  margin: 12px 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--civ-text-faint);
+}
+.bfp-nav-group:first-child { margin-top: 0; }
+
 .bfp-nav-link {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 14px;
+  gap: 12px;
+  padding: 10px 12px;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   color: var(--civ-text-muted);
@@ -111,17 +154,12 @@ body[data-shell='bfp'] #root {
 }
 
 .bfp-nav-link.active {
-  background: var(--civ-surface);
+  background: var(--civ-surface-2);
   color: var(--ft-red);
   box-shadow: inset 0 0 0 1px var(--civ-border);
 }
 
-.bfp-nav-link i { font-size: 12px; }
-
-@media (max-width: 900px) {
-  .bfp-nav { padding-left: 0; width: 100%; order: 3; }
-  .bfp-nav-link span { display: none; }
-}
+.bfp-nav-link i { font-size: 14px; width: 18px; text-align: center; }
 
 .bfp-header-actions {
   display: flex;
@@ -930,3 +968,283 @@ body[data-shell='bfp'] #root {
 }
 
 .bfp-activity-dot { opacity: 0.6; }
+
+/* ---------- Operational Overview: gauges + bar chart ---------- */
+
+.bfp-page-title {
+  margin: 0 0 4px;
+  font-family: var(--heading);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--civ-text);
+}
+
+.bfp-gauge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 20px 16px;
+}
+
+.bfp-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  flex: 1 1 140px;
+}
+
+.bfp-gauge-value {
+  font-family: var(--heading);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.bfp-gauge figcaption {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--civ-text-muted);
+}
+
+.bfp-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.bfp-bar-col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+}
+
+.bfp-bar {
+  width: 100%;
+  max-width: 46px;
+  min-height: 4px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--ft-red), var(--civ-status-responding, #d98324));
+  transition: height 0.3s ease;
+}
+
+.bfp-bar-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--civ-text);
+}
+
+.bfp-bar-label {
+  font-size: 11px;
+  color: var(--civ-text-faint);
+}
+
+/* ---------- Settings ---------- */
+
+/* Panels in the settings form sit flush otherwise; give each after the first
+   a little breathing room. */
+.bfp-settings-form .bfp-panel + .bfp-panel,
+form .bfp-panel + .bfp-panel {
+  margin-top: 10px;
+}
+
+.bfp-setting-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.bfp-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--civ-border-soft);
+  cursor: pointer;
+}
+.bfp-setting:last-child { border-bottom: 0; }
+
+.bfp-setting-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bfp-setting-label { font-size: 13px; font-weight: 600; color: var(--civ-text); }
+.bfp-setting-hint { font-size: 12px; color: var(--civ-text-faint); }
+
+.bfp-setting-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.bfp-setting-control input[type='number'] { width: 90px; }
+.bfp-setting-unit { font-size: 12px; color: var(--civ-text-muted); }
+
+.bfp-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--civ-border);
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.bfp-switch.is-on { background: var(--ft-red); }
+.bfp-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.bfp-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+.bfp-switch.is-on .bfp-switch-knob { transform: translateX(18px); }
+
+.bfp-settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+.bfp-settings-save { 
+  display: inline-flex; align-items: center; gap: 12px; 
+}
+
+.bfp-settings-saved { 
+  font-size: 12px; color: var(--civ-status-resolved, #2e7d32); 
+}
+
+.bfp-btn-csv {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 9px;
+  background-color: rgb(0, 190, 0);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.bfp-btn-csv:hover { 
+  background: rgb(0, 121, 0);
+}
+
+.bfp-btn-csv:disabled {
+  opacity: 0.5; cursor: not-allowed;
+}
+
+/* ---------- Buttons ---------- */
+
+.bfp-btn-primary,
+.bfp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bfp-btn-primary {
+  border: 0;
+  background: var(--ft-red);
+  color: #fff;
+}
+.bfp-btn-primary:hover { background: #b3121f; }
+
+.bfp-btn-ghost {
+  border: 1px solid var(--civ-border);
+  background: var(--civ-surface);
+  color: var(--civ-text);
+}
+.bfp-btn-ghost:hover { background: var(--civ-surface-2); }
+
+.bfp-btn-primary:disabled,
+.bfp-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Backup & Restore ---------- */
+
+.bfp-backup-body { padding: 16px; }
+.bfp-backup-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.bfp-backup-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--civ-text-faint);
+}
+.bfp-file-name {
+  font-size: 13px;
+  color: var(--civ-text-muted);
+}
+.bfp-danger-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0 16px 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(215, 25, 42, 0.1);
+  color: var(--ft-red);
+  font-size: 12px;
+}
+
+/* ---------- System Health page ---------- */
+
+.bfp-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.bfp-stat {
+  padding: 14px 16px;
+  border: 1px solid var(--civ-border);
+  border-radius: 12px;
+  background: var(--civ-surface);
+}
+.bfp-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--civ-text-faint);
+}
+.bfp-stat-value {
+  margin-top: 6px;
+  font-family: var(--heading);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--civ-text);
+}
+.bfp-stat-foot { margin-top: 2px; font-size: 12px; color: var(--civ-text-muted); }
+
+.bfp-meter {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--civ-border);
+  overflow: hidden;
+}
+.bfp-meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--civ-status-verified);
+}
+.bfp-meter-fill.is-warn { background: var(--civ-status-review); }
+.bfp-meter-fill.is-crit { background: var(--ft-red); }
