@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../../style.css';
-
 function PrivacyNotice(){
     const navigate = useNavigate();
     return(
@@ -13,5 +11,4 @@ function PrivacyNotice(){
          </div>
     );
 }
-
 export default PrivacyNotice;

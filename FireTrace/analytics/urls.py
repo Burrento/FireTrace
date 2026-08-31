@@ -13,6 +13,11 @@ from . import views
 urlpatterns = [
     path('kpis/', views.DashboardKPIView.as_view()),
     path('activity/', views.RecentActivityView.as_view()),
+    path('audit/', views.AuditLogView.as_view()),
+    path('operational/', views.OperationalOverviewView.as_view()),
+    path('reference/', views.ReferenceDataView.as_view()),
+    path('settings/', views.SystemSettingsView.as_view()),
+    path('backup/export/', views.BackupExportView.as_view()),
     path('health/', views.SystemHealthView.as_view()),
     path('map/', DashboardMapView.as_view()),
 ]

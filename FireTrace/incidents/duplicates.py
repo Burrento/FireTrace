@@ -19,8 +19,9 @@ it, so BFP personnel can see the reasoning and rule on it themselves.
 import math
 from datetime import timedelta
 
-from django.conf import settings
 from django.utils import timezone
+
+from analytics.models import SystemSetting
 
 from .models import DuplicateStatus, IncidentReport, IncidentTimelineEvent
 
@@ -41,10 +42,16 @@ def haversine_meters(lat1, lon1, lat2, lon2):
 
 
 def _thresholds():
-    return (
-        getattr(settings, 'DUPLICATE_RADIUS_METERS', 150),
-        getattr(settings, 'DUPLICATE_TIME_WINDOW_MINUTES', 30),
-    )
+    """The rule currently in force, as (radius_m, window_minutes).
+
+    Read from the ``SystemSetting`` singleton on every call rather than cached,
+    so a threshold retuned in the portal applies to the very next report
+    instead of at the next restart. The singleton seeds itself from the
+    ``settings.py`` values, so an installation nobody has touched still flags
+    exactly what it flagged before this was configurable.
+    """
+    current = SystemSetting.load()
+    return current.duplicate_radius_m, current.duplicate_window_minutes
 
 
 def find_duplicate_candidates(report):

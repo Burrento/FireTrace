@@ -4785,3 +4785,17 @@ input.searchInput {
 .barangay-hint-warn {
     color: var(--ft-red);
 }
+
+/* Confirmation counterpart to .auth-error, for the profile forms. Same shape
+   so a "saved" message and a failure occupy the same space and the layout does
+   not jump between them. Both dark and light themes read the colour from the
+   resolved-status variable rather than hardcoding a green. */
+.form-success {
+    color: var(--civ-status-resolved);
+    font-size: 13px;
+    margin: -4px 0 10px 0;
+    padding: 8px 12px;
+    background-color: var(--civ-status-resolved-bg);
+    border-radius: 8px;
+    border-left: 3px solid var(--civ-status-resolved);
+}
