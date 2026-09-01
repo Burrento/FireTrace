@@ -22,6 +22,9 @@ build/
 # Env / secrets
 .env
 .env.*
+CLAUDE.md
+CLAUDE.md.bak
+GEMINI.md
 
 # Editor
 .vscode/
