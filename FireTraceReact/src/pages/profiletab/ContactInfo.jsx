@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../style.css';
 import { apiFetch } from '../../api';
+import CivHeader from '../../components/CivHeader';
 
 /* Contact numbers, backed by GET/PATCH /accounts/me.
 
@@ -71,52 +72,60 @@ function ContactInfo() {
   }
 
   return (
-    <div className="page">
-      <header className="top-bar">
-        <h2 className="firetraceheader">CONTACT INFO</h2>
-      </header>
+    <div className="civilian-dashboard">
+      <CivHeader title="Contact Information" back="/profile" />
 
-      <form className="edit-profile-form" onSubmit={handleSave}>
-        <p className="PersoName">Mobile Number</p>
-        <input
-          type="tel"
-          id="mobile-number"
-          name="phone_number"
-          autoComplete="tel"
-          placeholder="09XX XXX XXXX"
-          disabled={!form}
-          value={form?.phone_number ?? ''}
-          onChange={(event) => set('phone_number', event.target.value)}
-        />
+      <div className="civ-main-content">
+        <form className="civ-form" onSubmit={handleSave}>
+          <label className="civ-field">
+            <span className="civ-field-label">Mobile number</span>
+            <input
+              type="tel"
+              id="mobile-number"
+              name="phone_number"
+              autoComplete="tel"
+              placeholder="09XX XXX XXXX"
+              disabled={!form}
+              value={form?.phone_number ?? ''}
+              onChange={(event) => set('phone_number', event.target.value)}
+            />
+          </label>
 
-        <p>Alternative Contact Number (Optional)</p>
-        <input
-          type="tel"
-          id="alternate-number"
-          name="alternate_phone_number"
-          autoComplete="tel"
-          placeholder="Another number BFP can reach"
-          disabled={!form}
-          value={form?.alternate_phone_number ?? ''}
-          onChange={(event) => set('alternate_phone_number', event.target.value)}
-        />
+          <label className="civ-field">
+            <span className="civ-field-label">
+              Alternative number <em>optional</em>
+            </span>
+            <input
+              type="tel"
+              id="alternate-number"
+              name="alternate_phone_number"
+              autoComplete="tel"
+              placeholder="Another number BFP can reach"
+              disabled={!form}
+              value={form?.alternate_phone_number ?? ''}
+              onChange={(event) => set('alternate_phone_number', event.target.value)}
+            />
+          </label>
 
-        <p>
-          BFP uses these numbers to follow up on a report you have filed. They
-          are not used to sign you in.
-        </p>
+          <p className="civ-form-note">
+            <i className="fa-solid fa-circle-info" />
+            BFP uses these numbers to follow up on a report you have filed. They
+            are not used to sign you in.
+          </p>
 
-        {error && <p className="auth-error">{error}</p>}
-        {saved && <p className="form-success">Saved.</p>}
+          {error && <p className="civ-form-error">{error}</p>}
+          {saved && <p className="civ-form-success"><i className="fa-solid fa-check" /> Saved.</p>}
 
-        <button type="submit" className="UpdateNumber-btn" disabled={saving || !form}>
-          {saving ? 'SAVING…' : 'UPDATE NUMBER'}
-        </button>
-      </form>
-
-      <button type="button" className="Cancel-btn" onClick={() => navigate(-1)}>
-        CANCEL
-      </button>
+          <div className="civ-form-actions">
+            <button type="submit" className="civ-primary-btn" disabled={saving || !form}>
+              {saving ? 'Saving…' : 'Update numbers'}
+            </button>
+            <button type="button" className="civ-secondary-btn" onClick={() => navigate(-1)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

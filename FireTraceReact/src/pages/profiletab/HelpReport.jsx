@@ -1,40 +1,67 @@
-import { useNavigate } from 'react-router-dom';
 import '../../style.css';
+import CivHeader from '../../components/CivHeader';
+
 const GUIDE_ITEMS = [
     {
-        title: 'How to Report Safely',
-        description: 'Report only when it is safe to do so. Do not put yourself in danger.',
+        icon: 'fa-person-running',
+        title: 'How to report safely',
+        description: 'Get yourself out first. Report only when you are at a safe distance — never from inside a burning building.',
     },
     {
-        title: 'What to Include',
-        description: 'Provide accurate details such as location, incident type, and description.',
+        icon: 'fa-location-dot',
+        title: 'What to include',
+        description: 'Pin the location as precisely as you can, pick the right incident type, and describe what you can actually see.',
     },
     {
-        title: 'Supporting Photos',
-        description: 'Add photos if available, but never risk your safety to take one.',
+        icon: 'fa-camera',
+        title: 'Supporting photos',
+        description: 'A photograph helps personnel judge the size of a fire before they arrive, but it is optional. Never go back for one.',
     },
     {
-        title: 'After You Submit',
-        description: "Your report will be reviewed by BFP personnel. You'll be notified of updates.",
+        icon: 'fa-clipboard-check',
+        title: 'After you submit',
+        description: 'Your report goes to BFP personnel for review. You can follow its status under My Reports, and once it is verified it appears on the live map.',
+    },
+    {
+        icon: 'fa-copy',
+        title: 'If someone already reported it',
+        description: 'File it anyway. Reports near each other in place and time are flagged for review — personnel decide, and a second account often adds detail.',
     },
 ];
-function HelpReport(){
-    const navigate = useNavigate();
-    return(
-        <div className="page">
-            <header className="top-bar">
-                <h2 className="firetraceheader">Guidelines</h2>
-            </header>
-            <div className="help-guide-list">
-                {GUIDE_ITEMS.map((item) => (
-                    <div className="help-guide-card" key={item.title}>
-                        <p className="help-guide-title">{item.title}</p>
-                        <p className="help-guide-desc">{item.description}</p>
-                    </div>
-                ))}
+
+/* Reporting guidance. Ordered the way an emergency actually unfolds: get safe,
+   file it, then what happens next -- rather than as a list of app features. */
+function HelpReport() {
+    return (
+        <div className="civilian-dashboard">
+            <CivHeader title="Reporting Guidelines" back="/profile" />
+
+            <div className="civ-main-content">
+                <p className="civ-doc-lead">
+                    FireTrace sends what you file straight to BFP Calapan. These
+                    are the things worth knowing before you use it.
+                </p>
+
+                <div className="civ-guide-list">
+                    {GUIDE_ITEMS.map((item) => (
+                        <article className="civ-guide-card" key={item.title}>
+                            <span className="civ-guide-icon"><i className={`fa-solid ${item.icon}`} /></span>
+                            <div>
+                                <h3>{item.title}</h3>
+                                <p>{item.description}</p>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+
+                <p className="civ-doc-callout">
+                    <i className="fa-solid fa-phone" />
+                    In a life-threatening emergency, call BFP Calapan first. This
+                    app is a report, not a dispatch line.
+                </p>
             </div>
-            <button className="Cancel-btn" onClick={() => navigate(-1)}>BACK</button>
-         </div>
+        </div>
     );
 }
+
 export default HelpReport;

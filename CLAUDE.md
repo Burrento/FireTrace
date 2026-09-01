@@ -178,6 +178,15 @@ Single Vite SPA, routes in `src/App.jsx`, wrapped in `ThemeProvider` +
 `ReportDraftProvider`. Two shells share one app:
 
 - **Civilian**, a phone column — `#root` is capped at `480px` in `index.css`.
+  Navigation is **one drawer** (`components/SideNav.jsx`), opened by the menu
+  button in `components/CivHeader.jsx`, with open/closed state in
+  `context/NavDrawerContext.jsx` because the button and the drawer live on
+  opposite sides of the tree. There were previously three navs — a bottom tab
+  bar, a floating red hamburger positioned over the wordmark, and a header
+  button that was a dead link to `/profile` — each listing a different subset
+  of the screens. `NAV_GROUPS` is now the only list, so a new page is one line
+  and cannot become unreachable. Every civilian screen renders `CivHeader`
+  rather than its own `<header>`; a screen that draws its own has no menu.
 - **BFP portal** — `pages/bfp/BfpShell.jsx` holds the access check, header and tab
   bar for *every* portal screen, so adding a page cannot accidentally ship one
   without the personnel check. It sets `document.body.dataset.shell='bfp'` on mount
@@ -358,7 +367,24 @@ socket was verified end to end and still failed in real use: that test received
 its broadcast within seconds, before the first idle blocking read could time out.
 Anything long-lived needs to be observed *idle*, not just exercised once.
 
+`lib/contacts.js` holds BFP Calapan's numbers. The Home screen's call button
+used to dial a hardcoded `+639171234567` while the Official BFP Contacts page
+listed `(043) 288-2430` — two numbers for one station, one of them a
+placeholder. Both read from here now. **The numbers still want confirming with
+the station**; they were taken from the page that already listed them.
+
+A `tel:` link cannot auto-dial, and no browser setting changes that — it hands
+the number to the dialer and the user presses call. True one-press dialing
+needs a native wrapper (Android `ACTION_CALL` + `CALL_PHONE`); iOS has no
+equivalent at all.
+
 ### Known small issues
+- **The Privacy Notice and Consent pages were empty** — a header and a Cancel
+  button — and now carry content written from what the code actually does
+  (`IncidentReport`'s columns, the never-deleted rule, what
+  `OngoingFireMapView` withholds). Nobody at BFP has signed off on the wording
+  yet, and a privacy notice is the station's statement rather than the
+  developer's.
 - **Password reset is still a stub.** `ForgotPasswordRequest.jsx` and
   `ForgotPasswordReset.jsx` navigate onward without calling any API — there is
   no reset endpoint behind them. They lint clean, which is not the same as

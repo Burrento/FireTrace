@@ -32,6 +32,14 @@ to "Kept Separate" or "Confirmed Duplicate".
 **4. Analytics are descriptive only.** Counts, trends, and observed response
 times. No forecasting, no risk scoring, no automated resource allocation.
 
+## Getting around (civilian)
+
+Every screen carries the same header, and the menu button in it opens the one
+drawer that holds all navigation — emergency actions first, then your activity,
+your account, and the reference pages. It replaced a bottom tab bar, a floating
+hamburger and a header button that each covered a different subset of the app;
+adding a screen now means adding one entry in `SideNav.jsx`.
+
 ## Reporting a fire (civilian)
 
 Three steps, and the third one files it:

@@ -4,8 +4,8 @@ import '../style.css';
 import { apiFetch } from '../api';
 import { clearTokens, isLoggedIn } from '../auth';
 import { humanize } from '../lib/incidentDisplay';
-import BottomNav from '../components/BottomNav';
-import ThemeToggle from '../components/ThemeToggle';
+import CivHeader from '../components/CivHeader';
+import { BFP_HOTLINE, BFP_HOTLINE_DISPLAY } from '../lib/contacts';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -62,28 +62,7 @@ function Dashboard() {
 
   return (
     <div className="civilian-dashboard">
-      {/* Header */}
-      <header className="civ-header">
-        <div className="civ-header-left">
-          <div className="civ-logo-container">
-            <i className="fa-solid fa-fire-flame-curved civ-logo-icon"></i>
-            <div className="civ-brand">
-              <span className="civ-brand-fire">FIRE</span>
-              <span className="civ-brand-trace">TRACE</span>
-            </div>
-          </div>
-        </div>
-        <div className="civ-header-right">
-          <ThemeToggle />
-          <Link to="/Notifications" className="civ-notification-icon">
-            <i className="fa-solid fa-bell"></i>
-            <span className="civ-notification-badge"></span>
-          </Link>
-          <Link to="/profile" className="civ-menu-btn">
-            <i className="fa-solid fa-bars"></i>
-          </Link>
-        </div>
-      </header>
+      <CivHeader bell />
 
       {/* Welcome Card */}
       <section className="civ-welcome-section">
@@ -152,14 +131,14 @@ function Dashboard() {
           </Link>
 
           {/* Call BFP Card */}
-          <a href="tel:+639171234567" className="civ-action-card civ-action-secondary">
+          <a href={`tel:${BFP_HOTLINE}`} className="civ-action-card civ-action-secondary">
             <div className="civ-action-icon">
               <i className="fa-solid fa-phone"></i>
             </div>
             <div className="civ-action-content">
               <div className="civ-action-main">
                 <h3>Call BFP Calapan</h3>
-                <p>Emergency hotline</p>
+                <p>{BFP_HOTLINE_DISPLAY}</p>
               </div>
               <div className="civ-action-badge civ-action-badge-secondary">24/7 AVAILABLE</div>
             </div>
@@ -293,8 +272,6 @@ function Dashboard() {
         </section>
       </div>
 
-      {/* Bottom Navigation */}
-      <BottomNav />
     </div>
   );
 }

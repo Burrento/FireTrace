@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
 import LocationPickerMap from '../../components/LocationPickerMap';
-import BottomNav from '../../components/BottomNav';
+import CivHeader from '../../components/CivHeader';
 import { CALAPAN_BARANGAYS } from '../../data/barangays';
 
 function LocationStep() {
@@ -72,10 +72,7 @@ function LocationStep() {
 
     return (
         <center>
-            <header className="top-bar">
-                <h2 className="firetraceheader">Fire Report Incident</h2>
-                <p>2 of 3</p>
-            </header>
+            <CivHeader title="Step 2 of 3" subtitle="Where is the fire?" />
             <button className="pinpointbtn" onClick={handleUseCurrentLocation} type="button">
                 USE MY CURRENT LOCATION
             </button>
@@ -161,7 +158,6 @@ function LocationStep() {
                 Continue
             </button>
             </div>
-            <BottomNav active="report" />
         </center>
     );
 }

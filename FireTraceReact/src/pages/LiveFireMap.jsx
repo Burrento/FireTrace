@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
 import '../style.css';
 import { apiFetch } from '../api';
 import { isLoggedIn } from '../auth';
 import { markerKey } from '../lib/ongoingFires';
-import BottomNav from '../components/BottomNav';
-import ThemeToggle from '../components/ThemeToggle';
+import CivHeader from '../components/CivHeader';
 import OngoingFireGlyph from '../components/OngoingFireGlyph';
 import '../styles/fire-pulse.css';
 
@@ -97,23 +96,7 @@ function LiveFireMap() {
 
     return (
         <div className="civilian-dashboard">
-            <header className="civ-header">
-                <div className="civ-header-left">
-                    <Link to="/dashboard" className="civ-icon-btn" title="Back">
-                        <i className="fa-solid fa-arrow-left"></i>
-                    </Link>
-                    <div className="civ-logo-container">
-                        <i className="fa-solid fa-fire-flame-curved civ-logo-icon"></i>
-                        <div className="civ-brand">
-                            <span className="civ-brand-fire">FIRE</span>
-                            <span className="civ-brand-trace">TRACE</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="civ-header-right">
-                    <ThemeToggle />
-                </div>
-            </header>
+            <CivHeader title="Live Fire Map" back="/dashboard" />
 
             <div className="civ-main-content">
                 <section className="civ-live-head">
@@ -228,8 +211,6 @@ function LiveFireMap() {
                     call BFP Calapan — do not wait for a pin to appear.
                 </p>
             </div>
-
-            <BottomNav />
         </div>
     );
 }

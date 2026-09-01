@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../style.css';
 import { apiFetch } from '../../api';
+import CivHeader from '../../components/CivHeader';
 
 /* Password change, backed by POST /accounts/me/password.
 
@@ -56,61 +57,77 @@ function ChangePass() {
   }
 
   return (
-    <div className="page">
-      <header className="top-bar">
-        <h2 className="firetraceheader">CHANGE PASSWORD</h2>
-      </header>
+    <div className="civilian-dashboard">
+      <CivHeader title="Change Password" back="/profile" />
 
-      <form className="edit-profile-form" onSubmit={handleSubmit}>
-        <p className="PersoName">Current Password</p>
-        <input
-          type="password"
-          id="current-password"
-          name="current_password"
-          autoComplete="current-password"
-          value={form.current}
-          onChange={(event) => set('current', event.target.value)}
-        />
+      <div className="civ-main-content">
+        <form className="civ-form" onSubmit={handleSubmit}>
+          <label className="civ-field">
+            <span className="civ-field-label">Current password</span>
+            <input
+              type="password"
+              id="current-password"
+              name="current_password"
+              autoComplete="current-password"
+              value={form.current}
+              onChange={(event) => set('current', event.target.value)}
+            />
+          </label>
 
-        <p>New Password</p>
-        <input
-          type="password"
-          id="new-password"
-          name="new_password"
-          autoComplete="new-password"
-          value={form.next}
-          onChange={(event) => set('next', event.target.value)}
-        />
+          <label className="civ-field">
+            <span className="civ-field-label">New password</span>
+            <input
+              type="password"
+              id="new-password"
+              name="new_password"
+              autoComplete="new-password"
+              value={form.next}
+              onChange={(event) => set('next', event.target.value)}
+            />
+          </label>
 
-        <p>Confirm New Password</p>
-        <input
-          type="password"
-          id="confirm-password"
-          name="confirm_password"
-          autoComplete="new-password"
-          value={form.confirm}
-          onChange={(event) => set('confirm', event.target.value)}
-        />
+          <label className="civ-field">
+            <span className="civ-field-label">Confirm new password</span>
+            <input
+              type="password"
+              id="confirm-password"
+              name="confirm_password"
+              autoComplete="new-password"
+              value={form.confirm}
+              onChange={(event) => set('confirm', event.target.value)}
+            />
+          </label>
 
-        <p>At least 8 characters</p>
-        <p>Includes letters and numbers</p>
-        <p>Not similar to your personal information</p>
+          {/* Stated up front rather than only in the server's rejection: these
+              are Django's configured validators, and reading them before typing
+              beats being refused after. */}
+          <ul className="civ-rule-list">
+            <li><i className="fa-solid fa-check" /> At least 8 characters</li>
+            <li><i className="fa-solid fa-check" /> Includes letters and numbers</li>
+            <li><i className="fa-solid fa-check" /> Not similar to your personal information</li>
+          </ul>
 
-        {error && <p className="auth-error">{error}</p>}
-        {done && <p className="form-success">Your password has been changed.</p>}
+          {error && <p className="civ-form-error">{error}</p>}
+          {done && (
+            <p className="civ-form-success">
+              <i className="fa-solid fa-check" /> Your password has been changed.
+            </p>
+          )}
 
-        <button
-          type="submit"
-          className="UpdatePass-btn"
-          disabled={saving || !form.current || !form.next || !form.confirm}
-        >
-          {saving ? 'UPDATING…' : 'UPDATE PASSWORD'}
-        </button>
-      </form>
-
-      <button type="button" className="Cancel-btn" onClick={() => navigate(-1)}>
-        CANCEL
-      </button>
+          <div className="civ-form-actions">
+            <button
+              type="submit"
+              className="civ-primary-btn"
+              disabled={saving || !form.current || !form.next || !form.confirm}
+            >
+              {saving ? 'Updating…' : 'Update password'}
+            </button>
+            <button type="button" className="civ-secondary-btn" onClick={() => navigate(-1)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

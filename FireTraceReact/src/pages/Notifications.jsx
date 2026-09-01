@@ -1,6 +1,5 @@
-import { useNavigate } from 'react-router-dom';
 import '../style.css';
-import { logout } from '../api';
+import CivHeader from '../components/CivHeader';
 
 const NOTIFICATION_GROUPS = [
     {
@@ -47,19 +46,9 @@ const ICONS = {
 };
 
 function Notifications() {
-    const navigate = useNavigate();
-
-    async function handleLogout() {
-        await logout();
-        navigate('/login');
-    }
-
     return (
         <center>
-            <header className="top-bar">
-                <h2 className="firetraceheader">NOTIFICATIONS</h2>
-                <button className="LogOut" onClick={handleLogout}>Log Out</button>
-            </header>
+            <CivHeader title="Alerts" back="/dashboard" />
 
             <div className="notif-list">
                 {NOTIFICATION_GROUPS.map((group) => (
