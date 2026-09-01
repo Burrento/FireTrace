@@ -4799,3 +4799,181 @@ input.searchInput {
     border-radius: 8px;
     border-left: 3px solid var(--civ-status-resolved);
 }
+
+/* ==========================================================================
+   Live fire map (/livemap)
+   The civilian view of what is burning now. Styled off the same surface
+   tokens as the rest of the civilian shell; only the fire itself is loud.
+   ========================================================================== */
+
+.civ-action-live {
+    background: rgba(215, 25, 42, 0.12);
+    border: 1px solid rgba(215, 25, 42, 0.3);
+}
+
+.civ-action-live:hover {
+    background: rgba(215, 25, 42, 0.18);
+}
+
+.civ-action-live .civ-action-icon {
+    background: rgba(215, 25, 42, 0.2);
+    border-radius: 12px;
+    color: var(--ft-red);
+}
+
+.civ-action-badge-live {
+    background: rgba(215, 25, 42, 0.85);
+    color: #fff;
+}
+
+.civ-live-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.civ-live-sub {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--civ-text-faint);
+}
+
+.civ-live-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    background: var(--civ-surface-2);
+    color: var(--civ-text-faint);
+    border: 1px solid var(--civ-border);
+}
+
+.civ-live-count.is-active {
+    background: rgba(215, 25, 42, 0.14);
+    border-color: rgba(215, 25, 42, 0.35);
+    color: var(--ft-red);
+}
+
+.civ-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* The count breathes only while something is actually burning, so the badge
+   is never animated for a quiet city. */
+.civ-live-count.is-active .civ-live-dot {
+    animation: fire-pulse-breathe 1.8s ease-in-out infinite;
+}
+
+.civ-live-warning {
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    background: var(--civ-surface-2);
+    border: 1px solid var(--civ-border);
+    color: var(--civ-text-faint);
+}
+
+.civ-live-map {
+    height: 320px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--civ-border);
+    margin-bottom: 14px;
+}
+
+.civ-live-map > div,
+.civ-live-map .map-frame {
+    width: 100%;
+    height: 100%;
+}
+
+.civ-live-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.civ-live-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--civ-surface);
+    border: 1px solid var(--civ-border);
+}
+
+.civ-live-item-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 18px;
+    color: var(--ft-red);
+    background: rgba(215, 25, 42, 0.16);
+}
+
+.civ-live-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.civ-live-item-body h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.civ-live-item-place {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--civ-text-faint);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.civ-live-item-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    text-align: right;
+}
+
+.civ-live-status {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(215, 25, 42, 0.16);
+    color: var(--ft-red);
+    white-space: nowrap;
+}
+
+.civ-live-elapsed {
+    font-size: 11px;
+    color: var(--civ-text-faint);
+}
+
+.civ-live-footnote {
+    margin: 16px 0 0;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--civ-text-faint);
+}

@@ -136,6 +136,21 @@ function Dashboard() {
             <i className="fa-solid fa-chevron-right civ-action-arrow"></i>
           </Link>
 
+          {/* Live Fire Map Card */}
+          <Link to="/livemap" className="civ-action-card civ-action-live">
+            <div className="civ-action-icon">
+              <i className="fa-solid fa-map-location-dot"></i>
+            </div>
+            <div className="civ-action-content">
+              <div className="civ-action-main">
+                <h3>Live Fire Map</h3>
+                <p>See fires burning near you right now</p>
+              </div>
+              <div className="civ-action-badge civ-action-badge-live">BFP VERIFIED</div>
+            </div>
+            <i className="fa-solid fa-chevron-right civ-action-arrow"></i>
+          </Link>
+
           {/* Call BFP Card */}
           <a href="tel:+639171234567" className="civ-action-card civ-action-secondary">
             <div className="civ-action-icon">
@@ -246,13 +261,13 @@ function Dashboard() {
               <h4>Evacuation Centers</h4>
               <p>Find nearest safe locations</p>
             </div>
-            <div className="civ-quick-card">
+            <Link to="/livemap" className="civ-quick-card">
               <div className="civ-quick-icon">
-                <i className="fa-solid fa-bell"></i>
+                <i className="fa-solid fa-fire"></i>
               </div>
-              <h4>Alerts & Updates</h4>
-              <p>Stay informed in real-time</p>
-            </div>
+              <h4>Ongoing Fires</h4>
+              <p>Live map of active fires</p>
+            </Link>
             <Link to="/myreport" className="civ-quick-card">
               <div className="civ-quick-icon">
                 <i className="fa-solid fa-file-lines"></i>

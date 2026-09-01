@@ -130,6 +130,14 @@ is or how it is drawn — only about which records they ask for.
   ages out. Implemented as a `Q` OR, not ANDed kwargs.
 - `scope=all` — the All Reports page. Every record, any age, any status.
 
+`OngoingFireMapView` (`/api/incidents/ongoing/`) is the third map and the only
+incident endpoint that is **not** `IsBFPPersonnel` — any signed-in user reads
+it. It returns Verified/Responding records with no time window at all, and a
+deliberately thin field set: no reporter, description, photo or duplicate
+review. A report already linked to an `Incident` is skipped so one fire is one
+pin. It is separate from `DashboardMapView` rather than a fourth scope on it
+because the difference is not which rows but *who may read which columns*.
+
 `?hours=` is clamped to `MAP_RECENT_HOURS_CHOICES` (1 / 6 / 24, default
 `MAP_RECENT_HOURS = 1`). Clamped rather than trusted: an arbitrary value would turn
 the live map back into the unbounded query the filter exists to prevent.
@@ -178,6 +186,15 @@ Single Vite SPA, routes in `src/App.jsx`, wrapped in `ThemeProvider` +
   - `/bfp` — operations overview: KPIs, **recent** map, health, activity.
   - `/bfp/reports` — the archive: all-time map + the filterable queue.
 
+`pages/LiveFireMap.jsx` (`/livemap`) is the civilian half of the same idea:
+ongoing fires only, polled every 20s off `/api/incidents/ongoing/` because
+`/ws/dashboard` is personnel-only. It shares the ring and glyph with the
+operations map through `styles/fire-pulse.css` and `OngoingFireGlyph`, which
+are imported by the components rather than by either shell so the two maps
+cannot drift apart. The marker artwork is `public/ongoing-fire.png`, referenced
+by URL and not imported — a missing file falls back to the drawn pin instead of
+failing the build.
+
 `src/api.js` — `apiFetch` hardcodes `Content-Type: application/json`, attaches the
 bearer token, and on a 401 refreshes once through a **shared** promise so parallel
 401s trigger one refresh. Errors keep DRF's field names (`describeError`) instead of
@@ -224,10 +241,16 @@ refreshes on return; the socket stays open (cheap while idle, and the screen is
 already current when the operator looks back). The header shows **Live** with a green
 pulse only while the socket is genuinely up, **Polling** with a grey dot otherwise.
 
-`components/bfp/DashboardMap.jsx` — a report pulses a red ring for
-`PULSE_WINDOW_MS` (90s), read off `created_at` rather than diffed between polls so it
-survives a remount and a background tab. The window is deliberately wider than the
-fallback poll, so a report is still pulsing when the refresh carrying it lands.
+`components/bfp/DashboardMap.jsx` — **two things pulse for two different
+reasons.** A new report pulses a red ring for `PULSE_WINDOW_MS` (90s), read off
+`created_at` rather than diffed between polls so it survives a remount and a
+background tab; the window is deliberately wider than the fallback poll, so a
+report is still pulsing when the refresh carrying it lands. That one is an
+arrival alert and has to stop. Separately, any marker `isOngoing` — Verified or
+Responding, the rule shared with the backend via `lib/ongoingFires.js` — pulses
+for as long as that holds and wears `OngoingFireGlyph` instead of a `Pin`. That
+one is the state of the fire and stops only when a person resolves it. A record
+can qualify both ways and draws one ring.
 `FocusOnNewReport` pans the camera to a new report and settles at zoom 15 — it only
 reacts to an id it has not focused before (so manual panning is not fought) and never
 zooms *out*. The archive map passes `focusOnNew={false}`.

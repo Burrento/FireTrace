@@ -17,6 +17,10 @@ urlpatterns = [
     path('reports/<int:pk>/duplicate-review/', views.ReportDuplicateReviewView.as_view()),
     path('reports/<int:pk>/timeline/', views.ReportTimelineView.as_view()),
 
+    # Ongoing fires, readable by any signed-in user (see the view's docstring
+    # for why this one is not personnel-only).
+    path('incidents/ongoing/', views.OngoingFireMapView.as_view()),
+
     # Canonical, personnel-verified events
     path('incidents/', views.IncidentListCreateView.as_view()),
     path('incidents/verify/', views.IncidentVerifyView.as_view()),

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { APIProvider, Map, AdvancedMarker, InfoWindow, Pin, useMap } from '@vis.gl/react-google-maps';
+import OngoingFireGlyph from '../OngoingFireGlyph';
+import { isOngoing, markerKey } from '../../lib/ongoingFires';
+import '../../styles/fire-pulse.css';
 
 /* The live operations map.
 
@@ -19,9 +22,18 @@ const INCIDENT_PIN = { background: '#d7192a', borderColor: '#7f0d18', glyphColor
 const REPORT_PIN = { background: '#f7b32b', borderColor: '#a9760a', glyphColor: '#5a3d00' };
 const DUPLICATE_PIN = { background: '#8b5cf6', borderColor: '#5b21b6', glyphColor: '#ffffff' };
 
-/* A civilian report pulses on the map while it is this recent. The window is
-   comfortably wider than the 15s dashboard poll, so a report is always still
-   pulsing by the time the first refresh that carries it reaches the screen. */
+/* Two different things pulse, for two different reasons.
+
+   A brand new report pulses for PULSE_WINDOW_MS to say "this just landed, look
+   here" -- an arrival alert, which has to stop or the map fills with noise. The
+   window is comfortably wider than the 15s dashboard poll, so a report is
+   always still pulsing by the time the first refresh that carries it reaches
+   the screen.
+
+   A fire that personnel have verified and not yet resolved pulses for as long
+   as that stays true. That is not an alert about an arrival, it is the state of
+   the fire: it is still burning, and it stops pulsing when someone marks it
+   Resolved rather than when a timer runs out. */
 const PULSE_WINDOW_MS = 90000;
 const PULSE_RECHECK_MS = 5000;
 
@@ -31,7 +43,8 @@ function markerStyle(marker) {
   return REPORT_PIN;
 }
 
-/* The ids of the civilian reports that should be pulsing right now.
+/* The ids of the civilian reports that arrived recently enough to still be
+   announcing themselves.
 
    Freshness is read off `created_at` rather than off a diff between polls, so
    it survives a remount, a background tab and the switch from polling to
@@ -85,7 +98,7 @@ function FocusOnNewReport({ report }) {
   return null;
 }
 
-function MapLegend({ withheld, pulsing }) {
+function MapLegend({ withheld, pulsing, ongoing }) {
   return (
     <div className="bfp-map-legend">
       <span className="bfp-legend-item">
@@ -104,6 +117,12 @@ function MapLegend({ withheld, pulsing }) {
         <span className="bfp-legend-item">
           <span className="bfp-legend-dot bfp-legend-dot-pulse" />
           {pulsing} just reported
+        </span>
+      )}
+      {ongoing > 0 && (
+        <span className="bfp-legend-item">
+          <span className="bfp-legend-dot bfp-legend-dot-pulse is-ongoing" />
+          {ongoing} still burning
         </span>
       )}
       {withheld > 0 && (
@@ -225,6 +244,15 @@ function DashboardMap({
   const markers = [...incidents, ...reports];
   const fresh = useFreshReports(reports);
 
+  /* Everything that should be pulsing, keyed so reports and incidents cannot
+     collide on a shared id. A record can qualify both ways -- newly arrived and
+     already being responded to -- and draws one ring either way. */
+  const ongoingMarkers = markers.filter(isOngoing);
+  const pulsingKeys = new Set(ongoingMarkers.map(markerKey));
+  for (const report of reports) {
+    if (fresh.has(report.id)) pulsingKeys.add(markerKey(report));
+  }
+
   // Escape closes the details too, which is what an operator reaches for
   // before hunting the small X. Registered only while something is open.
   useEffect(() => {
@@ -313,33 +341,43 @@ function DashboardMap({
 
             {/* Drawn as their own markers under the pins so the ring stays
                 centred on the coordinate while the pin keeps its tip anchor. */}
-            {reports
-              .filter((report) => fresh.has(report.id))
-              .map((report) => (
+            {markers
+              .filter((marker) => pulsingKeys.has(markerKey(marker)))
+              .map((marker) => (
                 <AdvancedMarker
-                  key={`pulse-${report.id}`}
-                  position={{ lat: report.latitude, lng: report.longitude }}
+                  key={`pulse-${markerKey(marker)}`}
+                  position={{ lat: marker.latitude, lng: marker.longitude }}
                   clickable={false}
                   zIndex={0}
                 >
-                  <span className="bfp-map-pulse" aria-hidden="true" />
+                  <span className="fire-pulse" aria-hidden="true" />
                 </AdvancedMarker>
               ))}
 
-            {markers.map((marker) => (
-              <AdvancedMarker
-                key={`${marker.kind}-${marker.id}`}
-                position={{ lat: marker.latitude, lng: marker.longitude }}
-                title={`${marker.reference_number} — ${marker.barangay}`}
-                onClick={() => setSelected(marker)}
-                zIndex={marker.kind === 'incident' ? 2 : 1}
-              >
+            {markers.map((marker) => {
+              const pin = (
                 <Pin
                   {...markerStyle(marker)}
                   scale={marker.kind === 'incident' ? 1.15 : 0.9}
                 />
-              </AdvancedMarker>
-            ))}
+              );
+
+              return (
+                <AdvancedMarker
+                  key={markerKey(marker)}
+                  position={{ lat: marker.latitude, lng: marker.longitude }}
+                  title={`${marker.reference_number} — ${marker.barangay}`}
+                  onClick={() => setSelected(marker)}
+                  /* A burning fire sits above the rest of the map: it is the
+                     one thing on it that is still happening. */
+                  zIndex={isOngoing(marker) ? 3 : marker.kind === 'incident' ? 2 : 1}
+                >
+                  {isOngoing(marker)
+                    ? <OngoingFireGlyph alt={`Ongoing fire in ${marker.barangay}`} fallback={pin} />
+                    : pin}
+                </AdvancedMarker>
+              );
+            })}
 
             {selected && (
               <MarkerDetails marker={selected} onClose={() => setSelected(null)} />
@@ -348,7 +386,11 @@ function DashboardMap({
         </APIProvider>
       </div>
 
-      <MapLegend withheld={data?.withheld_low_confidence ?? 0} pulsing={fresh.size} />
+      <MapLegend
+        withheld={data?.withheld_low_confidence ?? 0}
+        pulsing={fresh.size}
+        ongoing={ongoingMarkers.length}
+      />
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
    same bar as the home tab. */
 const NAV_ITEMS = [
     { key: 'home', label: 'Home', icon: 'fa-house', to: '/dashboard', match: ['/dashboard'] },
+    { key: 'livemap', label: 'Live Map', icon: 'fa-fire', to: '/livemap', match: ['/livemap'] },
     { key: 'report', label: 'Report', icon: 'fa-pen', to: '/report', match: ['/report', '/continue2', '/continuethird', '/continue4'] },
     { key: 'myreports', label: 'My Reports', icon: 'fa-file-lines', to: '/myreport', match: ['/myreport'] },
     { key: 'alerts', label: 'Alerts', icon: 'fa-bell', to: '/Notifications', match: ['/Notifications'] },
