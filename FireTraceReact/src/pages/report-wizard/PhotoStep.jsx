@@ -4,7 +4,7 @@ import '../../style.css';
 import { apiFetch } from '../../api';
 import { isLoggedIn } from '../../auth';
 import { useReportDraft } from '../../context/useReportDraft';
-import BottomNav from '../../components/BottomNav';
+import CivHeader from '../../components/CivHeader';
 
 /* Step 3 of 3 — the last step, and the one that actually files the report.
 
@@ -114,10 +114,7 @@ function PhotoStep() {
 
     return(
         <center>
-            <header className="top-bar">
-                <h2 className="firetraceheader">Fire Report Incident</h2>
-                <p>3 of 3</p>
-            </header>
+            <CivHeader title="Step 3 of 3" subtitle="Photograph" />
             <p className="addphoto">Add Supporting Photograph (Optional)</p>
             <div className="photo-warning">
                 <span className="photo-warning-icon">⚠️</span>
@@ -194,7 +191,6 @@ function PhotoStep() {
                 {submitting ? 'Submitting…' : 'Submit Report'}
             </button>
             </div>
-            <BottomNav active="report" />
         </center>
     );
 }

@@ -2,10 +2,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
-import { clearTokens, isLoggedIn } from '../../auth';
+import { isLoggedIn } from '../../auth';
 import { humanize } from '../../lib/incidentDisplay';
-import BottomNav from '../../components/BottomNav';
-import ThemeToggle from '../../components/ThemeToggle';
+import CivHeader from '../../components/CivHeader';
 
 const FILTERS = [
     { key: 'all', label: 'All' },
@@ -35,11 +34,6 @@ function MyReports() {
             .finally(() => setLoading(false));
     }, [navigate]);
 
-    function handleLogout() {
-        clearTokens();
-        navigate('/login');
-    }
-
     const visibleReports = useMemo(() => {
         const term = search.trim().toLowerCase();
         return reports.filter((report) => {
@@ -60,29 +54,13 @@ function MyReports() {
 
     return (
         <div className="civilian-dashboard">
-            {/* Header */}
-            <header className="civ-header">
-                <div className="civ-header-left">
-                    <div className="civ-logo-container">
-                        <i className="fa-solid fa-fire-flame-curved civ-logo-icon"></i>
-                        <div className="civ-brand">
-                            <span className="civ-brand-fire">FIRE</span>
-                            <span className="civ-brand-trace">TRACE</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="civ-header-right">
-                    <ThemeToggle />
-                    <button className="civ-icon-btn" onClick={handleLogout} title="Log out">
-                        <i className="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                </div>
-            </header>
+            <CivHeader title="My Reports" back="/dashboard" />
 
             <div className="civ-main-content civ-page-content">
-                {/* Page heading */}
+                {/* The header already names the screen, so this line only
+                    carries the count -- repeating the title under itself was
+                    the same words twice in 40 pixels. */}
                 <section className="civ-page-head">
-                    <h1 className="civ-page-title">My Reports</h1>
                     <p className="civ-page-subtitle">
                         {loading
                             ? 'Loading your reports...'
@@ -204,8 +182,6 @@ function MyReports() {
                     )}
                 </section>
             </div>
-
-            <BottomNav />
         </div>
     );
 }

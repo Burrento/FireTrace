@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import '../../style.css';
 import { useReportDraft } from '../../context/useReportDraft';
-import BottomNav from '../../components/BottomNav';
+import CivHeader from '../../components/CivHeader';
 
 function IncidentDetailsStep() {
 
@@ -31,18 +31,7 @@ function IncidentDetailsStep() {
 
     return (
         <center>
-            <header className="top-bar">
-                <Link to="/dashboard" className="back-btn">
-                    <i className="fa-solid fa-arrow-left"></i>
-                </Link>
-                <div className="brand-identity">
-                    <div className="app-name">
-                        <span className="fire-txt">STEP</span>
-                        <span className="trace-txt">1 OF 3</span>
-                    </div>
-                </div>
-                <div style={{width: 48}}></div>
-            </header>
+            <CivHeader title="Step 1 of 3" subtitle="Incident details" back="/dashboard" />
 
             <p className="incident-text">Incident Type:</p>
 
@@ -101,7 +90,6 @@ function IncidentDetailsStep() {
                     Continue
                 </button>
             </div>
-            <BottomNav active="report" />
         </center>
     );
 }

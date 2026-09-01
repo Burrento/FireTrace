@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../style.css';
 import { apiFetch } from '../../api';
+import CivHeader from '../../components/CivHeader';
 
 /* Personal info, backed by GET/PATCH /accounts/me.
 
@@ -69,52 +70,60 @@ function Personal() {
   }
 
   return (
-    <div className="page">
-      <header className="top-bar">
-        <h2 className="firetraceheader">EDIT PROFILE</h2>
-      </header>
+    <div className="civilian-dashboard">
+      <CivHeader title="Personal Information" back="/profile" />
 
-      <form className="edit-profile-form" onSubmit={handleSave}>
-        <p className="PersoName">First Name</p>
-        <input
-          type="text"
-          id="first-name"
-          name="first_name"
-          autoComplete="given-name"
-          disabled={!form}
-          value={form?.first_name ?? ''}
-          onChange={(event) => set('first_name', event.target.value)}
-        />
+      <div className="civ-main-content">
+        <form className="civ-form" onSubmit={handleSave}>
+          <label className="civ-field">
+            <span className="civ-field-label">First name</span>
+            <input
+              type="text"
+              id="first-name"
+              name="first_name"
+              autoComplete="given-name"
+              disabled={!form}
+              value={form?.first_name ?? ''}
+              onChange={(event) => set('first_name', event.target.value)}
+            />
+          </label>
 
-        <p>Last Name</p>
-        <input
-          type="text"
-          id="last-name"
-          name="last_name"
-          autoComplete="family-name"
-          disabled={!form}
-          value={form?.last_name ?? ''}
-          onChange={(event) => set('last_name', event.target.value)}
-        />
+          <label className="civ-field">
+            <span className="civ-field-label">Last name</span>
+            <input
+              type="text"
+              id="last-name"
+              name="last_name"
+              autoComplete="family-name"
+              disabled={!form}
+              value={form?.last_name ?? ''}
+              onChange={(event) => set('last_name', event.target.value)}
+            />
+          </label>
 
-        <p>Email</p>
-        <input type="email" id="email" name="email" value={email} disabled readOnly />
-        <p>
-          Your email address is also how you sign in, so it cannot be changed
-          here. Contact BFP if it needs to be updated.
-        </p>
+          <label className="civ-field">
+            <span className="civ-field-label">Email</span>
+            <input type="email" id="email" name="email" value={email} disabled readOnly />
+            <span className="civ-field-hint">
+              <i className="fa-solid fa-lock" />
+              Your email address is also how you sign in, so it cannot be changed
+              here. Contact BFP if it needs to be updated.
+            </span>
+          </label>
 
-        {error && <p className="auth-error">{error}</p>}
-        {saved && <p className="form-success">Saved.</p>}
+          {error && <p className="civ-form-error">{error}</p>}
+          {saved && <p className="civ-form-success"><i className="fa-solid fa-check" /> Saved.</p>}
 
-        <button type="submit" className="SaveChanges-btn" disabled={saving || !form}>
-          {saving ? 'SAVING…' : 'SAVE CHANGES'}
-        </button>
-      </form>
-
-      <button type="button" className="Cancel-btn" onClick={() => navigate(-1)}>
-        CANCEL
-      </button>
+          <div className="civ-form-actions">
+            <button type="submit" className="civ-primary-btn" disabled={saving || !form}>
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+            <button type="button" className="civ-secondary-btn" onClick={() => navigate(-1)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

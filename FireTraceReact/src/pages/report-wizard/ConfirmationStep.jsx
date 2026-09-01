@@ -1,6 +1,6 @@
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import '../../style.css';
-import BottomNav from '../../components/BottomNav';
+import CivHeader from '../../components/CivHeader';
 
 /* The receipt, not a wizard step — step 3 files the report and hands the
    created record over in router state.
@@ -16,10 +16,7 @@ function ConfirmationStep() {
 
     return(
         <center>
-            <header className="top-bar">
-                <h2 className="firetraceheader">Fire Report Incident</h2>
-                <p>Submitted</p>
-            </header>
+            <CivHeader title="Report filed" subtitle="Reference and status" />
 
             <div className="submitted-icon">&#10003;</div>
             <h2 className="submitted-title">REPORT SUBMITTED</h2>
@@ -38,8 +35,6 @@ function ConfirmationStep() {
 
             <button className="view-status-button"><Link to="/myreport">VIEW REPORT STATUS</Link></button><br />
             <button className="contact-bfp-button">&#128222; CONTACT BFP FOR URGENT HELP</button>
-
-            <BottomNav active="report" />
         </center>
     );
 }

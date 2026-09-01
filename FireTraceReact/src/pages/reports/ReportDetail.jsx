@@ -4,8 +4,7 @@ import '../../style.css';
 import { apiFetch } from '../../api';
 import { isLoggedIn } from '../../auth';
 import IncidentMap from '../../components/IncidentMap';
-import BottomNav from '../../components/BottomNav';
-import ThemeToggle from '../../components/ThemeToggle';
+import CivHeader from '../../components/CivHeader';
 import { humanize } from '../../lib/incidentDisplay';
 
 /* Mirrors Incident.Status in the backend, in order, so the tracker can show
@@ -35,20 +34,7 @@ function ReportDetail() {
     }, [id, navigate]);
 
     const header = (
-        <header className="civ-header">
-            <div className="civ-header-left">
-                <button className="civ-back-btn" onClick={() => navigate('/myreport')} title="Back to my reports">
-                    <i className="fa-solid fa-arrow-left"></i>
-                </button>
-                <div className="civ-brand">
-                    <span className="civ-brand-fire">REPORT</span>
-                    <span className="civ-brand-trace">DETAILS</span>
-                </div>
-            </div>
-            <div className="civ-header-right">
-                <ThemeToggle />
-            </div>
-        </header>
+        <CivHeader title="Report Details" back="/myreport" />
     );
 
     if (error) {
@@ -63,7 +49,6 @@ function ReportDetail() {
                         </button>
                     </div>
                 </div>
-                <BottomNav />
             </div>
         );
     }
@@ -78,7 +63,6 @@ function ReportDetail() {
                         <div className="civ-skeleton-card"></div>
                     </div>
                 </div>
-                <BottomNav />
             </div>
         );
     }
@@ -183,8 +167,6 @@ function ReportDetail() {
                     </div>
                 </section>
             </div>
-
-            <BottomNav />
         </div>
     );
 }
