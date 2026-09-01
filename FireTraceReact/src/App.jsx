@@ -3,6 +3,7 @@ import Welcome from './pages/auth/Welcome';
 import CreateAccount from './pages/auth/CreateAccount';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/Dashboard';
+import LiveFireMap from './pages/LiveFireMap';
 import BfpDashboard from './pages/bfp/BfpDashboard';
 import BfpReports from './pages/bfp/BfpReports';
 import BfpIncidentMap from './pages/bfp/BfpIncidentMap';
@@ -65,6 +66,9 @@ function App() {
           <Route path="/bfp/BfpSystemHealth" element={<BfpSystemHealth />} />
           <Route element={<NavLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            {/* The public live map. Any signed-in user, civilian included,
+                sees the fires BFP has verified and not yet resolved. */}
+            <Route path="/livemap" element={<LiveFireMap />} />
             <Route path="/report" element={<IncidentDetailsStep />} />
             <Route path="/continue2" element={<LocationStep />} />
             <Route path="/continuethird" element={<PhotoStep />} />

@@ -367,3 +367,113 @@ class DashboardAPITests(APITestCase):
         self.assertEqual(len(response.data), 1)
         # The old `status` key the shipped app reads is still present.
         self.assertIn('status', response.data[0])
+
+
+class OngoingFireMapTests(APITestCase):
+    """The one incident endpoint a civilian may read.
+
+    Its whole job is to be narrower than the operations map, so the tests are
+    about what it leaves out as much as what it returns.
+    """
+
+    def setUp(self):
+        self.reporter = User.objects.create_user(username='brent@example.com', password='pw')
+        self.other = User.objects.create_user(username='neighbour@example.com', password='pw')
+
+    def test_requires_a_signed_in_user(self):
+        self.assertEqual(self.client.get('/api/incidents/ongoing/').status_code, 401)
+
+    def test_a_civilian_sees_someone_elses_verified_fire(self):
+        # The point of the map: Brent reports, BFP verifies, the neighbourhood
+        # can see it burning.
+        make_report(
+            self.reporter,
+            workflow_status=WorkflowStatus.VERIFIED,
+            geocoding_confidence=GeocodingConfidence.HIGH,
+        )
+        self.client.force_authenticate(self.other)
+
+        response = self.client.get('/api/incidents/ongoing/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['fires'][0]['workflow_status'], 'verified')
+
+    def test_unverified_and_resolved_fires_are_both_left_off(self):
+        make_report(self.reporter, geocoding_confidence=GeocodingConfidence.HIGH)
+        make_report(
+            self.reporter, lat=BASE_LAT + 0.05,
+            workflow_status=WorkflowStatus.UNDER_REVIEW,
+            geocoding_confidence=GeocodingConfidence.HIGH,
+        )
+        make_report(
+            self.reporter, lat=BASE_LAT + 0.06,
+            workflow_status=WorkflowStatus.RESOLVED,
+            geocoding_confidence=GeocodingConfidence.HIGH,
+        )
+        self.client.force_authenticate(self.other)
+
+        response = self.client.get('/api/incidents/ongoing/')
+
+        self.assertEqual(response.data['count'], 0)
+
+    def test_an_ongoing_fire_never_ages_out(self):
+        # Unlike the operations map, there is no time window here: a fire is on
+        # this map until a person resolves it.
+        make_report(
+            self.reporter,
+            created_at=timezone.now() - timedelta(days=3),
+            workflow_status=WorkflowStatus.RESPONDING,
+            geocoding_confidence=GeocodingConfidence.HIGH,
+        )
+        self.client.force_authenticate(self.other)
+
+        self.assertEqual(self.client.get('/api/incidents/ongoing/').data['count'], 1)
+
+    def test_nothing_about_the_reporter_or_their_photo_is_exposed(self):
+        # A saved upload survives the test transaction, so it gets a media root
+        # of its own rather than leaving a file behind on every run.
+        with TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            report = make_report(
+                self.reporter,
+                workflow_status=WorkflowStatus.VERIFIED,
+                geocoding_confidence=GeocodingConfidence.HIGH,
+            )
+            report.photo.save('fire.png', ContentFile(b'not-really-a-png'), save=True)
+            self.client.force_authenticate(self.other)
+
+            fire = self.client.get('/api/incidents/ongoing/').data['fires'][0]
+
+        for leaked in ('reporter', 'description', 'photo_url', 'has_photo', 'address'):
+            self.assertNotIn(leaked, fire)
+
+    def test_a_report_attached_to_an_incident_is_drawn_once(self):
+        incident = Incident.objects.create(
+            incident_type='fire',
+            barangay='Ibaba East',
+            latitude=BASE_LAT,
+            longitude=BASE_LNG,
+            workflow_status=WorkflowStatus.RESPONDING,
+        )
+        make_report(
+            self.reporter,
+            incident=incident,
+            workflow_status=WorkflowStatus.VERIFIED,
+            geocoding_confidence=GeocodingConfidence.HIGH,
+        )
+        self.client.force_authenticate(self.other)
+
+        response = self.client.get('/api/incidents/ongoing/')
+
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['fires'][0]['kind'], 'incident')
+
+    def test_low_confidence_coordinates_are_not_plotted(self):
+        make_report(
+            self.reporter,
+            workflow_status=WorkflowStatus.VERIFIED,
+            geocoding_confidence=GeocodingConfidence.LOW,
+        )
+        self.client.force_authenticate(self.other)
+
+        self.assertEqual(self.client.get('/api/incidents/ongoing/').data['count'], 0)

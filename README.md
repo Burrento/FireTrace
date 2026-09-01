@@ -57,6 +57,39 @@ sent as `multipart/form-data` instead of JSON; one without is unchanged. Uploads
 go to Azure Blob Storage in the deployment and to `MEDIA_ROOT` locally — see
 [Photo storage](#photo-storage).
 
+## The live fire map (civilian)
+
+`/livemap` shows every signed-in user the fires that are burning right now:
+personnel have verified them and nobody has marked them Resolved. Each one
+wears the flame marker over a ring that pulses until it is resolved, so a
+resident can see that a fire near them is still going rather than guessing from
+a timestamp. Reachable from the Home tab, the *Live Fire Map* card and the
+*Ongoing Fires* tile.
+
+The map is deliberately narrower than the operations one on both axes.
+
+**Which fires.** Only Verified and Responding. A submission still sitting in
+Submitted is an unconfirmed claim, and broadcasting unconfirmed claims of fire
+to a whole city is its own hazard. Nothing ages out — an ongoing fire is on the
+map until someone resolves it, which is what "ongoing" has to mean to somebody
+deciding whether to leave the house. A report already attached to a canonical
+incident is skipped so the same fire is not drawn twice.
+
+**Which fields.** Type, barangay, status and when it started. No reporter, no
+description, no photograph, no duplicate review: a report is somebody's account
+of their own emergency, and the public map needs the fire's location, not
+theirs. Low-confidence coordinates are withheld here as everywhere.
+
+It polls every 20s rather than holding a socket — `/ws/dashboard` is
+personnel-only — pausing on a hidden tab and catching up on return. A failed
+refresh keeps the pins already on screen and says so, because an emptied map
+reads as "no fires".
+
+**The marker artwork** is `FireTraceReact/public/ongoing-fire.png`, referenced
+by URL rather than imported: a missing import is a build error, while a missing
+file is one broken image that `OngoingFireGlyph` answers with the drawn pin the
+map used before. Drop a replacement in at that path and both maps pick it up.
+
 ## BFP Administrative Portal
 
 Sign in with a BFP account and you land on `/bfp`. Civilians who reach that URL
@@ -88,10 +121,16 @@ sitting in Submitted ages out. The window is switchable in the panel header
 map can never be mistaken for a filtered one. Everything else is on
 `/bfp/reports`.
 
-A newly arrived report **pulses a red ring for 90 seconds** and the camera pans
-to it at street level. Auto-focus only fires for a report it has not focused
+Two different things pulse, for two different reasons. A newly arrived report
+**pulses a red ring for 90 seconds** to announce itself, and the camera pans to
+it at street level. Auto-focus only fires for a report it has not focused
 before, so it never fights an operator who has panned away, and it never zooms
 out.
+
+A fire in an ongoing state (Verified / Responding) **pulses for as long as it
+stays that way** and wears the flame marker instead of a pin. That is not an
+arrival alert but the state of the fire: it stops when a person marks it
+Resolved, not when a timer runs out.
 
 ### Real-time
 
@@ -159,6 +198,7 @@ assert its own confidence:
 /api/reports/<id>/timeline/               history of one report
 /api/incidents/                           canonical incidents (BFP only)
 /api/incidents/verify/                    create an incident from report(s)
+/api/incidents/ongoing/                   ongoing fires; any signed-in user
 /api/incidents/<id>/status/               dispatch / resolve
 /api/dashboard/kpis|map|activity|health/  dashboard panels
 /api/dashboard/map/?scope=all             every record, any age (All Reports page)

@@ -528,3 +528,84 @@ class DashboardMapView(APIView):
         except (TypeError, ValueError):
             return default
         return hours if hours in MAP_RECENT_HOURS_CHOICES else default
+
+
+class OngoingFireMapView(APIView):
+    """The live map every signed-in user can see -- ongoing fires only.
+
+    This is the one incident view that is not personnel-only, so what it
+    returns is deliberately narrow on both axes:
+
+    *Which* records. Only fires in an ``ONGOING_STATUSES`` state: a person at
+    BFP has verified this one is real and it is not resolved yet. A civilian
+    submission sitting in Submitted is an unconfirmed claim, and broadcasting
+    unconfirmed claims of fire to the whole city is its own hazard. Nothing
+    ages out of this map -- an ongoing fire stays on it until someone marks it
+    Resolved, which is exactly what "ongoing" has to mean to a resident
+    deciding whether to leave the house.
+
+    *Which fields*. Enough to draw a pulsing point and say what is burning
+    where: no reporter, no description, no photograph, no duplicate review. A
+    report is somebody's account of their own emergency; the public map needs
+    the fire's location, not theirs.
+
+    A report already attached to a canonical incident is skipped -- the
+    incident is the same fire, and drawing both would read as two.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        ongoing = Q(workflow_status__in=ONGOING_STATUSES)
+
+        reports = (
+            IncidentReport.objects.filter(
+                ongoing,
+                incident__isnull=True,
+                geocoding_confidence__in=[GeocodingConfidence.HIGH, GeocodingConfidence.MEDIUM],
+            )
+            .exclude(duplicate_status=DuplicateStatus.CONFIRMED)
+            .order_by('-created_at')[:250]
+        )
+
+        incidents = Incident.objects.filter(ongoing).order_by('-created_at')[:250]
+
+        fires = [
+            {
+                'id': i.id,
+                'kind': 'incident',
+                'reference_number': i.reference_number,
+                'latitude': float(i.latitude),
+                'longitude': float(i.longitude),
+                'barangay': i.barangay,
+                'incident_type': i.incident_type,
+                'incident_type_display': i.get_incident_type_display(),
+                'workflow_status': i.workflow_status,
+                'workflow_status_display': i.get_workflow_status_display(),
+                'started_at': i.verified_at or i.created_at,
+            }
+            for i in incidents
+        ] + [
+            {
+                'id': r.id,
+                'kind': 'report',
+                'reference_number': r.reference_number,
+                'latitude': float(r.latitude),
+                'longitude': float(r.longitude),
+                'barangay': r.barangay,
+                'incident_type': r.incident_type,
+                'incident_type_display': r.get_incident_type_display(),
+                'workflow_status': r.workflow_status,
+                'workflow_status_display': r.get_workflow_status_display(),
+                'started_at': r.created_at,
+            }
+            for r in reports
+        ]
+
+        return Response({
+            'fires': fires,
+            'count': len(fires),
+            # The server's own clock, so a browser with a skewed clock reads
+            # "as of" from the same moment the data was assembled.
+            'as_of': timezone.now(),
+        })
