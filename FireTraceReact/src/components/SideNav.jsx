@@ -22,7 +22,7 @@ const NAV_GROUPS = [
     {
         title: 'Emergency',
         items: [
-            { to: '/report', label: 'Submit Fire Report', icon: 'fa-fire', accent: true, match: ['/report', '/continue2', '/continuethird', '/continue4'] },
+            { to: '/report', label: 'Submit Fire Report', icon: 'fa-fire', accent: true, match: ['/report', '/continue4'] },
             { to: '/livemap', label: 'Live Fire Map', icon: 'fa-map-location-dot' },
         ],
     },

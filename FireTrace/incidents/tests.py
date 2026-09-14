@@ -357,6 +357,22 @@ class DashboardAPITests(APITestCase):
         created = IncidentReport.objects.get(pk=response.data['id'])
         self.assertEqual(created.geocoding_confidence, GeocodingConfidence.LOW)
 
+    def test_report_without_description_or_barangay_is_accepted(self):
+        self.client.force_authenticate(self.civilian)
+        response = self.client.post(
+            '/api/reports/',
+            {
+                'incident_type': 'fire',
+                'latitude': BASE_LAT,
+                'longitude': BASE_LNG,
+                'location_confirmed': True,
+                'location_source': LocationSource.DEVICE_GPS,
+                'gps_accuracy_m': 10,
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+
     def test_legacy_incidents_path_still_serves_reports(self):
         make_report(self.civilian)
         self.client.force_authenticate(self.civilian)

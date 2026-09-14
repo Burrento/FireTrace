@@ -78,8 +78,10 @@ class IncidentReport(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reports',
     )
     incident_type = models.CharField(max_length=20, choices=IncidentType.choices)
-    description = models.TextField()
-    barangay = models.CharField(max_length=100)
+    # Both optional: a reporter in a hurry may skip the description, and the
+    # barangay is reverse-geocoded from the pin, which can fail to match.
+    description = models.TextField(blank=True)
+    barangay = models.CharField(max_length=100, blank=True)
     address = models.TextField(blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)

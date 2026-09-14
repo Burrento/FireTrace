@@ -214,22 +214,26 @@ step-1 description used to read as a photo problem.
 `src/auth.js` picks `localStorage` (remember me, paired with a 30-day refresh token)
 vs `sessionStorage`; reads check both.
 
-The report wizard (`pages/report-wizard/`) is **three steps**, and step 3 files the
-report:
+The report form is **one page**, `pages/report-wizard/ReportForm.jsx` at
+`/report`, then the receipt at `/continue4`. It used to be three steps
+(`/continue2`, `/continuethird`); they were collapsed so an emergency report is
+one scroll and one press.
 
-```
-/report → /continue2 → /continuethird → /continue4
- details    location      photo+SUBMIT     receipt (not a step)
-```
-
-One draft accumulates in `ReportDraftContext`, persisted to `sessionStorage`.
-`PhotoStep` POSTs it on a button press and hands the created record to
+The draft lives in `ReportDraftContext`, persisted to `sessionStorage`.
+`ReportForm` POSTs it on a button press and hands the created record to
 `ConfirmationStep` in router state; that screen submits nothing and redirects to
 `/myreport` if it has no state. Submitting on a press rather than on arrival at the
-receipt is what stops a refresh filing a second copy of the same fire. Every step
-gates its own Continue, so a missing field is caught on the step that owns it.
+receipt is what stops a refresh filing a second copy of the same fire. Submit is
+gated on incident type + pin + `location_confirmed` only — **description and
+barangay are optional**, on the model too (`0005`).
 
-`PhotoStep` holds **two** hidden file inputs, not one: `capture="environment"`
+Geolocation fires on mount unless the draft already holds a pin, so a refresh
+does not discard a hand-placed one. There is no barangay input: `LocationPickerMap`
+reverse-geocodes the pin and `matchBarangay` normalises Google's name against
+`data/barangays.js` (the list stays — it keeps names consistent for the queue
+filter and analytics grouping); no match files a blank barangay.
+
+`ReportForm` holds **two** hidden file inputs, not one: `capture="environment"`
 asks the phone for the camera directly and must be *absent* for a gallery pick,
 so one input cannot serve both buttons. A report with a photo is posted as
 `FormData`; `api.js`'s `send()` omits its hardcoded `Content-Type` for a

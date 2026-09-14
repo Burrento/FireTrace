@@ -25,6 +25,8 @@ function MapRecenter({ position, recenterKey }) {
     if (lastKey.current === recenterKey) return;
     lastKey.current = recenterKey;
     map.panTo(position);
+    // A pin at city zoom cannot be checked against the street it is on.
+    if (map.getZoom() < 17) map.setZoom(17);
   }, [map, position, recenterKey]);
 
   return null;

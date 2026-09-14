@@ -42,16 +42,16 @@ adding a screen now means adding one entry in `SideNav.jsx`.
 
 ## Reporting a fire (civilian)
 
-Three steps, and the third one files it:
+One page at `/report`, filed by one **Submit Report** press. It collects the
+incident type (required), an optional description, the location — device GPS is
+requested as soon as the page opens, and the pin can be dragged or re-placed —
+and an optional photograph. The barangay is not entered by hand: it is
+reverse-geocoded from the pin with Google Maps and matched against the Calapan
+list, and left blank when nothing matches. The address pre-fills the same way
+and stays editable.
 
-| Step | Route | What it collects |
-|---|---|---|
-| 1 of 3 | `/report` | Incident type + description |
-| 2 of 3 | `/continue2` | Map pin or device GPS; barangay and address are reverse-geocoded from the pin and stay editable |
-| 3 of 3 | `/continuethird` | Optional photograph — camera or gallery — then **Submit Report** |
-
-The receipt at `/continue4` shows the reference number and status. It is not a
-step and submits nothing — refreshing it cannot file a second copy of the same
+The receipt at `/continue4` shows the reference number and status. It submits
+nothing — refreshing it cannot file a second copy of the same
 fire, and reaching it directly redirects to `/myreport`.
 
 Each step gates its own Continue button, so a missing field is caught on the step
@@ -357,8 +357,8 @@ npm run dev -- --host    # also exposes it on your LAN IP, e.g. http://192.168.1
 - `/create` — register an account
 - `/login` — log in (returns JWT tokens, stored in the browser)
 - `/dashboard` — the civilian home
-- `/report` → `/continue2` → `/continuethird` — the three-step report wizard; step 3
-  files the report and hands you a receipt with the reference number
+- `/report` — the one-page report form; submitting hands you a receipt with the
+  reference number
 - `/myreport` — your own submissions
 - `/bfp`, `/bfp/reports` — the BFP portal (personnel accounts only)
 

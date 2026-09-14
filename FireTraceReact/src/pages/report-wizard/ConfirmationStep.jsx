@@ -2,7 +2,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import '../../style.css';
 import CivHeader from '../../components/CivHeader';
 
-/* The receipt, not a wizard step — step 3 files the report and hands the
+/* The receipt — ReportForm files the report and hands the
    created record over in router state.
 
    Nothing is submitted here any more. Reaching this URL without that state

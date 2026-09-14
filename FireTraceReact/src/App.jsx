@@ -17,9 +17,7 @@ import BfpBackup from './pages/bfp/BfpBackup';
 import BfpSystemHealth from './pages/bfp/BfpSystemHealth';
 import ForgotPasswordRequest from './pages/auth/ForgotPasswordRequest';
 import ForgotPasswordReset from './pages/auth/ForgotPasswordReset';
-import IncidentDetailsStep from './pages/report-wizard/IncidentDetailsStep';
-import LocationStep from './pages/report-wizard/LocationStep';
-import PhotoStep from './pages/report-wizard/PhotoStep';
+import ReportForm from './pages/report-wizard/ReportForm';
 import ConfirmationStep from './pages/report-wizard/ConfirmationStep';
 import MyReports from './pages/reports/MyReports';
 import Notifications from './pages/Notifications';
@@ -69,9 +67,7 @@ function App() {
             {/* The public live map. Any signed-in user, civilian included,
                 sees the fires BFP has verified and not yet resolved. */}
             <Route path="/livemap" element={<LiveFireMap />} />
-            <Route path="/report" element={<IncidentDetailsStep />} />
-            <Route path="/continue2" element={<LocationStep />} />
-            <Route path="/continuethird" element={<PhotoStep />} />
+            <Route path="/report" element={<ReportForm />} />
             <Route path="/continue4" element={<ConfirmationStep />} />
             <Route path="/myreport" element={<MyReports />} />
             <Route path="/report/:id" element={<ReportDetail />} />
