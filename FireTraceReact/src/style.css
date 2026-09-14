@@ -3070,7 +3070,7 @@ input.searchInput {
 .civ-safety-content p {
     margin: 0;
     font-size: 12px;
-    color: #c3c7cf;
+    color: var(--civ-text-muted);
     line-height: 1.5;
 }
 
@@ -3217,6 +3217,11 @@ input.searchInput {
 
 .civ-action-primary .civ-action-main p {
     color: rgba(255, 255, 255, 0.9);
+}
+
+/* White on the red card in both themes; --civ-text is near-black in light mode. */
+.civ-action-primary .civ-action-main h3 {
+    color: var(--ft-on-red);
 }
 
 .civ-action-badge {
