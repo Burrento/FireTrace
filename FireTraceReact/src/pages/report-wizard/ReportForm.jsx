@@ -250,11 +250,15 @@ function ReportForm() {
                 </div>
 
                 <p className="barangay-text">Barangay</p>
-                <p className="barangay-hint">
-                    {!hasPin && 'Detected from the map pin.'}
-                    {hasPin && lookup === 'loading' && 'Detecting barangay from the pin...'}
+                {/* Drawn like the address box so it reads as a value, not a footnote. */}
+                <p
+                    className={`barangay-value${hasPin && lookup !== 'loading' && draft.barangay ? '' : ' barangay-value-empty'}`}
+                    aria-live="polite"
+                >
+                    {!hasPin && 'Waiting for the pin…'}
+                    {hasPin && lookup === 'loading' && 'Detecting barangay…'}
                     {hasPin && lookup !== 'loading' && (draft.barangay
-                        || 'Could not detect the barangay — BFP will use the pin and address.')}
+                        || 'Not detected — BFP will use the pin and address')}
                 </p>
 
                 <p className="address-text">Address / Landmark</p>

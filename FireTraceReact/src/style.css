@@ -4571,6 +4571,29 @@ input.searchInput {
     color: var(--ft-red);
 }
 
+/* The detected barangay on the report form. No input: Google fills it. */
+.barangay-value {
+    width: 100%;
+    max-width: 480px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    background-color: var(--ft-input-bg);
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: left;
+    color: var(--ft-text);
+}
+
+.barangay-value-empty {
+    font-size: 15px;
+    font-weight: normal;
+    color: var(--ft-text-muted);
+}
+
 /* Confirmation counterpart to .auth-error, for the profile forms. Same shape
    so a "saved" message and a failure occupy the same space and the layout does
    not jump between them. Both dark and light themes read the colour from the
