@@ -1,9 +1,6 @@
-/* Recent Activity — the audit trail of personnel actions.
-
-   Merged server-side from AUDIT_LOG (what a person did) and the system-raised
-   entries of INCIDENT_TIMELINE_EVENT (such as a duplicate flag). Entries
-   attributed to "System" were raised by the flagging rule, not by staff; the
-   distinction matters when reconstructing who decided what. */
+/* Recent Activity — what BFP personnel did. Civilian submissions and
+   system-raised flags are filtered out server-side; the full trail is on the
+   Audit page. */
 
 const ACTION_ICONS = {
   report_submitted: 'fa-file-circle-plus',
@@ -30,13 +27,16 @@ function ActivityFeed({ data, loading, error }) {
   return (
     <section className="bfp-panel bfp-activity-panel">
       <header className="bfp-panel-head">
-        <h2 className="bfp-panel-title">Recent Activity</h2>
+        <div>
+          <h2 className="bfp-panel-title">Recent Activity</h2>
+          <p className="bfp-panel-sub">Actions by BFP personnel</p>
+        </div>
       </header>
 
       {error && <p className="bfp-inline-error">{error}</p>}
       {loading && !data && <p className="bfp-panel-muted">Loading activity…</p>}
       {!loading && entries.length === 0 && (
-        <p className="bfp-panel-muted">No recorded activity yet.</p>
+        <p className="bfp-panel-muted">No personnel activity yet.</p>
       )}
 
       <ol className="bfp-activity-list">
@@ -48,15 +48,7 @@ function ActivityFeed({ data, loading, error }) {
             <div className="bfp-activity-body">
               <p className="bfp-activity-summary">{entry.summary}</p>
               <p className="bfp-activity-meta">
-                <span
-                  className={
-                    entry.actor_name === 'System'
-                      ? 'bfp-activity-actor is-system'
-                      : 'bfp-activity-actor'
-                  }
-                >
-                  {entry.actor_name}
-                </span>
+                <span className="bfp-activity-actor">{entry.actor_name}</span>
                 <span className="bfp-activity-dot">·</span>
                 <span title={new Date(entry.created_at).toLocaleString()}>
                   {relativeTime(entry.created_at)}

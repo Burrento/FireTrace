@@ -117,6 +117,10 @@ class AuditLogViewTests(DashboardAPITestCase):
         sources = {row['source'] for row in data['results']}
         self.assertEqual(sources, {'audit_log', 'timeline_event'})
 
+    def test_recent_activity_lists_only_personnel_actions(self):
+        data = self.client.get('/api/dashboard/activity/').data
+        self.assertEqual([row['summary'] for row in data], ['FT moved from Submitted to Under Review'])
+
     def test_personnel_timeline_events_are_not_listed_twice(self):
         """A personnel action writes both a timeline event and an audit entry."""
         IncidentTimelineEvent.objects.create(

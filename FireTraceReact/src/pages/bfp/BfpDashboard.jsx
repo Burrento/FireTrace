@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import ActivityFeed from '../../components/bfp/ActivityFeed';
 import DashboardMap from '../../components/bfp/DashboardMap';
 import KpiCards from '../../components/bfp/KpiCards';
-import SystemHealth from '../../components/bfp/SystemHealth';
 import BfpShell from './BfpShell';
 import { useDashboardPoll, usePolledResource } from './useDashboardData';
 
@@ -38,14 +37,13 @@ function BfpDashboard() {
   const kpis = usePolledResource('/api/dashboard/kpis/', tick, { onAuthError: handleAuthError });
   const map = usePolledResource(`/api/dashboard/map/?hours=${mapHours}`, tick, { onAuthError: handleAuthError });
   const activity = usePolledResource('/api/dashboard/activity/?limit=25', tick, { onAuthError: handleAuthError });
-  const health = usePolledResource('/api/dashboard/health/', tick, { onAuthError: handleAuthError });
 
   return (
     <BfpShell live={live} lastRefresh={lastRefresh} refreshNow={refreshNow}>
       <KpiCards data={kpis.data} loading={kpis.loading} />
       {kpis.error && <p className="bfp-inline-error">{kpis.error}</p>}
 
-      <div className="bfp-grid">
+      <div className="bfp-grid bfp-grid-ops">
         <div className="bfp-col-main">
           <DashboardMap
             data={map.data}
@@ -57,7 +55,6 @@ function BfpDashboard() {
         </div>
 
         <aside className="bfp-col-side">
-          <SystemHealth data={health.data} loading={health.loading} error={health.error} />
           <ActivityFeed data={activity.data} loading={activity.loading} error={activity.error} />
         </aside>
       </div>

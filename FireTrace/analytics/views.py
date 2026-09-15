@@ -17,6 +17,7 @@ from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import User
 from accounts.permissions import IsBFPPersonnel
 from incidents.geocoding import derive_confidence
 from incidents.models import (
@@ -151,13 +152,12 @@ def _timeline_row(event):
 
 
 class RecentActivityView(APIView):
-    """The Recent Activity sidebar feed.
+    """The Recent Activity sidebar feed: what BFP personnel did.
 
-    Merges two sources without double-counting: ``AuditLog`` carries every
-    action a person took, and ``IncidentTimelineEvent`` contributes only its
-    system-raised entries (those with no actor, such as a duplicate flag).
-    Personnel-driven timeline events are skipped here because the audit log
-    already records them.
+    Civilian submissions and system-raised flags are left out -- the map and
+    the KPI cards already surface new reports, and this panel answers "what
+    has the station done". The full trail, including both, stays on
+    ``AuditLogView``.
     """
 
     permission_classes = [IsBFPPersonnel]
@@ -168,19 +168,11 @@ class RecentActivityView(APIView):
         except (TypeError, ValueError):
             limit = 20
 
-        entries = [
-            _audit_row(entry)
-            for entry in AuditLog.objects.select_related('actor')[:limit]
-        ]
-
-        entries += [
-            _timeline_row(event)
-            for event in IncidentTimelineEvent.objects.filter(actor__isnull=True)
-            .select_related('incident', 'report')[:limit]
-        ]
-
-        entries.sort(key=lambda item: item['created_at'], reverse=True)
-        return Response(entries[:limit])
+        entries = (
+            AuditLog.objects.filter(actor__user_type=User.UserType.BFP)
+            .select_related('actor')[:limit]
+        )
+        return Response([_audit_row(entry) for entry in entries])
 
 
 class AuditLogView(APIView):

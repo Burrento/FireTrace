@@ -325,14 +325,17 @@ body[data-shell='bfp'] #root {
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
-  background: var(--civ-text-faint);
+  background: var(--kpi-accent);
 }
 
-.bfp-kpi-new_reports::before { background: var(--civ-status-submitted); }
-.bfp-kpi-under_review::before { background: var(--civ-status-review); }
-.bfp-kpi-duplicates::before { background: #8b5cf6; }
-.bfp-kpi-responding::before { background: var(--civ-status-responding); }
-.bfp-kpi-resolved::before { background: var(--civ-status-resolved); }
+.bfp-kpi-card { --kpi-accent: var(--civ-text-faint); transition: transform 0.15s ease, border-color 0.15s ease; }
+.bfp-kpi-card:hover { transform: translateY(-2px); border-color: var(--kpi-accent); }
+
+.bfp-kpi-new_reports { --kpi-accent: var(--civ-status-submitted); }
+.bfp-kpi-under_review { --kpi-accent: var(--civ-status-review); }
+.bfp-kpi-duplicates { --kpi-accent: #8b5cf6; }
+.bfp-kpi-responding { --kpi-accent: var(--civ-status-responding); }
+.bfp-kpi-resolved { --kpi-accent: var(--civ-status-resolved); }
 
 .bfp-kpi-skeleton {
   height: 108px;
@@ -361,8 +364,14 @@ body[data-shell='bfp'] #root {
 }
 
 .bfp-kpi-icon {
-  font-size: 14px;
-  color: var(--civ-text-faint);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  font-size: 13px;
+  color: var(--kpi-accent);
+  background: color-mix(in srgb, var(--kpi-accent) 16%, transparent);
 }
 
 .bfp-kpi-value {
@@ -923,8 +932,27 @@ body[data-shell='bfp'] #root {
 
 .bfp-activity-actor { font-weight: 600; color: var(--civ-text-muted); }
 
-/* System-raised entries are visually distinct from personnel actions, so the
-   audit trail never implies a person made a call the rule made. */
+/* Operations overview: with the health panel gone the map gets the room,
+   and the feed stretches to the map's height instead of stopping short. */
+.bfp-grid-ops { align-items: stretch; }
+.bfp-grid-ops .bfp-map-canvas { height: 580px; }
+.bfp-grid-ops .bfp-activity-panel { display: flex; flex-direction: column; height: 100%; }
+.bfp-grid-ops .bfp-activity-list { flex: 1; max-height: none; min-height: 0; }
+
+@media (min-width: 1181px) {
+  .bfp-grid-ops .bfp-col-side { position: relative; }
+  .bfp-grid-ops .bfp-activity-panel { position: absolute; inset: 0; }
+}
+
+@media (max-width: 1180px) {
+  .bfp-grid-ops .bfp-map-canvas { height: 440px; }
+  .bfp-grid-ops .bfp-activity-list { max-height: 460px; }
+}
+
+.bfp-activity-item:hover { background: var(--civ-surface-2); }
+
+/* The Audit page still lists system-raised entries; keep them visually
+   distinct so the trail never implies a person made a call the rule made. */
 .bfp-activity-actor.is-system {
   font-weight: 500;
   font-style: italic;
