@@ -781,6 +781,7 @@ body[data-shell='bfp'] #root {
 .bfp-badge-verified { background: var(--civ-status-verified-bg); color: var(--civ-status-verified); }
 .bfp-badge-responding { background: var(--civ-status-responding-bg); color: var(--civ-status-responding); }
 .bfp-badge-resolved { background: var(--civ-status-resolved-bg); color: var(--civ-status-resolved); }
+.bfp-badge-rejected { background: var(--civ-chip-bg); color: var(--civ-text-muted); }
 
 .bfp-badge-not-flagged { background: var(--civ-chip-bg); color: var(--civ-text-muted); }
 .bfp-badge-possible-duplicate { background: rgba(139, 92, 246, 0.16); color: #7c3aed; }
@@ -1261,3 +1262,68 @@ form .bfp-panel + .bfp-panel {
 }
 .bfp-meter-fill.is-warn { background: var(--civ-status-review); }
 .bfp-meter-fill.is-crit { background: var(--ft-red); }
+
+/* ---------- Manual intake ---------- */
+
+.bfp-intake-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  padding: 16px;
+}
+
+.bfp-intake-form label,
+.bfp-intake-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--civ-text-muted);
+}
+
+/* style.css sizes every form control for the phone column; undo that here. */
+.bfp-intake-form input,
+.bfp-intake-form select,
+.bfp-intake-form textarea {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  padding: 9px 10px;
+  border: 1px solid var(--civ-border);
+  border-radius: 8px;
+  background: var(--civ-surface-2);
+  color: var(--civ-text);
+  font: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.bfp-intake-form textarea { min-height: 80px; resize: vertical; }
+.bfp-intake-wide { grid-column: 1 / -1; }
+.bfp-intake-form .map-container { height: 320px; margin-top: 6px; border-radius: 10px; overflow: hidden; }
+
+.bfp-intake-saved {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--civ-status-resolved-bg);
+  color: var(--civ-status-resolved);
+  font-size: 13px;
+}
+
+.bfp-intake-submit {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ft-red);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bfp-intake-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 720px) {
+  .bfp-intake-form { grid-template-columns: minmax(0, 1fr); }
+}

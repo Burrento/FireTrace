@@ -10,6 +10,8 @@ const ACTION_ICONS = {
   duplicate_reviewed: 'fa-clone',
   duplicate_flagged: 'fa-flag',
   report_linked: 'fa-link',
+  report_unlinked: 'fa-link-slash',
+  report_encoded: 'fa-headset',
   note_added: 'fa-note-sticky',
 };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import BfpShell from './BfpShell';
 import { useBfpPage, usePolledResource } from './useDashboardData';
+import { csvLine, downloadCsv } from '../../lib/csv';
 
 /* Operational Overview, from /api/dashboard/operational/.
 
@@ -109,6 +110,33 @@ function BarChart({ data }) {
   );
 }
 
+/* The page as a spreadsheet: every figure with the counts behind it, so the
+   export makes the same claims the gauges do and no stronger. */
+function operationalCsv(data) {
+  const times = data.response_times ?? {};
+  return [
+    csvLine(['FireTrace Operational Overview']),
+    csvLine(['Period', `${data.range.start} to ${data.range.end}`, `${data.days} days`]),
+    csvLine(['Generated', new Date(data.generated_at).toISOString()]),
+    '',
+    csvLine(['Rate', 'Percent', 'Count', 'Total', 'Detail']),
+    ...data.rates.map((rate) => csvLine([rate.label, rate.percent ?? 'n/a', rate.count, rate.total, rate.detail])),
+    '',
+    csvLine(['Date', 'Reports', 'Incidents']),
+    ...data.daily.map((day) => csvLine([day.date, day.reports, day.incidents])),
+    '',
+    csvLine(['Category', 'Reports']),
+    ...data.by_type.map((row) => csvLine([row.label, row.count])),
+    '',
+    csvLine(['Barangay', 'Reports']),
+    ...data.by_barangay.map((row) => csvLine([row.barangay, row.count])),
+    '',
+    csvLine(['Response time', 'Mean seconds', 'Incidents measured']),
+    csvLine(['Verified to dispatched', times.average_dispatch_seconds ?? 'n/a', times.dispatch_sample ?? 0]),
+    csvLine(['Verified to resolved', times.average_resolution_seconds ?? 'n/a', times.resolution_sample ?? 0]),
+  ].join('\r\n');
+}
+
 function BfpOperational() {
   const { tick, lastRefresh, refreshNow, live, onAuthError } = useBfpPage(REFRESH_MS);
   const [days, setDays] = useState(7);
@@ -133,6 +161,17 @@ function BfpOperational() {
       <section className="bfp-panel">
         <div className="bfp-panel-head">
           <h2 className="bfp-panel-title">Key rates</h2>
+          <button
+            type="button"
+            className="bfp-mini-btn"
+            disabled={!data}
+            onClick={() => downloadCsv(
+              operationalCsv(data),
+              `firetrace-operational-${data.range.end}-${data.days}d.csv`,
+            )}
+          >
+            <i className="fa-solid fa-download" /> Download CSV
+          </button>
           <div className="bfp-window-switch">
             {(data?.days_choices ?? [7, 30, 90]).map((choice) => (
               <button

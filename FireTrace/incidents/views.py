@@ -20,6 +20,7 @@ from .models import (
     Incident,
     IncidentReport,
     IncidentTimelineEvent,
+    SourceChannel,
     WorkflowStatus,
 )
 from .serializers import (
@@ -28,6 +29,8 @@ from .serializers import (
     IncidentSerializer,
     IncidentTimelineEventSerializer,
     IncidentVerifySerializer,
+    ReportIntakeSerializer,
+    ReportLinkSerializer,
     ReportQueueSerializer,
     WorkflowStatusUpdateSerializer,
 )
@@ -57,6 +60,14 @@ ACTIVE_STATUSES = (
     WorkflowStatus.VERIFIED,
     WorkflowStatus.RESPONDING,
 )
+
+
+def _reporter_contact(report):
+    """Who to call back: the caller for an encoded report, else the account holder."""
+    if report.source_channel != SourceChannel.PWA:
+        return report.caller_name, report.caller_phone
+    user = report.reporter
+    return (user.get_full_name() or user.email or user.username), user.phone_number
 
 
 class QueuePagination(PageNumberPagination):
@@ -98,6 +109,30 @@ class IncidentReportListCreateView(ReportQuerysetMixin, generics.ListCreateAPIVi
         # report's workflow status is untouched.
         flag_possible_duplicate(report)
 
+        broadcast_dashboard_event('report.created', {'report_id': report.id})
+
+
+class ReportIntakeView(generics.CreateAPIView):
+    """Personnel encode a report that reached the station by another channel.
+
+    From here on it is an ordinary IncidentReport -- same duplicate rule, same
+    queue, same map -- with the channel and the caller recorded on it.
+    """
+
+    serializer_class = ReportIntakeSerializer
+    permission_classes = [IsBFPPersonnel]
+
+    def perform_create(self, serializer):
+        report = serializer.save()
+        record_activity(
+            actor=self.request.user,
+            action=AuditLog.Action.REPORT_ENCODED,
+            event_type=IncidentTimelineEvent.EventType.REPORT_SUBMITTED,
+            summary=f"Report {report.reference_number} encoded from {report.get_source_channel_display()}",
+            report=report,
+            context={'source_channel': report.source_channel, 'incident_type': report.incident_type},
+        )
+        flag_possible_duplicate(report)
         broadcast_dashboard_event('report.created', {'report_id': report.id})
 
 
@@ -250,6 +285,119 @@ class ReportDuplicateReviewView(APIView):
         broadcast_dashboard_event('report.duplicate_reviewed', {'report_id': report.id})
 
         return Response(IncidentReportSerializer(report, context={'request': request}).data)
+
+
+class ReportLinkView(APIView):
+    """Link a report to a canonical incident, move it to another, or unlink it.
+
+    The report itself is untouched; only the association moves, and every move
+    records who made it, from where to where, and why.
+    """
+
+    permission_classes = [IsBFPPersonnel]
+
+    def post(self, request, pk):
+        report = generics.get_object_or_404(IncidentReport.objects.select_related('incident'), pk=pk)
+        serializer = ReportLinkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        target = serializer.validated_data['incident']
+        note = serializer.validated_data.get('note', '')
+        previous = report.incident
+
+        if target == previous:
+            return Response(
+                {'incident': ['The report is already in that state.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        report.incident = target
+        report.save(update_fields=['incident', 'updated_at'])
+
+        if target is None:
+            action = AuditLog.Action.REPORT_UNLINKED
+            event_type = IncidentTimelineEvent.EventType.REPORT_UNLINKED
+            summary = f"{report.reference_number} unlinked from {previous.reference_number}"
+        else:
+            action = AuditLog.Action.REPORT_LINKED
+            event_type = IncidentTimelineEvent.EventType.REPORT_LINKED
+            summary = f"{report.reference_number} linked to {target.reference_number}"
+            if previous:
+                summary += f" (moved from {previous.reference_number})"
+
+        record_activity(
+            actor=request.user,
+            action=action,
+            event_type=event_type,
+            summary=f"{summary}. {note}" if note else summary,
+            report=report,
+            context={
+                'from_incident_id': previous.id if previous else None,
+                'incident_id': target.id if target else None,
+                'note': note,
+            },
+        )
+        broadcast_dashboard_event('report.linked', {'report_id': report.id})
+        return Response(IncidentReportSerializer(report, context={'request': request}).data)
+
+
+class ReportNotificationsView(APIView):
+    """In-system updates for the signed-in reporter, built from the timeline.
+
+    Messages are written here from status values, never passed through from a
+    timeline description, which can carry a note meant for personnel. A
+    reporter learns that their report moved, not what a staff member wrote.
+    Includes status changes on a canonical incident their report is linked to,
+    since that is what governs the report once linked.
+    """
+
+    permission_classes = [IsAuthenticated]
+    LIMIT = 50
+
+    def get(self, request):
+        user = request.user
+        types = IncidentTimelineEvent.EventType
+        events = (
+            IncidentTimelineEvent.objects.filter(
+                Q(report__reporter=user, event_type__in=(
+                    types.REPORT_SUBMITTED, types.STATUS_CHANGE, types.REPORT_LINKED,
+                ))
+                | Q(incident__source_reports__reporter=user, event_type__in=(
+                    types.STATUS_CHANGE, types.DISPATCH,
+                ))
+            )
+            .distinct()
+            .select_related('report')
+            .prefetch_related('incident__source_reports')[:self.LIMIT]
+        )
+        rows = (self._row(event, user) for event in events)
+        return Response([row for row in rows if row])
+
+    def _row(self, event, user):
+        report = event.report or next(
+            (r for r in event.incident.source_reports.all() if r.reporter_id == user.id), None,
+        )
+        if report is None:
+            return None
+
+        types = IncidentTimelineEvent.EventType
+        if event.event_type == types.REPORT_SUBMITTED:
+            kind, message = 'received', 'was received by BFP Calapan.'
+        elif event.event_type == types.REPORT_LINKED:
+            kind, message = 'verified', 'was verified as part of a confirmed fire incident.'
+        else:
+            to = event.context.get('to')
+            if to not in WorkflowStatus.values:
+                return None
+            kind, message = to, f'is now {WorkflowStatus(to).label}.'
+
+        return {
+            'id': event.id,
+            'report_id': report.id,
+            'reference_number': report.reference_number,
+            'kind': kind,
+            'message': message,
+            'created_at': event.created_at,
+        }
 
 
 class ReportTimelineView(generics.ListAPIView):
@@ -493,8 +641,10 @@ class DashboardMapView(APIView):
                     'geocoding_confidence': r.geocoding_confidence,
                     # Who to call back. Personnel-only endpoint, so the contact
                     # details are safe here; OngoingFireMapView never carries them.
-                    'reporter_name': (r.reporter.get_full_name() or r.reporter.email or r.reporter.username) if r.reporter else '',
-                    'reporter_phone': r.reporter.phone_number if r.reporter else '',
+                    'reporter_name': _reporter_contact(r)[0],
+                    'reporter_phone': _reporter_contact(r)[1],
+                    'source_channel': r.source_channel,
+                    'source_channel_display': r.get_source_channel_display(),
                     'has_photo': r.has_photo,
                     # Signing is a local HMAC, not a call to Azure, so doing it
                     # per marker costs nothing worth avoiding. Absent rather

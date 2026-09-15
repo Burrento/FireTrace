@@ -7,6 +7,7 @@ export const WORKFLOW_STATUSES = [
   { value: 'verified', label: 'Verified' },
   { value: 'responding', label: 'Responding' },
   { value: 'resolved', label: 'Resolved' },
+  { value: 'rejected', label: 'Rejected' },
 ];
 
 export function statusClass(value) {

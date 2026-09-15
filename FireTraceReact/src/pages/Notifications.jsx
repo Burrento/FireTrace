@@ -1,76 +1,101 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import '../style.css';
+import { apiFetch } from '../api';
+import { isLoggedIn } from '../auth';
 import CivHeader from '../components/CivHeader';
 
-const NOTIFICATION_GROUPS = [
-    {
-        label: 'Today',
-        items: [
-            {
-                id: 'FT-2026-00124',
-                icon: 'warning',
-                message: 'is now Under Review.',
-                time: '9:10 AM',
-            },
-            {
-                id: 'FT-2026-00110',
-                icon: 'verified',
-                message: 'has been Verified by BFP.',
-                time: '8:05 AM',
-            },
-            {
-                id: null,
-                icon: 'thanks',
-                message: 'Thank you for helping keep your community safe.',
-                time: '7:30 AM',
-            },
-        ],
-    },
-    {
-        label: 'Yesterday',
-        items: [
-            {
-                id: 'FT-2026-00015',
-                icon: 'resolved',
-                message: 'has been Resolved.',
-                time: '2:45 PM',
-            },
-        ],
-    },
-];
+/* Updates on the reporter's own reports, from /api/reports/notifications/.
 
+   The server writes each message from status values alone, so a note a staff
+   member recorded for the station never reaches this screen. Loaded when the
+   screen opens: /ws/dashboard is personnel-only, so there is no push here. */
+
+// [css modifier already styled in style.css, glyph]
 const ICONS = {
-    warning: '⚠️',
-    verified: '✓',
-    resolved: '✓',
-    thanks: '🛡️',
+    received: ['thanks', '📨'],
+    submitted: ['warning', '⚠️'],
+    under_review: ['warning', '⚠️'],
+    verified: ['verified', '✓'],
+    responding: ['warning', '🚒'],
+    resolved: ['resolved', '✓'],
+    rejected: ['warning', '✕'],
 };
 
+function dayLabel(iso) {
+    const day = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (day.toDateString() === today.toDateString()) return 'Today';
+    if (day.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    return day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
 function Notifications() {
+    const navigate = useNavigate();
+    const [items, setItems] = useState(null);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!isLoggedIn()) {
+            navigate('/login');
+            return;
+        }
+        apiFetch('/api/reports/notifications/')
+            .then((data) => setItems(Array.isArray(data) ? data : []))
+            .catch(() => setError('Could not load your alerts.'));
+    }, [navigate]);
+
+    // Newest first from the server, so days come out in order as they are met.
+    const groups = useMemo(() => {
+        const byDay = new Map();
+        for (const item of items ?? []) {
+            const label = dayLabel(item.created_at);
+            if (!byDay.has(label)) byDay.set(label, []);
+            byDay.get(label).push(item);
+        }
+        return [...byDay];
+    }, [items]);
+
     return (
         <center>
             <CivHeader title="Alerts" back="/dashboard" />
 
             <div className="notif-list">
-                {NOTIFICATION_GROUPS.map((group) => (
-                    <div className="notif-group" key={group.label}>
-                        <p className="notif-group-title">{group.label.toUpperCase()}</p>
+                {error && <p className="notif-sub notif-sub-solo">{error}</p>}
+                {!error && items === null && <p className="notif-sub notif-sub-solo">Loading…</p>}
+                {items?.length === 0 && (
+                    <p className="notif-sub notif-sub-solo">
+                        No updates yet. Alerts appear here when BFP acts on your reports.
+                    </p>
+                )}
 
-                        {group.items.map((item, index) => (
-                            <div className="notif-item" key={item.id ?? `${group.label}-${index}`}>
-                                <span className={`notif-icon notif-icon-${item.icon}`}>
-                                    {ICONS[item.icon]}
-                                </span>
+                {groups.map(([label, group]) => (
+                    <div className="notif-group" key={label}>
+                        <p className="notif-group-title">{label.toUpperCase()}</p>
 
-                                {item.id ? (
+                        {group.map((item) => {
+                            const [icon, glyph] = ICONS[item.kind] ?? ICONS.submitted;
+                            const time = new Date(item.created_at).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                            });
+                            return (
+                                <Link
+                                    className="notif-item"
+                                    key={item.id}
+                                    to={`/report/${item.report_id}`}
+                                    style={{ textDecoration: 'none', color: 'inherit' }}
+                                >
+                                    <span className={`notif-icon notif-icon-${icon}`}>{glyph}</span>
                                     <div className="notif-content">
-                                        <p className="notif-title">{item.id}</p>
-                                        <p className="notif-sub">{item.message} {item.time}</p>
+                                        <p className="notif-title">{item.reference_number}</p>
+                                        <p className="notif-sub">{item.message} {time}</p>
                                     </div>
-                                ) : (
-                                    <p className="notif-sub notif-sub-solo">{item.message} {item.time}</p>
-                                )}
-                            </div>
-                        ))}
+                                </Link>
+                            );
+                        })}
                     </div>
                 ))}
             </div>

@@ -133,6 +133,9 @@ function BfpShell({ live, lastRefresh, refreshNow, children }) {
           <NavLink to="/bfp/reports" className="bfp-nav-link" onClick={closeMenu}>
             <i className="fa-solid fa-list" /> All Reports
           </NavLink>
+          <NavLink to="/bfp/intake" className="bfp-nav-link" onClick={closeMenu}>
+            <i className="fa-solid fa-headset" /> Encode a Report
+          </NavLink>
           <NavLink to="/bfp/BfpIncidentMap" className="bfp-nav-link" onClick={closeMenu}>
             <i className="fa-solid fa-map" /> Incident Map
           </NavLink>

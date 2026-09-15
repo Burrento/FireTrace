@@ -8,6 +8,7 @@ from .models import (
     Incident,
     IncidentReport,
     IncidentTimelineEvent,
+    SourceChannel,
     WorkflowStatus,
 )
 
@@ -54,9 +55,12 @@ class IncidentReportSerializer(serializers.ModelSerializer):
             'duplicate_distance_m', 'duplicate_time_delta_seconds',
             'duplicate_reviewed_at',
             'incident', 'incident_reference',
+            'source_channel', 'caller_name', 'caller_phone',
             'created_at', 'updated_at',
         )
         read_only_fields = (
+            # A civilian cannot claim a report came in by hotline.
+            'source_channel', 'caller_name', 'caller_phone',
             'workflow_status', 'geocoding_confidence', 'duplicate_status',
             'duplicate_of', 'duplicate_distance_m', 'duplicate_time_delta_seconds',
             'duplicate_reviewed_at', 'incident', 'created_at', 'updated_at',
@@ -94,6 +98,27 @@ class IncidentReportSerializer(serializers.ModelSerializer):
             has_coordinates=validated_data.get('latitude') is not None,
         )
         return super().create(validated_data)
+
+
+class ReportIntakeSerializer(IncidentReportSerializer):
+    """A report personnel encode from a call, walk-in, text, radio or referral.
+
+    Declared fields ignore the parent's read_only_fields, which is what makes
+    the channel and caller writable here and only here.
+    """
+
+    source_channel = serializers.ChoiceField(
+        choices=[choice for choice in SourceChannel.choices if choice[0] != SourceChannel.PWA],
+    )
+    caller_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    caller_phone = serializers.CharField(max_length=32, required=False, allow_blank=True)
+
+
+class ReportLinkSerializer(serializers.Serializer):
+    """Attach a report to a canonical incident, move it, or detach it (null)."""
+
+    incident = serializers.PrimaryKeyRelatedField(queryset=Incident.objects.all(), allow_null=True)
+    note = serializers.CharField(required=False, allow_blank=True, max_length=255)
 
 
 class ReportQueueSerializer(serializers.ModelSerializer):

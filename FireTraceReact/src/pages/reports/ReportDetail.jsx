@@ -92,6 +92,12 @@ function ReportDetail() {
                 {/* Progress tracker */}
                 <section>
                     <h2 className="civ-section-title">Report Status</h2>
+                    {incident.status === 'rejected' && (
+                        <p className="civ-rejected-note">
+                            BFP reviewed this report and closed it without a response, for example a
+                            false alarm or something that was not a fire. It stays on record.
+                        </p>
+                    )}
                     <div className="civ-timeline">
                         {TIMELINE.map((step, index) => {
                             const state =

@@ -221,6 +221,9 @@ function MarkerDetails({ marker, onClose, onChanged }) {
         ) : (
           <div className="bfp-iw-reporter">
             <p><i className="fa-solid fa-user" /> {marker.reporter_name || 'Unknown reporter'}</p>
+            {marker.source_channel && marker.source_channel !== 'pwa' && (
+              <p><i className="fa-solid fa-headset" /> Via {marker.source_channel_display}</p>
+            )}
             <p>
               <i className="fa-solid fa-phone" />{' '}
               {marker.reporter_phone

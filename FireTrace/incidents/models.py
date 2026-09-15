@@ -35,6 +35,9 @@ class WorkflowStatus(models.TextChoices):
     VERIFIED = 'verified', 'Verified'
     RESPONDING = 'responding', 'Responding'
     RESOLVED = 'resolved', 'Resolved'
+    # Reviewed and closed without a response: a false alarm, a hoax, or not a
+    # fire. Kept like every report, never counted as an incident.
+    REJECTED = 'rejected', 'Rejected'
 
 
 class DuplicateStatus(models.TextChoices):
@@ -60,6 +63,17 @@ class GeocodingConfidence(models.TextChoices):
     HIGH = 'high', 'High'
     MEDIUM = 'medium', 'Medium'
     LOW = 'low', 'Low'
+
+
+class SourceChannel(models.TextChoices):
+    """How a report reached the station. Only app reports are self-filed."""
+
+    PWA = 'pwa', 'FireTrace app'
+    HOTLINE = 'hotline', 'Hotline call'
+    WALK_IN = 'walk_in', 'Walk-in'
+    TEXT = 'text', 'Text message'
+    RADIO = 'radio', 'Radio'
+    REFERRAL = 'referral', 'Inter-agency referral'
 
 
 class LocationSource(models.TextChoices):
@@ -95,6 +109,13 @@ class IncidentReport(models.Model):
     )
     # Metres, as reported by the browser Geolocation API. Null for map pins.
     gps_accuracy_m = models.FloatField(blank=True, null=True)
+    # A report encoded by personnel from another channel: `reporter` is then the
+    # person who typed it in, and the caller is recorded here instead.
+    source_channel = models.CharField(
+        max_length=20, choices=SourceChannel.choices, default=SourceChannel.PWA,
+    )
+    caller_name = models.CharField(max_length=150, blank=True)
+    caller_phone = models.CharField(max_length=32, blank=True)
     geocoding_confidence = models.CharField(
         max_length=10, choices=GeocodingConfidence.choices, default=GeocodingConfidence.LOW,
     )
@@ -238,6 +259,7 @@ class IncidentTimelineEvent(models.Model):
         DUPLICATE_REVIEW = 'duplicate_review', 'Duplicate Review'
         REPORT_LINKED = 'report_linked', 'Report Linked To Incident'
         NOTE = 'note', 'Note'
+        REPORT_UNLINKED = 'report_unlinked', 'Report Unlinked From Incident'
 
     incident = models.ForeignKey(
         Incident, on_delete=models.CASCADE, blank=True, null=True,

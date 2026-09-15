@@ -3314,6 +3314,21 @@ input.searchInput {
     white-space: nowrap;
 }
 
+.civ-status-badge.status-rejected {
+    background: var(--civ-chip-bg);
+    color: var(--civ-text-muted);
+}
+
+.civ-rejected-note {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--civ-chip-bg);
+    color: var(--civ-text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 .civ-status-badge.status-submitted {
     background: var(--civ-status-submitted-bg);
     color: var(--civ-status-submitted);

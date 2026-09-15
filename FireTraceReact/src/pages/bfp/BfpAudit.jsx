@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '../../api';
 import BfpShell from './BfpShell';
 import { useBfpPage, usePolledResource } from './useDashboardData';
+import { downloadCsv as download } from '../../lib/csv';
 
 /* The personnel activity trail, from /api/dashboard/audit/.
 
@@ -61,20 +62,6 @@ function toCsv(rows) {
       .join(','),
   );
   return [header.map(escape).join(','), ...lines].join('\r\n');
-}
-
-function download(text, filename) {
-  const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  // Object URLs live until revoked, so an operator exporting repeatedly would
-  // otherwise leak a blob per download for the life of the tab.
-  URL.revokeObjectURL(url);
 }
 
 function BfpAudit() {

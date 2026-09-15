@@ -15,6 +15,7 @@ import BfpSettings from './pages/bfp/BfpSettings';
 import BfpAudit from './pages/bfp/BfpAudit';
 import BfpBackup from './pages/bfp/BfpBackup';
 import BfpSystemHealth from './pages/bfp/BfpSystemHealth';
+import BfpIntake from './pages/bfp/BfpIntake';
 import ForgotPasswordRequest from './pages/auth/ForgotPasswordRequest';
 import ForgotPasswordReset from './pages/auth/ForgotPasswordReset';
 import ReportForm from './pages/report-wizard/ReportForm';
@@ -53,6 +54,7 @@ function App() {
               Both the route and its API check the user's role. */}
           <Route path="/bfp" element={<BfpDashboard />} />
           <Route path="/bfp/reports" element={<BfpReports />} />
+          <Route path="/bfp/intake" element={<BfpIntake />} />
           <Route path="/bfp/BfpIncidentMap" element={<BfpIncidentMap />} />
           <Route path="/bfp/BfpOperational" element={<BfpOperational />} />
           <Route path="/bfp/BfpAnalyticReport" element={<BfpAnalyticReport />} />

@@ -11,6 +11,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from accounts.models import User
+from analytics.models import AuditLog
 
 from .duplicates import find_duplicate_candidates, flag_possible_duplicate, haversine_meters
 from .geocoding import derive_confidence
@@ -20,6 +21,7 @@ from .models import (
     Incident,
     IncidentReport,
     LocationSource,
+    SourceChannel,
     WorkflowStatus,
 )
 
@@ -349,6 +351,94 @@ class DashboardAPITests(APITestCase):
         # Confidence is graded server-side from the capture method.
         self.assertEqual(created.geocoding_confidence, GeocodingConfidence.HIGH)
         self.assertTrue(created.timeline_events.exists())
+
+    def test_personnel_can_reject_a_report_and_it_leaves_the_intake_counts(self):
+        report = make_report(self.civilian)
+        self.client.force_authenticate(self.bfp)
+
+        response = self.client.post(
+            f'/api/reports/{report.id}/status/', {'workflow_status': 'rejected'}, format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        report.refresh_from_db()
+        self.assertEqual(report.workflow_status, WorkflowStatus.REJECTED)
+        cards = {card['key']: card for card in self.client.get('/api/dashboard/kpis/').data['cards']}
+        self.assertEqual(cards['new_reports']['value'], 0)
+        self.assertEqual(cards['under_review']['value'], 0)
+
+    def test_report_can_be_moved_and_unlinked_with_an_audit_trail(self):
+        report = self._linked_report()
+        second = Incident.objects.create(
+            incident_type='fire', barangay='Ibaba East', latitude=BASE_LAT, longitude=BASE_LNG,
+        )
+        self.client.force_authenticate(self.bfp)
+
+        moved = self.client.post(
+            f'/api/reports/{report.id}/link/', {'incident': second.id, 'note': 'Different fire'}, format='json',
+        )
+        self.assertEqual(moved.status_code, 200)
+        report.refresh_from_db()
+        self.assertEqual(report.incident, second)
+
+        unlinked = self.client.post(f'/api/reports/{report.id}/link/', {'incident': None}, format='json')
+        self.assertEqual(unlinked.status_code, 200)
+        report.refresh_from_db()
+        self.assertIsNone(report.incident)
+
+        actions = set(
+            AuditLog.objects.filter(target_type='IncidentReport', target_id=report.id)
+            .values_list('action', flat=True)
+        )
+        self.assertEqual(actions, {AuditLog.Action.REPORT_LINKED, AuditLog.Action.REPORT_UNLINKED})
+
+    def test_personnel_can_encode_a_hotline_report(self):
+        self.client.force_authenticate(self.bfp)
+        response = self.client.post('/api/reports/intake/', {
+            'source_channel': 'hotline', 'caller_name': 'Maria Santos', 'caller_phone': '09181234567',
+            'incident_type': 'fire', 'latitude': BASE_LAT, 'longitude': BASE_LNG,
+            'location_confirmed': True, 'location_source': LocationSource.MAP_PIN,
+        }, format='json')
+
+        self.assertEqual(response.status_code, 201)
+        report = IncidentReport.objects.get()
+        self.assertEqual(report.source_channel, SourceChannel.HOTLINE)
+        self.assertEqual(report.reporter, self.bfp)
+        row = self.client.get('/api/dashboard/map/').data['reports'][0]
+        self.assertEqual(row['reporter_name'], 'Maria Santos')
+        self.assertEqual(row['reporter_phone'], '09181234567')
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.REPORT_ENCODED).exists())
+
+    def test_civilian_cannot_encode_or_claim_a_channel(self):
+        payload = {
+            'incident_type': 'fire', 'latitude': BASE_LAT, 'longitude': BASE_LNG,
+            'location_confirmed': True, 'location_source': LocationSource.MAP_PIN,
+            'source_channel': 'hotline',
+        }
+        self.client.force_authenticate(self.civilian)
+
+        self.assertEqual(self.client.post('/api/reports/intake/', payload, format='json').status_code, 403)
+        self.client.post('/api/reports/', payload, format='json')
+        self.assertEqual(IncidentReport.objects.get().source_channel, SourceChannel.PWA)
+
+    def test_reporter_notifications_come_from_real_updates_without_staff_notes(self):
+        report = make_report(self.civilian)
+        self.client.force_authenticate(self.bfp)
+        self.client.post(
+            f'/api/reports/{report.id}/status/',
+            {'workflow_status': 'under_review', 'note': 'internal: check caller history'},
+            format='json',
+        )
+
+        self.client.force_authenticate(self.civilian)
+        rows = self.client.get('/api/reports/notifications/').data
+        self.assertEqual(rows[0]['reference_number'], report.reference_number)
+        self.assertEqual(rows[0]['message'], 'is now Under Review.')
+        self.assertNotIn('internal', str(rows))
+
+        stranger = User.objects.create_user(username='stranger@example.com', password='pw')
+        self.client.force_authenticate(stranger)
+        self.assertEqual(self.client.get('/api/reports/notifications/').data, [])
 
     def _linked_report(self):
         incident = Incident.objects.create(

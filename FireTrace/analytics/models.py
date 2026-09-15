@@ -31,6 +31,8 @@ class AuditLog(models.Model):
         ACCOUNT_UPDATED = 'account_updated', 'Account Updated'
         DATA_EXPORTED = 'data_exported', 'Data Exported'
         LOGIN = 'login', 'Signed In'
+        REPORT_UNLINKED = 'report_unlinked', 'Report Unlinked From Incident'
+        REPORT_ENCODED = 'report_encoded', 'Report Encoded'
 
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True,

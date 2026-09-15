@@ -39,6 +39,7 @@ REVIEWED_STATUSES = (
     WorkflowStatus.VERIFIED,
     WorkflowStatus.RESPONDING,
     WorkflowStatus.RESOLVED,
+    WorkflowStatus.REJECTED,
 )
 
 

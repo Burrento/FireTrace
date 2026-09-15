@@ -13,6 +13,7 @@ const FILTERS = [
     { key: 'verified', label: 'Verified' },
     { key: 'responding', label: 'Responding' },
     { key: 'resolved', label: 'Resolved' },
+    { key: 'rejected', label: 'Rejected' },
 ];
 
 function MyReports() {
