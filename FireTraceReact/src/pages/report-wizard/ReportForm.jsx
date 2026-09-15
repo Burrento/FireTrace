@@ -6,6 +6,7 @@ import { isLoggedIn } from '../../auth';
 import { useReportDraft } from '../../context/useReportDraft';
 import LocationPickerMap from '../../components/LocationPickerMap';
 import CivHeader from '../../components/CivHeader';
+import EmergencyNotice from '../../components/EmergencyNotice';
 
 /* The whole report on one page, filed by one button press.
 
@@ -13,9 +14,31 @@ import CivHeader from '../../components/CivHeader';
    happens exactly once: a refresh cannot file a second copy of the same fire. */
 
 /* Phone cameras produce 3-8 MB files and the reporter is often on mobile data,
-   so refuse the outliers here with a clear message rather than letting a slow
-   upload fail somewhere less legible. */
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+   so the photo is shrunk on the device before it is attached: 1600px on the
+   long edge at JPEG 0.8 is a few hundred KB and still sharp enough for an
+   operator to judge a fire. The server refuses anything over 5 MB. */
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const MAX_PHOTO_EDGE = 1600;
+
+async function compressPhoto(file) {
+    try {
+        // from-image applies the EXIF rotation, so a portrait shot stays upright.
+        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const scale = Math.min(1, MAX_PHOTO_EDGE / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bitmap.width * scale);
+        canvas.height = Math.round(bitmap.height * scale);
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+        if (!blob || blob.size >= file.size) return file;
+        return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.jpg`, { type: 'image/jpeg' });
+    } catch {
+        // A format this browser cannot decode (some HEIC) goes up as picked;
+        // the server decides whether it is acceptable.
+        return file;
+    }
+}
 
 /* The photo never travels in the JSON draft: it is a File, it is large, and it
    is optional. When one is attached the whole report goes as multipart
@@ -43,6 +66,10 @@ function ReportForm() {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [photo, setPhoto] = useState(null);
+    const [preparingPhoto, setPreparingPhoto] = useState(false);
+    // A failed submission, as opposed to a photo or form problem: the reporter
+    // must not be left thinking the station has it.
+    const [notSent, setNotSent] = useState(false);
     const cameraInput = useRef(null);
     const galleryInput = useRef(null);
 
@@ -138,7 +165,7 @@ function ReportForm() {
         setLookup('');
     }
 
-    function handleFileChange(event) {
+    async function handleFileChange(event) {
         const file = event.target.files?.[0];
         // Reset immediately so picking the same file twice still fires change,
         // which is what happens when someone retakes a photo they just removed.
@@ -149,13 +176,16 @@ function ReportForm() {
             setError('That file is not an image. Choose a photo instead.');
             return;
         }
-        if (file.size > MAX_PHOTO_BYTES) {
-            const mb = (file.size / 1024 / 1024).toFixed(1);
-            setError(`That photo is ${mb} MB. Please use one under 10 MB.`);
+        setError('');
+        setPreparingPhoto(true);
+        const compressed = await compressPhoto(file);
+        setPreparingPhoto(false);
+        if (compressed.size > MAX_PHOTO_BYTES) {
+            const mb = (compressed.size / 1024 / 1024).toFixed(1);
+            setError(`That photo is ${mb} MB. Please use one under 5 MB.`);
             return;
         }
-        setError('');
-        setPhoto(file);
+        setPhoto(compressed);
     }
 
     async function handleSubmit(event) {
@@ -168,6 +198,7 @@ function ReportForm() {
         }
 
         setError('');
+        setNotSent(false);
         setSubmitting(true);
         try {
             const incident = await apiFetch('/incidents/', {
@@ -179,6 +210,7 @@ function ReportForm() {
             navigate('/continue4', { state: { incident }, replace: true });
         } catch (err) {
             setError(err.message || 'Failed to submit report.');
+            setNotSent(true);
             setSubmitting(false);
         }
     }
@@ -188,6 +220,7 @@ function ReportForm() {
             <CivHeader title="Report a fire" subtitle="Fill in what you can, then submit" back="/dashboard" />
 
             <form onSubmit={handleSubmit}>
+                <EmergencyNotice />
                 <p className="incident-text">Incident Type:</p>
                 <div>
                     <select
@@ -320,6 +353,7 @@ function ReportForm() {
                 )}
 
                 {error && <p className="auth-error">{error}</p>}
+                {notSent && <EmergencyNotice>Your report was not sent.</EmergencyNotice>}
                 {!canSubmit && (
                     <p className="barangay-hint">
                         To submit: choose the incident type, pin the location, and tick the confirmation.
@@ -327,8 +361,8 @@ function ReportForm() {
                 )}
 
                 <div className="backcontinue-container">
-                    <button type="submit" className="continuebtn" disabled={submitting || !canSubmit}>
-                        {submitting ? 'Submitting…' : 'Submit Report'}
+                    <button type="submit" className="continuebtn" disabled={submitting || preparingPhoto || !canSubmit}>
+                        {submitting ? 'Submitting…' : preparingPhoto ? 'Preparing photo…' : 'Submit Report'}
                     </button>
                 </div>
             </form>

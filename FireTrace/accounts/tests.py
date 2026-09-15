@@ -9,6 +9,8 @@ personnel dashboard.
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from analytics.models import AuditLog
+
 from .models import User
 
 
@@ -42,6 +44,13 @@ class RegistrationTests(TestCase):
             User.UserType.CIVILIAN,
         )
 
+    def test_phone_number_is_stored(self):
+        """BFP calls the reporter back on this; the form used to drop it."""
+        self._register(phone_number='09171234567')
+        self.assertEqual(
+            User.objects.get(username='juan@example.com').phone_number, '09171234567',
+        )
+
     def test_first_name_is_stored(self):
         """The signup form posts it; it used to be dropped without a word."""
         self._register(first_name='Juan Dela Cruz')
@@ -67,6 +76,21 @@ class RegistrationTests(TestCase):
 
 
 class LoginTests(TestCase):
+    def test_successful_sign_in_is_audited_and_a_failed_one_is_not(self):
+        user = User.objects.create_user(username='ana@example.com', password='sample-password-123')
+        client = APIClient()
+
+        client.post('/accounts/login', {'username': 'ana@example.com', 'password': 'wrong'}, format='json')
+        self.assertFalse(AuditLog.objects.filter(action=AuditLog.Action.LOGIN).exists())
+
+        response = client.post(
+            '/accounts/login', {'username': 'ana@example.com', 'password': 'sample-password-123'}, format='json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('access', response.data)
+        entry = AuditLog.objects.get(action=AuditLog.Action.LOGIN)
+        self.assertEqual(entry.actor, user)
+
     def setUp(self):
         self.client = APIClient()
         self.client.post(

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import '../../style.css';
 import { API_BASE_URL, apiFetch } from '../../api';
 import { isLoggedIn, saveTokens } from '../../auth';
+import EmergencyNotice from '../../components/EmergencyNotice';
 import PasswordInput from '../../components/PasswordInput';
 
 function Login() {
@@ -166,10 +167,7 @@ function Login() {
 
           <p className="auth-footer">Don't have an account? <Link className="auth-footer-link" to="/create">Register</Link></p>
 
-          <div className="login-emergency-alert">
-            <i className="fa-solid fa-triangle-exclamation"></i>
-            <p>For immediate emergency response, contact the official BFP Hotline or 911. Dispatchers are available 24/7.</p>
-          </div>
+          <EmergencyNotice />
         </div>
       </div>
     </div>

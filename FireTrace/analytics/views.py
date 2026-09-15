@@ -170,6 +170,8 @@ class RecentActivityView(APIView):
 
         entries = (
             AuditLog.objects.filter(actor__user_type=User.UserType.BFP)
+            # Sign-ins are on the Audit page; here they would bury the work.
+            .exclude(action=AuditLog.Action.LOGIN)
             .select_related('actor')[:limit]
         )
         return Response([_audit_row(entry) for entry in entries])

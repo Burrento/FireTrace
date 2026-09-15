@@ -14,7 +14,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         # first_name is accepted: the signup form has always posted it, and
         # while it was absent here DRF dropped it silently, which is why the
         # dashboard greeting had no name to show and fell back to the username.
-        fields = ('id', 'username', 'email', 'first_name', 'password', 'user_type')
+        # phone_number likewise: the form collected it and never sent it, so
+        # BFP saw "No contact number" for every reporter.
+        fields = ('id', 'username', 'email', 'first_name', 'phone_number', 'password', 'user_type')
         # Public registration creates civilians, and this is what enforces it.
         # While user_type was writable, anyone could POST user_type="bfp" and
         # grant themselves the whole personnel dashboard. Promotion to BFP is a

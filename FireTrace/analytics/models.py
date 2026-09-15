@@ -30,6 +30,7 @@ class AuditLog(models.Model):
         SETTINGS_UPDATED = 'settings_updated', 'Settings Updated'
         ACCOUNT_UPDATED = 'account_updated', 'Account Updated'
         DATA_EXPORTED = 'data_exported', 'Data Exported'
+        LOGIN = 'login', 'Signed In'
 
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True,

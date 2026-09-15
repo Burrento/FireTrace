@@ -163,6 +163,16 @@ class ReportWorkflowStatusView(APIView):
 
     def post(self, request, pk):
         report = generics.get_object_or_404(IncidentReport, pk=pk)
+        # A linked report's resolution belongs to its incident; moving the
+        # report on its own would let the two disagree.
+        if report.incident_id:
+            return Response(
+                {'workflow_status': [
+                    f"{report.reference_number} is linked to {report.incident.reference_number}. "
+                    "Change the incident's status instead."
+                ]},
+                status=400,
+            )
         serializer = WorkflowStatusUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

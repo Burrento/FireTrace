@@ -18,7 +18,7 @@ class IncidentReportSerializer(serializers.ModelSerializer):
     reference_number = serializers.ReadOnlyField()
     reporter = serializers.PrimaryKeyRelatedField(read_only=True)
     incident_type_display = serializers.CharField(source='get_incident_type_display', read_only=True)
-    status_display = serializers.CharField(source='get_workflow_status_display', read_only=True)
+    status_display = serializers.SerializerMethodField()
     has_photo = serializers.ReadOnlyField()
     is_mappable = serializers.ReadOnlyField()
     duplicate_of_reference = serializers.CharField(
@@ -27,9 +27,20 @@ class IncidentReportSerializer(serializers.ModelSerializer):
     incident_reference = serializers.CharField(
         source='incident.reference_number', read_only=True, default=None,
     )
-    # The civilian app shipped against a field called `status`; keep that name
-    # working while the backend uses the unambiguous `workflow_status`.
-    status = serializers.CharField(source='workflow_status', read_only=True)
+    # `status` is what the civilian tracks. Once a report is linked to a
+    # canonical incident the incident governs resolution, so the reporter sees
+    # the incident's status rather than a report-level one that could
+    # contradict it. `workflow_status` stays the report's own, for personnel.
+    status = serializers.SerializerMethodField()
+
+    def _governing(self, obj):
+        return obj.incident if obj.incident_id else obj
+
+    def get_status(self, obj):
+        return self._governing(obj).workflow_status
+
+    def get_status_display(self, obj):
+        return self._governing(obj).get_workflow_status_display()
 
     class Meta:
         model = IncidentReport
@@ -50,6 +61,23 @@ class IncidentReportSerializer(serializers.ModelSerializer):
             'duplicate_of', 'duplicate_distance_m', 'duplicate_time_delta_seconds',
             'duplicate_reviewed_at', 'incident', 'created_at', 'updated_at',
         )
+
+    # Read from the file's first bytes, not its name or declared type -- both
+    # are whatever the client says. The app compresses to JPEG before upload.
+    PHOTO_SIGNATURES = (b'\xff\xd8\xff', b'\x89PNG\r\n\x1a\n')
+    PHOTO_MAX_BYTES = 5 * 1024 * 1024
+
+    def validate_photo(self, value):
+        if not value:
+            return value
+        if value.size > self.PHOTO_MAX_BYTES:
+            raise serializers.ValidationError('Photos must be 5 MB or smaller.')
+        head = value.read(12)
+        value.seek(0)
+        is_webp = head[:4] == b'RIFF' and head[8:12] == b'WEBP'
+        if not (head.startswith(self.PHOTO_SIGNATURES) or is_webp):
+            raise serializers.ValidationError('Photos must be JPEG, PNG or WebP images.')
+        return value
 
     def validate_location_confirmed(self, value):
         if not value:

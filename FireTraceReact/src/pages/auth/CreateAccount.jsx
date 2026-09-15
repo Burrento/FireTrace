@@ -3,6 +3,7 @@ import { useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
 import PasswordInput from '../../components/PasswordInput';
+import EmergencyNotice from '../../components/EmergencyNotice';
 
 function CreateAccount() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ function CreateAccount() {
           email: email.trim().toLowerCase(),
           password,
           first_name: fullName,
+          phone_number: mobileNumber.trim(),
         }),
       });
       navigate('/login');
@@ -47,6 +49,7 @@ function CreateAccount() {
 
         <div className="auth-description">
           <p>Provide your details below to set up your profile.</p>
+          <EmergencyNotice />
         </div>
         
         <form onSubmit={handleSubmit} className="auth-form compact-form">
@@ -77,8 +80,8 @@ function CreateAccount() {
           <div className="terms-container">
             <input type="checkbox" id="terms" required />
             <label htmlFor="terms" className="checkbox-txt">
-              I agree to the <a className="Privacy" href="#">Privacy Policy</a> & 
-              <a className="Terms" href="#"> Terms of Service</a>
+              I agree to the <Link className="Privacy" to="/PrivacyNotice">Privacy Notice</Link> &{' '}
+              <Link className="Terms" to="/ConsentDataUse">Consent to Data Use</Link>
             </label>
           </div>
 

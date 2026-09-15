@@ -4,6 +4,7 @@ from datetime import timedelta
 from tempfile import TemporaryDirectory
 
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -348,6 +349,75 @@ class DashboardAPITests(APITestCase):
         # Confidence is graded server-side from the capture method.
         self.assertEqual(created.geocoding_confidence, GeocodingConfidence.HIGH)
         self.assertTrue(created.timeline_events.exists())
+
+    def _linked_report(self):
+        incident = Incident.objects.create(
+            incident_type='fire', barangay='Ibaba East',
+            latitude=BASE_LAT, longitude=BASE_LNG,
+            workflow_status=WorkflowStatus.RESPONDING,
+        )
+        return make_report(self.civilian, incident=incident)
+
+    def test_linked_report_shows_the_incident_status_to_the_reporter(self):
+        report = self._linked_report()
+        self.client.force_authenticate(self.civilian)
+
+        data = self.client.get(f'/api/reports/{report.id}/').data
+
+        self.assertEqual(data['status'], WorkflowStatus.RESPONDING)
+        self.assertEqual(data['status_display'], 'Responding')
+        # The report's own workflow value is untouched and still visible.
+        self.assertEqual(data['workflow_status'], WorkflowStatus.SUBMITTED)
+
+    def test_linked_report_status_cannot_be_changed_directly(self):
+        report = self._linked_report()
+        self.client.force_authenticate(self.bfp)
+
+        response = self.client.post(
+            f'/api/reports/{report.id}/status/', {'workflow_status': 'resolved'}, format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        report.refresh_from_db()
+        self.assertEqual(report.workflow_status, WorkflowStatus.SUBMITTED)
+
+    def _post_report_with_photo(self, photo):
+        self.client.force_authenticate(self.civilian)
+        return self.client.post(
+            '/api/reports/',
+            {
+                'incident_type': 'fire',
+                'latitude': BASE_LAT,
+                'longitude': BASE_LNG,
+                'location_confirmed': 'true',
+                'location_source': LocationSource.MAP_PIN,
+                'photo': photo,
+            },
+            format='multipart',
+        )
+
+    def test_photo_that_is_not_an_image_is_rejected(self):
+        """The name and declared type say JPEG; the bytes decide."""
+        fake = SimpleUploadedFile('fire.jpg', b'<?php echo 1; ?>', content_type='image/jpeg')
+        response = self._post_report_with_photo(fake)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('photo', response.data)
+        self.assertFalse(IncidentReport.objects.exists())
+
+    def test_oversized_photo_is_rejected(self):
+        big = SimpleUploadedFile(
+            'fire.jpg', b'\xff\xd8\xff' + b'0' * (5 * 1024 * 1024), content_type='image/jpeg',
+        )
+        response = self._post_report_with_photo(big)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('photo', response.data)
+
+    def test_jpeg_photo_is_accepted(self):
+        with TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            jpeg = SimpleUploadedFile('fire.jpg', b'\xff\xd8\xff\xe0' + b'0' * 64, content_type='image/jpeg')
+            response = self._post_report_with_photo(jpeg)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(IncidentReport.objects.get().has_photo)
 
     def test_client_cannot_assert_its_own_confidence(self):
         self.client.force_authenticate(self.civilian)
