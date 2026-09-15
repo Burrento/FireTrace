@@ -124,7 +124,7 @@ function MapLegend({ withheld, pulsing, ongoing }) {
       {ongoing > 0 && (
         <span className="bfp-legend-item">
           <span className="bfp-legend-dot bfp-legend-dot-pulse is-ongoing" />
-          {ongoing} still burning
+          {ongoing} Burning
         </span>
       )}
       {withheld > 0 && (

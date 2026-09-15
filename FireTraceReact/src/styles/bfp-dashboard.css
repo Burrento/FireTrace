@@ -608,6 +608,14 @@ body[data-shell='bfp'] #root {
   font-size: 12px;
   color: #4b5563;
 }
+/* style.css sizes every <select> as a 45px full-width form field; the popup
+   wants a compact pill. */
+.bfp-iw-status .bfp-status-select {
+  width: auto;
+  height: auto;
+  padding: 2px 6px;
+  font-size: 10px;
+}
 .bfp-iw-error { font-size: 11px; color: #b91c1c; margin: 2px 0; }
 .bfp-iw-reporter { margin: 6px 0 2px; padding-top: 6px; border-top: 1px solid #e5e7eb; }
 .bfp-iw-reporter p { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; }
