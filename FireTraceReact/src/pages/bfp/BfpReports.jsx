@@ -37,6 +37,7 @@ function BfpReports() {
         data={map.data}
         loading={map.loading}
         error={map.error}
+        onChanged={refreshNow}
         title="All Reports Map"
         focusOnNew={false}
       />

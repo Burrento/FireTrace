@@ -218,6 +218,18 @@ class DashboardAPITests(APITestCase):
         self.assertEqual(len(response.data['reports']), 1)
         self.assertEqual(response.data['withheld_low_confidence'], 1)
 
+    def test_map_carries_reporter_contact_details(self):
+        self.civilian.first_name, self.civilian.last_name = 'Juan', 'Dela Cruz'
+        self.civilian.phone_number = '09171234567'
+        self.civilian.save()
+        make_report(self.civilian, geocoding_confidence=GeocodingConfidence.HIGH)
+
+        self.client.force_authenticate(self.bfp)
+        row = self.client.get('/api/dashboard/map/').data['reports'][0]
+
+        self.assertEqual(row['reporter_name'], 'Juan Dela Cruz')
+        self.assertEqual(row['reporter_phone'], '09171234567')
+
     def test_map_carries_a_photo_url_only_when_there_is_a_photo(self):
         """The popup shows the photograph, so the URL has to reach the map."""
         # A saved upload is not rolled back with the transaction, so give this

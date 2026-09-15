@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { APIProvider, Map, AdvancedMarker, InfoWindow, Pin, useMap } from '@vis.gl/react-google-maps';
 import OngoingFireGlyph from '../OngoingFireGlyph';
+import { apiFetch } from '../../api';
 import { isOngoing, markerKey } from '../../lib/ongoingFires';
+import { WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
 import '../../styles/fire-pulse.css';
 
 /* The live operations map.
@@ -162,8 +164,26 @@ function DismissDetailsOnOutsidePress({ onDismiss }) {
   return null;
 }
 
-function MarkerDetails({ marker, onClose }) {
+function MarkerDetails({ marker, onClose, onChanged }) {
   const isIncident = marker.kind === 'incident';
+  const [busy, setBusy] = useState(false);
+  const [statusError, setStatusError] = useState('');
+
+  async function changeStatus(workflow_status) {
+    setBusy(true);
+    setStatusError('');
+    try {
+      await apiFetch(`/api/${isIncident ? 'incidents' : 'reports'}/${marker.id}/status/`, {
+        method: 'POST',
+        body: JSON.stringify({ workflow_status }),
+      });
+      onChanged?.();
+    } catch (err) {
+      setStatusError(err.message || 'Could not update status');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <InfoWindow
@@ -179,19 +199,36 @@ function MarkerDetails({ marker, onClose }) {
           </span>
         </div>
         <p className="bfp-iw-line">{marker.incident_type_display} · {marker.barangay}</p>
-        <p className="bfp-iw-line">
-          Status: {String(marker.workflow_status).replace(/_/g, ' ')}
-        </p>
+        <label className="bfp-iw-status">
+          <span>Status</span>
+          <select
+            className={`bfp-status-select ${statusClass(marker.workflow_status)}`}
+            value={marker.workflow_status}
+            disabled={busy}
+            onChange={(e) => changeStatus(e.target.value)}
+          >
+            {WORKFLOW_STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </label>
+        {statusError && <p className="bfp-iw-error">{statusError}</p>}
         {isIncident ? (
           <p className="bfp-iw-line">
             {marker.source_report_count} source report
             {marker.source_report_count === 1 ? '' : 's'}
           </p>
         ) : (
-          <p className="bfp-iw-line">
-            Confidence: {marker.geocoding_confidence}
-            {marker.has_photo && !marker.photo_url ? ' · photo attached' : ''}
-          </p>
+          <div className="bfp-iw-reporter">
+            <p><i className="fa-solid fa-user" /> {marker.reporter_name || 'Unknown reporter'}</p>
+            <p>
+              <i className="fa-solid fa-phone" />{' '}
+              {marker.reporter_phone
+                ? <a href={`tel:${marker.reporter_phone}`}>{marker.reporter_phone}</a>
+                : 'No contact number'}
+            </p>
+            {marker.has_photo && !marker.photo_url && <p>Photo attached</p>}
+          </div>
         )}
         {/* The reporter's photograph, when there is one. Shown rather than
             described: an operator deciding whether to dispatch wants to see
@@ -234,15 +271,20 @@ function DashboardMap({
   title = 'Live Incident Map',
   hours,
   onHoursChange,
+  onChanged,
   focusOnNew = true,
 }) {
-  const [selected, setSelected] = useState(null);
+  // Held as a key, not the marker object, so the popup re-reads the record
+  // after a refresh -- otherwise a status change would show the old value.
+  const [selectedKey, setSelectedKey] = useState(null);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const reports = data?.reports ?? [];
   const incidents = data?.incidents ?? [];
   const markers = [...incidents, ...reports];
   const fresh = useFreshReports(reports);
+  const selected = markers.find((marker) => markerKey(marker) === selectedKey);
+  const setSelected = (marker) => setSelectedKey(marker ? markerKey(marker) : null);
 
   /* Everything that should be pulsing, keyed so reports and incidents cannot
      collide on a shared id. A record can qualify both ways -- newly arrived and
@@ -256,13 +298,13 @@ function DashboardMap({
   // Escape closes the details too, which is what an operator reaches for
   // before hunting the small X. Registered only while something is open.
   useEffect(() => {
-    if (!selected) return undefined;
+    if (!selectedKey) return undefined;
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') setSelected(null);
+      if (event.key === 'Escape') setSelectedKey(null);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selected]);
+  }, [selectedKey]);
 
   // The newest still-pulsing report drives the camera. `reports` arrives
   // newest-first from the server, so the first match is the latest.
@@ -334,7 +376,7 @@ function DashboardMap({
             fullscreenControl
           >
             {selected && (
-              <DismissDetailsOnOutsidePress onDismiss={() => setSelected(null)} />
+              <DismissDetailsOnOutsidePress onDismiss={() => setSelectedKey(null)} />
             )}
 
             {newestFresh && <FocusOnNewReport report={newestFresh} />}
@@ -380,7 +422,12 @@ function DashboardMap({
             })}
 
             {selected && (
-              <MarkerDetails marker={selected} onClose={() => setSelected(null)} />
+              <MarkerDetails
+                key={selectedKey}
+                marker={selected}
+                onClose={() => setSelectedKey(null)}
+                onChanged={onChanged}
+              />
             )}
           </Map>
         </APIProvider>

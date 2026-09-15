@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { apiFetch } from '../../api';
 import { CALAPAN_BARANGAYS } from '../../data/barangays';
+import { WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
 import { usePolledResource } from '../../pages/bfp/useDashboardData';
 
 /* The Incoming Reports queue.
@@ -11,14 +12,6 @@ import { usePolledResource } from '../../pages/bfp/useDashboardData';
 
    The duplicate column is also where the manual disposition happens. The system
    only ever raises a flag; nothing here merges or deletes a report. */
-
-const WORKFLOW_STATUSES = [
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'under_review', label: 'Under Review' },
-  { value: 'verified', label: 'Verified' },
-  { value: 'responding', label: 'Responding' },
-  { value: 'resolved', label: 'Resolved' },
-];
 
 const DUPLICATE_STATUSES = [
   { value: 'not_flagged', label: 'Not Flagged' },
@@ -34,10 +27,6 @@ const EMPTY_FILTERS = {
   barangay: '',
   has_photo: '',
 };
-
-function statusClass(value) {
-  return `bfp-badge bfp-badge-${String(value).replace(/_/g, '-')}`;
-}
 
 function formatSubmitted(iso) {
   const date = new Date(iso);

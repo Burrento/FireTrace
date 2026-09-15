@@ -49,6 +49,7 @@ function BfpDashboard() {
             data={map.data}
             loading={map.loading}
             error={map.error}
+        onChanged={refreshNow}
             hours={mapHours}
             onHoursChange={setMapHours}
           />

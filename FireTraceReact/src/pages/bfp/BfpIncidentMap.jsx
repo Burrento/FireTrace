@@ -33,6 +33,7 @@ function BfpIncidentMap() {
         data={map.data}
         loading={map.loading}
         error={map.error}
+        onChanged={refreshNow}
         title="Incident Map"
         focusOnNew={false}
       />

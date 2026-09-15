@@ -444,7 +444,7 @@ class DashboardMapView(APIView):
                 geocoding_confidence__in=[GeocodingConfidence.HIGH, GeocodingConfidence.MEDIUM],
             )
             .exclude(duplicate_status=DuplicateStatus.CONFIRMED)
-            .select_related('duplicate_of')
+            .select_related('duplicate_of', 'reporter')
             .order_by('-created_at')[:250]
         )
 
@@ -481,6 +481,10 @@ class DashboardMapView(APIView):
                     'workflow_status': r.workflow_status,
                     'duplicate_status': r.duplicate_status,
                     'geocoding_confidence': r.geocoding_confidence,
+                    # Who to call back. Personnel-only endpoint, so the contact
+                    # details are safe here; OngoingFireMapView never carries them.
+                    'reporter_name': (r.reporter.get_full_name() or r.reporter.email or r.reporter.username) if r.reporter else '',
+                    'reporter_phone': r.reporter.phone_number if r.reporter else '',
                     'has_photo': r.has_photo,
                     # Signing is a local HMAC, not a call to Azure, so doing it
                     # per marker costs nothing worth avoiding. Absent rather
