@@ -10,8 +10,8 @@
    +63 works whether the phone is roaming, on a mobile network, or has no area
    code configured. The display strings are the human-readable versions. */
 
-export const BFP_HOTLINE = '+63432882430';
-export const BFP_HOTLINE_DISPLAY = '(043) 288-2430';
+export const BFP_HOTLINE = ' 09156031561';
+export const BFP_HOTLINE_DISPLAY = '(043) 288-7777';
 
 export const BFP_STATION = {
     name: 'BFP – Calapan City Fire Station',
