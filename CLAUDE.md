@@ -97,6 +97,20 @@ and every combination is legal. Never derive one from the other.
 triggered it are stored on the report so the reasoning is inspectable. Only a person
 moves it to Kept Separate / Confirmed; a report already ruled on is never re-flagged.
 
+**A closed report is not a duplicate candidate.** `_open_candidates` drops
+anything Resolved or Rejected before the distance and time rules are applied.
+Space and time alone said a fire reported at 11:10pm duplicated one at the same
+address that crews had put out at 11:05 — a second fire, or a rekindle,
+arriving pre-labelled as a copy of something already closed, which is the one
+label that makes a new fire easy to wave past. Worse in the other direction: a
+real fire minutes after a hoax at the same address read as a duplicate of the
+hoax. Closed-ness is read from the **governing** record, the rule
+`IncidentReportSerializer._governing` uses — a report linked to an incident
+takes the incident's status, and its own `workflow_status` can still read
+Verified long after the fire is out, so checking the report alone misses it.
+Reports flagged before this keep their flag; unflagging them would overwrite
+rulings personnel have already made.
+
 **Confidence is graded server-side** in `incidents/geocoding.py` from
 `location_source` + `gps_accuracy_m` — a client cannot assert its own confidence
 (there is a test for that). Only High/Medium are plotted on the map; Low is kept and

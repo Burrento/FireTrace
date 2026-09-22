@@ -121,6 +121,90 @@ class DuplicateFlaggingTests(TestCase):
         # Flagging is a duplicate-dimension act only.
         self.assertEqual(nearby.workflow_status, WorkflowStatus.SUBMITTED)
 
+    def test_ignores_a_resolved_report(self):
+        """A fire that is out cannot be duplicated by the next one.
+
+        11:00pm a report comes in, personnel resolve it by 11:05. 11:10pm
+        somebody reports a fire at the same address. That is a second fire (or
+        a rekindle), not a second account of the first -- but it is inside both
+        thresholds, so before this the system flagged it against a closed
+        record and the new fire arrived pre-labelled as a copy.
+        """
+        self.original.workflow_status = WorkflowStatus.RESOLVED
+        self.original.save(update_fields=['workflow_status'])
+
+        nearby = make_report(self.reporter, lat=BASE_LAT + 0.0005)
+
+        self.assertIsNone(flag_possible_duplicate(nearby))
+        nearby.refresh_from_db()
+        self.assertEqual(nearby.duplicate_status, DuplicateStatus.NOT_FLAGGED)
+
+    def test_ignores_a_rejected_report(self):
+        """A false alarm described no fire, so nothing can duplicate it.
+
+        This is the dangerous direction: a real fire reported minutes after a
+        hoax at the same address would arrive flagged as a copy of the hoax.
+        """
+        self.original.workflow_status = WorkflowStatus.REJECTED
+        self.original.save(update_fields=['workflow_status'])
+
+        nearby = make_report(self.reporter, lat=BASE_LAT + 0.0005)
+
+        self.assertIsNone(flag_possible_duplicate(nearby))
+        nearby.refresh_from_db()
+        self.assertEqual(nearby.duplicate_status, DuplicateStatus.NOT_FLAGGED)
+
+    def test_ignores_a_report_whose_incident_is_resolved(self):
+        """Closed-ness follows the incident once a report is linked to one.
+
+        A linked report keeps its own workflow_status -- the serializer reads
+        the incident's instead, because the incident governs resolution. So a
+        report can read Verified while the fire it described is out, and a
+        status check on the report alone would still flag against it.
+        """
+        incident = Incident.objects.create(
+            incident_type='fire',
+            description='Two-storey house',
+            barangay='Ibaba East',
+            latitude=BASE_LAT,
+            longitude=BASE_LNG,
+            workflow_status=WorkflowStatus.RESOLVED,
+            resolved_at=timezone.now(),
+        )
+        self.original.incident = incident
+        self.original.workflow_status = WorkflowStatus.VERIFIED
+        self.original.save(update_fields=['incident', 'workflow_status'])
+
+        nearby = make_report(self.reporter, lat=BASE_LAT + 0.0005)
+
+        self.assertIsNone(flag_possible_duplicate(nearby))
+        nearby.refresh_from_db()
+        self.assertEqual(nearby.duplicate_status, DuplicateStatus.NOT_FLAGGED)
+
+    def test_still_flags_against_an_ongoing_incident(self):
+        """The rule is closed-ness, not linked-ness.
+
+        A second call about a fire crews are still working is exactly what the
+        flag is for, and linking the first report to an incident must not make
+        it stop matching.
+        """
+        incident = Incident.objects.create(
+            incident_type='fire',
+            description='Two-storey house',
+            barangay='Ibaba East',
+            latitude=BASE_LAT,
+            longitude=BASE_LNG,
+            workflow_status=WorkflowStatus.RESPONDING,
+        )
+        self.original.incident = incident
+        self.original.save(update_fields=['incident'])
+
+        nearby = make_report(self.reporter, lat=BASE_LAT + 0.0005)
+
+        self.assertEqual(flag_possible_duplicate(nearby), self.original)
+        nearby.refresh_from_db()
+        self.assertEqual(nearby.duplicate_status, DuplicateStatus.POSSIBLE)
+
     def test_does_not_re_flag_a_decided_report(self):
         nearby = make_report(self.reporter, lat=BASE_LAT + 0.0005)
         nearby.duplicate_status = DuplicateStatus.KEPT_SEPARATE

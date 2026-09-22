@@ -19,11 +19,43 @@ it, so BFP personnel can see the reasoning and rule on it themselves.
 import math
 from datetime import timedelta
 
+from django.db.models import Q
 from django.utils import timezone
 
 from analytics.models import SystemSetting
 
-from .models import DuplicateStatus, IncidentReport, IncidentTimelineEvent
+from .models import (
+    DuplicateStatus,
+    IncidentReport,
+    IncidentTimelineEvent,
+    WorkflowStatus,
+)
+
+# A fire that is out, and a report that described no fire at all. Neither can
+# be duplicated: see `_open_candidates`.
+CLOSED_STATUSES = (WorkflowStatus.RESOLVED, WorkflowStatus.REJECTED)
+
+
+def _open_candidates(queryset):
+    """Drop the reports whose event is already closed.
+
+    A duplicate is a second *account of the same ongoing event*. Once the fire
+    is out -- or the report was rejected as a false alarm -- a new report at
+    the same address is a new event, whatever the clock says: a second fire, a
+    rekindle, or a real fire after a hoax. Flagging it hands personnel a record
+    pre-labelled as a copy of something closed, which is the one label that
+    makes a new fire easy to wave past.
+
+    Closed-ness is read from the *governing* record, the same rule
+    `IncidentReportSerializer` applies: a report linked to an incident takes
+    the incident's status, because the incident governs resolution, and its own
+    `workflow_status` can still read Verified long after the fire is out.
+    Checking the report alone would miss exactly that case.
+    """
+    return queryset.exclude(
+        Q(incident__isnull=True, workflow_status__in=CLOSED_STATUSES)
+        | Q(incident__workflow_status__in=CLOSED_STATUSES)
+    )
 
 EARTH_RADIUS_M = 6371008.8
 
@@ -72,8 +104,9 @@ def find_duplicate_candidates(report):
     cos_lat = max(math.cos(math.radians(lat)), 1e-6)
     lon_delta = radius_m / (111320.0 * cos_lat)
 
-    nearby = (
+    nearby = _open_candidates(
         IncidentReport.objects.exclude(pk=report.pk)
+        .select_related('incident')
         .filter(
             created_at__gte=submitted_at - window,
             created_at__lte=submitted_at + window,
