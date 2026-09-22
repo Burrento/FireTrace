@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { APIProvider, Map, AdvancedMarker, InfoWindow, Pin, useMap } from '@vis.gl/react-google-maps';
 import OngoingFireGlyph from '../OngoingFireGlyph';
+import StatusConfirm from './StatusConfirm';
 import { apiFetch } from '../../api';
 import { isOngoing, markerKey } from '../../lib/ongoingFires';
-import { WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
+import { CONFIRMED_STATUSES, WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
 import '../../styles/fire-pulse.css';
 
 /* The live operations map.
@@ -168,14 +169,15 @@ function MarkerDetails({ marker, onClose, onChanged }) {
   const isIncident = marker.kind === 'incident';
   const [busy, setBusy] = useState(false);
   const [statusError, setStatusError] = useState('');
+  const [pending, setPending] = useState(null);
 
-  async function changeStatus(workflow_status) {
+  async function changeStatus(workflow_status, reason = '') {
     setBusy(true);
     setStatusError('');
     try {
       await apiFetch(`/api/${isIncident ? 'incidents' : 'reports'}/${marker.id}/status/`, {
         method: 'POST',
-        body: JSON.stringify({ workflow_status }),
+        body: JSON.stringify({ workflow_status, reason }),
       });
       onChanged?.();
     } catch (err) {
@@ -185,7 +187,31 @@ function MarkerDetails({ marker, onClose, onChanged }) {
     }
   }
 
+  /* The same two confirmations as the queue. Resolving from the map is the
+     same act as resolving from the table, and rejecting needs the reason the
+     server requires either way. */
+  function requestStatus(workflow_status) {
+    if (CONFIRMED_STATUSES.includes(workflow_status)) {
+      setPending(workflow_status);
+      return;
+    }
+    changeStatus(workflow_status);
+  }
+
   return (
+    <>
+      {pending && (
+        <StatusConfirm
+          label={marker.reference_number}
+          nextStatus={pending}
+          busy={busy}
+          onCancel={() => setPending(null)}
+          onConfirm={async (reason) => {
+            await changeStatus(pending, reason);
+            setPending(null);
+          }}
+        />
+      )}
     <InfoWindow
       position={{ lat: marker.latitude, lng: marker.longitude }}
       onCloseClick={onClose}
@@ -205,7 +231,7 @@ function MarkerDetails({ marker, onClose, onChanged }) {
             className={`bfp-status-select ${statusClass(marker.workflow_status)}`}
             value={marker.workflow_status}
             disabled={busy}
-            onChange={(e) => changeStatus(e.target.value)}
+            onChange={(e) => requestStatus(e.target.value)}
           >
             {WORKFLOW_STATUSES.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -264,6 +290,7 @@ function MarkerDetails({ marker, onClose, onChanged }) {
         <p className="bfp-iw-time">{new Date(marker.created_at).toLocaleString()}</p>
       </div>
     </InfoWindow>
+    </>
   );
 }
 

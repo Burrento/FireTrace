@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiFetch } from '../../api';
-import { WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
+import { CONFIRMED_STATUSES, WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
+import StatusConfirm from '../../components/bfp/StatusConfirm';
 import BfpShell from './BfpShell';
 import { useBfpPage, usePolledResource } from './useDashboardData';
 
@@ -62,6 +63,7 @@ function BfpIncident() {
 
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [pending, setPending] = useState(null);
 
   const reports = data?.source_reports ?? [];
 
@@ -78,12 +80,21 @@ function BfpIncident() {
     }
   }
 
-  const changeStatus = (workflow_status) => run(() =>
+  const changeStatus = (workflow_status, reason = '') => run(() =>
     apiFetch(`/api/incidents/${id}/status/`, {
       method: 'POST',
-      body: JSON.stringify({ workflow_status }),
+      body: JSON.stringify({ workflow_status, reason }),
     }),
   );
+
+  // Resolved and Rejected are asked about first, here as in the queue.
+  const requestStatus = (workflow_status) => {
+    if (CONFIRMED_STATUSES.includes(workflow_status)) {
+      setPending(workflow_status);
+      return;
+    }
+    changeStatus(workflow_status);
+  };
 
   const separate = (report) => run(() =>
     apiFetch(`/api/reports/${report.id}/link/`, {
@@ -97,6 +108,19 @@ function BfpIncident() {
       <h1 className="bfp-page-title">
         {data ? data.reference_number : 'Incident'}
       </h1>
+
+      {pending && (
+        <StatusConfirm
+          label={`${data?.reference_number ?? 'This incident'} and every report in it`}
+          nextStatus={pending}
+          busy={busy}
+          onCancel={() => setPending(null)}
+          onConfirm={async (reason) => {
+            await changeStatus(pending, reason);
+            setPending(null);
+          }}
+        />
+      )}
 
       {error && <p className="bfp-inline-error">{error}</p>}
       {actionError && <p className="bfp-inline-error">{actionError}</p>}
@@ -122,7 +146,7 @@ function BfpIncident() {
                   className={`bfp-status-select ${statusClass(data.workflow_status)}`}
                   value={data.workflow_status}
                   disabled={busy}
-                  onChange={(e) => changeStatus(e.target.value)}
+                  onChange={(e) => requestStatus(e.target.value)}
                 >
                   {WORKFLOW_STATUSES.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>

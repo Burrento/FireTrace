@@ -1480,3 +1480,37 @@ form .bfp-panel + .bfp-panel {
   flex-wrap: wrap;
   margin-left: auto;
 }
+
+/* --- Confirming a status that the reporter will read ------------------- */
+
+.bfp-modal-sm {
+  width: min(460px, 100%);
+}
+
+.bfp-confirm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.bfp-confirm-field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--civ-border);
+  border-radius: 8px;
+  background: var(--civ-surface-alt);
+  color: var(--civ-text);
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.bfp-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}

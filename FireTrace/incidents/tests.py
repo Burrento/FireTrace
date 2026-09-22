@@ -472,6 +472,71 @@ class DashboardAPITests(APITestCase):
         self.assertEqual(response.status_code, 201, response.data)
         return response.data
 
+    def test_rejecting_a_report_requires_a_reason(self):
+        report = make_report(self.civilian)
+        self.client.force_authenticate(self.bfp)
+
+        response = self.client.post(
+            f'/api/reports/{report.id}/status/',
+            {'workflow_status': WorkflowStatus.REJECTED}, format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('reason', response.data)
+        report.refresh_from_db()
+        self.assertEqual(report.workflow_status, WorkflowStatus.SUBMITTED)
+
+    def test_rejection_reason_reaches_the_reporter(self):
+        """The one piece of staff-written text a civilian ever sees."""
+        report = make_report(self.civilian)
+        self.client.force_authenticate(self.bfp)
+        self.client.post(
+            f'/api/reports/{report.id}/status/',
+            {
+                'workflow_status': WorkflowStatus.REJECTED,
+                'reason': 'Smoke was from a controlled rubbish burn.',
+                'note': 'Caller argumentative, see duty log',
+            },
+            format='json',
+        )
+
+        self.client.force_authenticate(self.civilian)
+        alerts = self.client.get('/api/reports/notifications/').data
+
+        rejected = [a for a in alerts if a['kind'] == WorkflowStatus.REJECTED]
+        self.assertEqual(len(rejected), 1)
+        self.assertIn('controlled rubbish burn', rejected[0]['message'])
+        # The station's own note must not travel with it.
+        self.assertNotIn('duty log', rejected[0]['message'])
+
+    def test_resolving_needs_no_reason(self):
+        report = make_report(self.civilian)
+        self.client.force_authenticate(self.bfp)
+
+        response = self.client.post(
+            f'/api/reports/{report.id}/status/',
+            {'workflow_status': WorkflowStatus.RESOLVED}, format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_rejecting_an_incident_reaches_every_linked_reporter(self):
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.0004)
+        incident = self._consolidate(first, second)
+
+        self.client.post(
+            f"/api/incidents/{incident['id']}/status/",
+            {'workflow_status': WorkflowStatus.REJECTED, 'reason': 'Duplicate call-out, no fire found.'},
+            format='json',
+        )
+
+        self.client.force_authenticate(self.civilian)
+        alerts = self.client.get('/api/reports/notifications/').data
+        rejected = [a for a in alerts if a['kind'] == WorkflowStatus.REJECTED]
+        self.assertTrue(rejected)
+        self.assertIn('no fire found', rejected[0]['message'])
+
     def test_queue_shows_one_row_per_fire(self):
         """Three calls about one fire are one row, with the count behind it."""
         first = make_report(self.civilian)
@@ -660,7 +725,9 @@ class DashboardAPITests(APITestCase):
         self.client.force_authenticate(self.bfp)
 
         response = self.client.post(
-            f'/api/reports/{report.id}/status/', {'workflow_status': 'rejected'}, format='json',
+            f'/api/reports/{report.id}/status/',
+            {'workflow_status': 'rejected', 'reason': 'No fire at the address.'},
+            format='json',
         )
 
         self.assertEqual(response.status_code, 200)

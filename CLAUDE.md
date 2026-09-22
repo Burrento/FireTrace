@@ -110,6 +110,28 @@ is derived from the flags on record rather than by re-running the distance and
 time rules, because the thresholds are editable and a grouping assembled from
 today's settings could contradict the flags an operator is looking at.
 
+**A consolidated row's dropdown drives its incident.** The row *is* the fire,
+so its status posts to `/api/incidents/<id>/status/` and every linked report
+follows; an unlinked row still posts to the report. Before this the dropdown on
+a linked row was inert — `ReportWorkflowStatusView` refuses to move a linked
+report — and with the incident column gone there was no way to change it at all.
+
+**Resolved and Rejected are confirmed first, everywhere.** `StatusConfirm` is
+shared by the queue, the incident page and the map popup, because a rejection
+from any of them has to carry a reason: `WorkflowStatusUpdateSerializer`
+*requires* one, so a path without the dialog would just 400. Every other status
+moves straight through — a confirmation on each would train the operator to
+dismiss all of them.
+
+**`note` and `reason` are for different readers and must not be merged.**
+`note` goes to the timeline and the audit log and is never shown to a civilian.
+`reason` is written *to the reporter* and is the only staff-entered text that
+reaches them, surfaced by `ReportNotificationsView`. That view still refuses to
+pass through a timeline *description*; `reason` is an exception on purpose,
+because closing somebody's report of a fire without saying why is the outcome
+they are most owed an explanation for. There is a test that a rejection's
+reason reaches the reporter and its note does not.
+
 **The queue row carries no incident column and no ruling buttons.** Both moved
 into the modal: the incident as a link on the report that belongs to it, and
 *Keep separate* / *Confirm duplicate* beside the reports a ruling is about,

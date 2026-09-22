@@ -227,10 +227,27 @@ class IncidentTimelineEventSerializer(serializers.ModelSerializer):
 # --- Action payloads ------------------------------------------------------
 
 class WorkflowStatusUpdateSerializer(serializers.Serializer):
-    """Moves a record along the workflow dimension only."""
+    """Moves a record along the workflow dimension only.
+
+    Two free-text fields, for two different readers, and they must not be
+    confused. ``note`` is for the station: it lands on the timeline and in the
+    audit log and is never shown to a civilian. ``reason`` is written *to the
+    reporter* and is the only staff-entered text that reaches them, which is
+    why it is a field of its own rather than a flag on the note.
+    """
 
     workflow_status = serializers.ChoiceField(choices=WorkflowStatus.choices)
     note = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    reason = serializers.CharField(required=False, allow_blank=True, max_length=255)
+
+    def validate(self, attrs):
+        # Closing somebody's report of a fire without saying why is the one
+        # outcome a reporter is owed an explanation for.
+        if attrs['workflow_status'] == WorkflowStatus.REJECTED and not (attrs.get('reason') or '').strip():
+            raise serializers.ValidationError(
+                {'reason': 'Give the reporter a reason for rejecting this report.'}
+            )
+        return attrs
 
 
 class DuplicateReviewSerializer(serializers.Serializer):

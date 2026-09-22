@@ -279,6 +279,7 @@ class ReportWorkflowStatusView(APIView):
         previous = report.workflow_status
         new_status = serializer.validated_data['workflow_status']
         note = serializer.validated_data.get('note', '')
+        reason = serializer.validated_data.get('reason', '')
 
         report.workflow_status = new_status
         report.save(update_fields=['workflow_status', 'updated_at'])
@@ -293,7 +294,9 @@ class ReportWorkflowStatusView(APIView):
             event_type=IncidentTimelineEvent.EventType.STATUS_CHANGE,
             summary=f"{summary}. {note}".strip() if note else summary,
             report=report,
-            context={'from': previous, 'to': new_status, 'note': note},
+            # `reason` is the reporter-facing half and is read back by
+            # ReportNotificationsView; `note` stays inside the station.
+            context={'from': previous, 'to': new_status, 'note': note, 'reason': reason},
         )
         broadcast_dashboard_event('report.status_changed', {'report_id': report.id})
 
@@ -454,6 +457,13 @@ class ReportNotificationsView(APIView):
             if to not in WorkflowStatus.values:
                 return None
             kind, message = to, f'is now {WorkflowStatus(to).label}.'
+            # The one piece of staff-written text a reporter ever sees, and
+            # only because it was written to them: rejecting somebody's report
+            # of a fire without saying why is what this exists to prevent. The
+            # `note` on the same event stays inside the station.
+            reason = (event.context.get('reason') or '').strip()
+            if reason:
+                message = f'{message} Reason: {reason}'
 
         return {
             'id': event.id,
@@ -616,6 +626,7 @@ class IncidentWorkflowStatusView(APIView):
         previous = incident.workflow_status
         new_status = serializer.validated_data['workflow_status']
         note = serializer.validated_data.get('note', '')
+        reason = serializer.validated_data.get('reason', '')
         now = timezone.now()
 
         incident.workflow_status = new_status
@@ -644,7 +655,7 @@ class IncidentWorkflowStatusView(APIView):
             ),
             summary=f"{summary}. {note}".strip() if note else summary,
             incident=incident,
-            context={'from': previous, 'to': new_status, 'note': note},
+            context={'from': previous, 'to': new_status, 'note': note, 'reason': reason},
         )
         broadcast_dashboard_event('incident.status_changed', {'incident_id': incident.id})
 

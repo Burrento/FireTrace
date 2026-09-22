@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { apiFetch } from '../../api';
 import RelatedReports from './RelatedReports';
+import StatusConfirm from './StatusConfirm';
 import { CALAPAN_BARANGAYS } from '../../data/barangays';
-import { WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
+import { CONFIRMED_STATUSES, WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
 import { usePolledResource } from '../../pages/bfp/useDashboardData';
 
 /* The Incoming Reports queue.
@@ -59,6 +60,8 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
   // The row whose group is open. One at a time: the panel is tall, and two
   // open at once pushes the rest of the queue off the screen.
   const [openId, setOpenId] = useState(null);
+  // A status change waiting on a confirmation: {report, status}.
+  const [pending, setPending] = useState(null);
 
   const path = useMemo(() => {
     const params = new URLSearchParams();
@@ -139,13 +142,29 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
     }
   }
 
-  function changeWorkflowStatus(report, workflow_status) {
+  /* A consolidated row *is* its incident, so its status is set on the
+     incident: every linked report follows it, and the report endpoint refuses
+     to move a linked report on its own. Before this the dropdown on such a row
+     was inert and the incident could only be reached through the modal. */
+  function changeWorkflowStatus(report, workflow_status, reason = '') {
+    const path = report.incident
+      ? `/api/incidents/${report.incident}/status/`
+      : `/api/reports/${report.id}/status/`;
     return runAction(report.id, () =>
-      apiFetch(`/api/reports/${report.id}/status/`, {
+      apiFetch(path, {
         method: 'POST',
-        body: JSON.stringify({ workflow_status }),
+        body: JSON.stringify({ workflow_status, reason }),
       }),
     );
+  }
+
+  // Resolved and Rejected are asked about first; everything else goes through.
+  function requestStatus(report, workflow_status) {
+    if (CONFIRMED_STATUSES.includes(workflow_status)) {
+      setPending({ report, status: workflow_status });
+      return undefined;
+    }
+    return changeWorkflowStatus(report, workflow_status);
   }
 
   const filtersActive = Object.values(filters).some(Boolean);
@@ -333,25 +352,19 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                         its incident, and the API refuses to move it on its own,
                         so offering the dropdown here would only produce an
                         error the operator cannot act on. */}
-                    {report.incident ? (
-                      <span
-                        className={statusClass(report.status)}
-                        title={`Governed by ${report.incident_reference}`}
-                      >
-                        {report.status_display}
-                      </span>
-                    ) : (
-                      <select
-                        className={`bfp-status-select ${statusClass(report.status)}`}
-                        value={report.status}
-                        disabled={busy}
-                        onChange={(e) => changeWorkflowStatus(report, e.target.value)}
-                      >
-                        {WORKFLOW_STATUSES.map((s) => (
-                          <option key={s.value} value={s.value}>{s.label}</option>
-                        ))}
-                      </select>
-                    )}
+                    <select
+                      className={`bfp-status-select ${statusClass(report.status)}`}
+                      value={report.status}
+                      disabled={busy}
+                      title={report.incident
+                        ? `Sets the status of ${report.incident_reference} and every report in it`
+                        : undefined}
+                      onChange={(e) => requestStatus(report, e.target.value)}
+                    >
+                      {WORKFLOW_STATUSES.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
                   </td>
                   <td>
                     {/* The badge is the way in to the group: an operator who
@@ -390,6 +403,21 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
           </tbody>
         </table>
       </div>
+
+      {pending && (
+        <StatusConfirm
+          label={pending.report.incident
+            ? `${pending.report.incident_reference} and every report in it`
+            : pending.report.reference_number}
+          nextStatus={pending.status}
+          busy={busyId === pending.report.id}
+          onCancel={() => setPending(null)}
+          onConfirm={async (reason) => {
+            await changeWorkflowStatus(pending.report, pending.status, reason);
+            setPending(null);
+          }}
+        />
+      )}
 
       {openId !== null && (
         <RelatedReports
