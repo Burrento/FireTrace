@@ -14,6 +14,7 @@ import BfpAudit from './pages/bfp/BfpAudit';
 import BfpBackup from './pages/bfp/BfpBackup';
 import BfpSystemHealth from './pages/bfp/BfpSystemHealth';
 import BfpIntake from './pages/bfp/BfpIntake';
+import BfpIncident from './pages/bfp/BfpIncident';
 import ForgotPasswordRequest from './pages/auth/ForgotPasswordRequest';
 import ForgotPasswordReset from './pages/auth/ForgotPasswordReset';
 import ReportForm from './pages/report-wizard/ReportForm';
@@ -53,6 +54,8 @@ function App() {
           <Route path="/bfp" element={<BfpDashboard />} />
           <Route path="/bfp/reports" element={<BfpReports />} />
           <Route path="/bfp/intake" element={<BfpIntake />} />
+          {/* One consolidated incident and the reports behind it. */}
+          <Route path="/bfp/incidents/:id" element={<BfpIncident />} />
           {/* Both are BfpReports with one half turned off. */}
           <Route path="/bfp/BfpIncidentMap" element={<BfpReports queue={false} mapTitle="Incident Map" />} />
           <Route path="/bfp/BfpOperational" element={<BfpOperational />} />

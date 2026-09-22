@@ -345,17 +345,31 @@ failed as `SubscriptionNotFound`, which is not what that means.
 
 ## Unfinished work
 
-**No UI to create a canonical `Incident`** — the biggest functional hole. The API is
-complete but the queue has no row selection and nothing calls
-`POST /api/incidents/verify/`. Consequence: the Responding and Resolved KPI cards
-read 0 forever in real use, since only `seed_demo_data` or the admin creates any.
+**Consolidating reports into one incident is now in the UI.** Tick rows in the
+queue → *Consolidate into one incident* (`POST /api/incidents/verify/`) →
+`/bfp/incidents/:id`, which lists the source reports, separates one
+(`POST /api/reports/<id>/link/` with `incident: null`) and sets the status for
+all of them at once.
 
 `/api/incidents/` and `/api/incidents/<id>/` are **read-only**. `verify/` is the
 only way an `Incident` comes into being and `status/` the only way it moves —
-that is the design, not an omission, so build the queue's row selection against
-`verify/` rather than restoring a plain POST. A bare create would mint a
-canonical event traceable to no report, and a PUT would edit one without the
-timeline entry every other mutation writes.
+that is the design, not an omission. A bare create would mint a canonical event
+traceable to no report, and a PUT would edit one without the timeline entry
+every other mutation writes.
+
+**Status is derived, never copied.** `IncidentReport.governing` returns the
+incident when one is linked, else the report. Every reader goes through it —
+both serializers and the duplicate rule — so there is no second copy of the
+status to fall out of step. A linked report's own `workflow_status` is
+deliberately left untouched, which is what lets *Separate* hand it back the
+status it actually had. The queue therefore shows `status` (in force) and
+disables its dropdown on a linked row, because `ReportWorkflowStatusView`
+refuses to move one.
+
+**Separating the last source report is allowed.** It leaves an incident with
+nothing behind it, which is untidy, but forbidding it makes a consolidation done
+by mistake impossible to reverse. Reversibility wins; there is a test naming
+that trade.
 
 **Timeline endpoints are unused.** `/api/reports/<id>/timeline/` and
 `/api/incidents/<id>/timeline/` are built and tested; no screen consumes them, and

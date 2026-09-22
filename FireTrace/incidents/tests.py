@@ -411,6 +411,119 @@ class DashboardAPITests(APITestCase):
         self.assertEqual(first.duplicate_status, DuplicateStatus.NOT_FLAGGED)
         self.assertEqual(second.duplicate_status, DuplicateStatus.NOT_FLAGGED)
 
+    def _consolidate(self, *reports, note='Confirmed by station'):
+        self.client.force_authenticate(self.bfp)
+        response = self.client.post(
+            '/api/incidents/verify/',
+            {'report_ids': [r.id for r in reports], 'verification_note': note},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        return response.data
+
+    def test_consolidated_incident_lists_the_reports_behind_it(self):
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.0005)
+        incident = self._consolidate(first, second)
+
+        response = self.client.get(f"/api/incidents/{incident['id']}/")
+
+        self.assertEqual(response.status_code, 200)
+        refs = {r['reference_number'] for r in response.data['source_reports']}
+        self.assertEqual(refs, {first.reference_number, second.reference_number})
+
+    def test_incident_status_governs_every_report_linked_to_it(self):
+        """One fire, one status. Changing the incident changes them all."""
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.0005)
+        incident = self._consolidate(first, second)
+
+        response = self.client.post(
+            f"/api/incidents/{incident['id']}/status/",
+            {'workflow_status': WorkflowStatus.RESOLVED},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 200)
+
+        queue = self.client.get('/api/reports/queue/').data['results']
+        for row in queue:
+            with self.subTest(report=row['reference_number']):
+                self.assertEqual(row['status'], WorkflowStatus.RESOLVED)
+                # The report's own column is untouched, so separating it later
+                # restores what the report said on its own.
+                self.assertEqual(row['workflow_status'], WorkflowStatus.VERIFIED)
+
+    def test_separating_a_report_returns_it_to_its_own_status(self):
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.0005)
+        incident = self._consolidate(first, second)
+        self.client.post(
+            f"/api/incidents/{incident['id']}/status/",
+            {'workflow_status': WorkflowStatus.RESOLVED}, format='json',
+        )
+
+        response = self.client.post(
+            f'/api/reports/{second.id}/link/', {'incident': None}, format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        second.refresh_from_db()
+        self.assertIsNone(second.incident_id)
+        # Unlinked, so it governs itself again -- at the status it actually had.
+        self.assertEqual(second.governing, second)
+        self.assertEqual(second.governing.workflow_status, WorkflowStatus.VERIFIED)
+        # The one still attached continues to follow the incident.
+        first.refresh_from_db()
+        self.assertEqual(first.governing.workflow_status, WorkflowStatus.RESOLVED)
+
+    def test_a_consolidation_of_one_report_can_be_undone(self):
+        """Separating the last report must stay possible.
+
+        It leaves an incident with nothing behind it, which is untidy -- but
+        forbidding it makes a consolidation done by mistake impossible to
+        reverse, and an operator who ticked one box wrongly has no way back.
+        Reversibility wins.
+        """
+        only = make_report(self.civilian)
+        self._consolidate(only)
+
+        response = self.client.post(
+            f'/api/reports/{only.id}/link/', {'incident': None}, format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        only.refresh_from_db()
+        self.assertIsNone(only.incident_id)
+        self.assertEqual(only.governing.workflow_status, WorkflowStatus.VERIFIED)
+
+    def test_cannot_consolidate_a_report_that_is_already_linked(self):
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.0005)
+        self._consolidate(first)
+
+        response = self.client.post(
+            '/api/incidents/verify/', {'report_ids': [first.id, second.id]}, format='json',
+        )
+
+        # Re-pointing it silently would move it off its incident with no record
+        # of where it came from.
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Separate them first', str(response.data))
+        second.refresh_from_db()
+        self.assertIsNone(second.incident_id)
+
+    def test_a_linked_report_cannot_be_moved_on_its_own(self):
+        first = make_report(self.civilian)
+        self._consolidate(first)
+
+        response = self.client.post(
+            f'/api/reports/{first.id}/status/',
+            {'workflow_status': WorkflowStatus.RESOLVED}, format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("incident's status", str(response.data))
+
     def test_submitting_a_report_flags_duplicates_and_logs_activity(self):
         make_report(self.civilian)
         self.client.force_authenticate(self.civilian)

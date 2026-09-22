@@ -1293,3 +1293,63 @@ form .bfp-panel + .bfp-panel {
 @media (max-width: 720px) {
   .bfp-intake-form { grid-template-columns: minmax(0, 1fr); }
 }
+/* --- Consolidation: selecting reports, and the incident they become ----- */
+
+/* Appears only while reports are ticked, so the queue is unchanged until an
+   operator is actually mid-consolidation. */
+.bfp-selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--ft-red);
+  border-radius: 8px;
+  background: var(--civ-surface-alt);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.bfp-mini-btn-primary {
+  background: var(--ft-red);
+  border-color: var(--ft-red);
+  color: #fff;
+}
+
+.bfp-muted {
+  color: var(--civ-text-faint);
+}
+
+.bfp-source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bfp-source-report {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid var(--civ-border);
+  border-radius: 8px;
+  background: var(--civ-surface-alt);
+}
+
+.bfp-source-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bfp-source-meta {
+  color: var(--civ-text-muted);
+  font-size: 0.85rem;
+}

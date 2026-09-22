@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { CALAPAN_BARANGAYS } from '../../data/barangays';
 import { WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
@@ -51,6 +52,10 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState('');
+  // Report ids ticked for consolidation. Ids rather than rows, so a refresh
+  // landing mid-selection does not leave stale copies behind.
+  const [selected, setSelected] = useState(() => new Set());
+  const [consolidating, setConsolidating] = useState(false);
 
   const path = useMemo(() => {
     const params = new URLSearchParams();
@@ -77,6 +82,38 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
   function clearFilters() {
     setFilters(EMPTY_FILTERS);
     setPage(1);
+  }
+
+  function toggleSelected(id) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+
+  /* Consolidate the ticked reports into one canonical incident.
+
+     This is the evidentiary act: these submissions describe one fire, and the
+     incident is the record the station acts on. It is deliberately not a
+     duplicate ruling -- every report keeps its own duplicate_status and is
+     still dispositioned separately -- and nothing is merged or deleted, so the
+     reports stay readable exactly as they were filed. */
+  async function consolidate() {
+    setConsolidating(true);
+    setActionError('');
+    try {
+      await apiFetch('/api/incidents/verify/', {
+        method: 'POST',
+        body: JSON.stringify({ report_ids: [...selected] }),
+      });
+      setSelected(new Set());
+      onChanged?.();
+    } catch (err) {
+      setActionError(err.message || 'Could not consolidate those reports.');
+    } finally {
+      setConsolidating(false);
+    }
   }
 
   async function runAction(reportId, request) {
@@ -123,6 +160,25 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
           </p>
         </div>
       </header>
+
+      {selected.size > 0 && (
+        <div className="bfp-selection-bar">
+          <span>
+            {selected.size} report{selected.size === 1 ? '' : 's'} selected
+          </span>
+          <button
+            type="button"
+            className="bfp-mini-btn bfp-mini-btn-primary"
+            disabled={consolidating}
+            onClick={consolidate}
+          >
+            {consolidating ? 'Consolidating…' : 'Consolidate into one incident'}
+          </button>
+          <button type="button" className="bfp-link-btn" onClick={() => setSelected(new Set())}>
+            Clear selection
+          </button>
+        </div>
+      )}
 
       <div className="bfp-filters">
         <input
@@ -185,23 +241,25 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
         <table className="bfp-table">
           <thead>
             <tr>
+              <th className="bfp-col-center" aria-label="Select" />
               <th>Reference</th>
               <th>Submitted</th>
               <th>Barangay</th>
               <th>Category</th>
               <th className="bfp-col-center">Photo</th>
               <th>Status</th>
+              <th>Incident</th>
               <th>Duplicate Review</th>
             </tr>
           </thead>
           <tbody>
             {loading && rows.length === 0 && (
-              <tr><td colSpan={7} className="bfp-table-empty">Loading reports…</td></tr>
+              <tr><td colSpan={9} className="bfp-table-empty">Loading reports…</td></tr>
             )}
 
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="bfp-table-empty">
+                <td colSpan={9} className="bfp-table-empty">
                   {filtersActive ? 'No reports match these filters.' : 'No reports submitted yet.'}
                 </td>
               </tr>
@@ -214,6 +272,20 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
 
               return (
                 <tr key={report.id} className={isFlagged ? 'bfp-row-flagged' : undefined}>
+                  <td className="bfp-col-center">
+                    {/* A report already in an incident is not loose evidence to
+                        consolidate; separate it on the incident page first. */}
+                    <input
+                      type="checkbox"
+                      checked={selected.has(report.id)}
+                      disabled={Boolean(report.incident)}
+                      onChange={() => toggleSelected(report.id)}
+                      aria-label={`Select ${report.reference_number}`}
+                      title={report.incident
+                        ? `Already part of ${report.incident_reference}`
+                        : 'Select for consolidation'}
+                    />
+                  </td>
                   <td>
                     <span className="bfp-ref">{report.reference_number}</span>
                     {report.geocoding_confidence === 'low' && (
@@ -239,16 +311,38 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                     )}
                   </td>
                   <td>
-                    <select
-                      className={`bfp-status-select ${statusClass(report.workflow_status)}`}
-                      value={report.workflow_status}
-                      disabled={busy}
-                      onChange={(e) => changeWorkflowStatus(report, e.target.value)}
-                    >
-                      {WORKFLOW_STATUSES.map((s) => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                      ))}
-                    </select>
+                    {/* `status` is the one in force: a linked report follows
+                        its incident, and the API refuses to move it on its own,
+                        so offering the dropdown here would only produce an
+                        error the operator cannot act on. */}
+                    {report.incident ? (
+                      <span
+                        className={statusClass(report.status)}
+                        title={`Governed by ${report.incident_reference}`}
+                      >
+                        {report.status_display}
+                      </span>
+                    ) : (
+                      <select
+                        className={`bfp-status-select ${statusClass(report.status)}`}
+                        value={report.status}
+                        disabled={busy}
+                        onChange={(e) => changeWorkflowStatus(report, e.target.value)}
+                      >
+                        {WORKFLOW_STATUSES.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                    )}
+                  </td>
+                  <td>
+                    {report.incident ? (
+                      <Link className="bfp-link-btn" to={`/bfp/incidents/${report.incident}`}>
+                        {report.incident_reference}
+                      </Link>
+                    ) : (
+                      <span className="bfp-muted">—</span>
+                    )}
                   </td>
                   <td>
                     <span className={statusClass(report.duplicate_status)}>

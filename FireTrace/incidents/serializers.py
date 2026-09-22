@@ -34,14 +34,11 @@ class IncidentReportSerializer(serializers.ModelSerializer):
     # contradict it. `workflow_status` stays the report's own, for personnel.
     status = serializers.SerializerMethodField()
 
-    def _governing(self, obj):
-        return obj.incident if obj.incident_id else obj
-
     def get_status(self, obj):
-        return self._governing(obj).workflow_status
+        return obj.governing.workflow_status
 
     def get_status_display(self, obj):
-        return self._governing(obj).get_workflow_status_display()
+        return obj.governing.get_workflow_status_display()
 
     class Meta:
         model = IncidentReport
@@ -122,12 +119,23 @@ class ReportLinkSerializer(serializers.Serializer):
 
 
 class ReportQueueSerializer(serializers.ModelSerializer):
-    """Trimmed row for the Incoming Reports queue table."""
+    """Trimmed row for the Incoming Reports queue table.
+
+    Carries both statuses. ``workflow_status`` is the report's own column;
+    ``status`` is the one in force, which is the incident's once the report is
+    linked to one. The queue shows ``status``, so personnel and the reporter
+    are never looking at two different answers for the same fire.
+    """
 
     reference_number = serializers.ReadOnlyField()
     has_photo = serializers.ReadOnlyField()
     incident_type_display = serializers.CharField(source='get_incident_type_display', read_only=True)
     workflow_status_display = serializers.CharField(source='get_workflow_status_display', read_only=True)
+    incident_reference = serializers.CharField(
+        source='incident.reference_number', read_only=True, default=None,
+    )
+    status = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
     duplicate_status_display = serializers.CharField(source='get_duplicate_status_display', read_only=True)
     duplicate_of_reference = serializers.CharField(
         source='duplicate_of.reference_number', read_only=True, default=None,
@@ -145,7 +153,14 @@ class ReportQueueSerializer(serializers.ModelSerializer):
             'duplicate_of', 'duplicate_of_reference',
             'duplicate_distance_m', 'duplicate_time_delta_seconds',
             'geocoding_confidence', 'reporter_name',
+            'incident', 'incident_reference', 'status', 'status_display',
         )
+
+    def get_status(self, obj):
+        return obj.governing.workflow_status
+
+    def get_status_display(self, obj):
+        return obj.governing.get_workflow_status_display()
 
 
 class IncidentSerializer(serializers.ModelSerializer):
@@ -156,11 +171,14 @@ class IncidentSerializer(serializers.ModelSerializer):
     resolution_time_seconds = serializers.ReadOnlyField()
     verified_by = UserSerializer(read_only=True)
     source_report_count = serializers.SerializerMethodField()
+    incident_type_display = serializers.CharField(source='get_incident_type_display', read_only=True)
+    workflow_status_display = serializers.CharField(source='get_workflow_status_display', read_only=True)
 
     class Meta:
         model = Incident
         fields = (
-            'id', 'reference_number', 'incident_type', 'description',
+            'id', 'reference_number', 'incident_type', 'incident_type_display',
+            'workflow_status_display', 'description',
             'barangay', 'address', 'latitude', 'longitude',
             'workflow_status', 'verified_by', 'verification_note',
             'verified_at', 'dispatched_at', 'resolved_at',
@@ -174,6 +192,22 @@ class IncidentSerializer(serializers.ModelSerializer):
 
     def get_source_report_count(self, obj):
         return obj.source_reports.count()
+
+
+class IncidentDetailSerializer(IncidentSerializer):
+    """One incident with the reports that evidenced it.
+
+    The reports are the same rows the queue draws, so a report reads the same
+    whether it is being reviewed in the queue or examined as the source of an
+    incident. Each keeps its own duplicate_status: linking several reports to
+    one fire is an evidentiary statement, not a ruling that they duplicate each
+    other, and personnel still disposition every one separately.
+    """
+
+    source_reports = ReportQueueSerializer(many=True, read_only=True)
+
+    class Meta(IncidentSerializer.Meta):
+        fields = IncidentSerializer.Meta.fields + ('source_reports',)
 
 
 class IncidentTimelineEventSerializer(serializers.ModelSerializer):
@@ -237,4 +271,15 @@ class IncidentVerifySerializer(serializers.Serializer):
         found = IncidentReport.objects.filter(id__in=value)
         if found.count() != len(set(value)):
             raise serializers.ValidationError('One or more report IDs do not exist.')
+
+        # Silently re-pointing a linked report would move it off its current
+        # incident with no record of where it came from. Unlinking is a
+        # separate, audited act -- make the caller perform it.
+        linked = found.filter(incident__isnull=False).select_related('incident')
+        if linked.exists():
+            raise serializers.ValidationError(
+                'Already part of an incident: ' + ', '.join(
+                    f'{r.reference_number} ({r.incident.reference_number})' for r in linked
+                ) + '. Separate them first.'
+            )
         return value

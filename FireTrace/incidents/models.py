@@ -173,6 +173,21 @@ class IncidentReport(models.Model):
         return f"FT-{self.created_at.year}-{self.id:05d}"
 
     @property
+    def governing(self):
+        """The record whose workflow status applies to this report.
+
+        Once a report is linked to a canonical incident the incident governs
+        resolution -- one fire, one status -- so the report's own
+        ``workflow_status`` column is no longer what it means. It is left
+        untouched rather than overwritten, so unlinking restores what the
+        report said on its own.
+
+        Read by the serializers and by the duplicate rule, which must not offer
+        a closed fire as a duplicate candidate.
+        """
+        return self.incident or self
+
+    @property
     def has_photo(self):
         return bool(self.photo)
 

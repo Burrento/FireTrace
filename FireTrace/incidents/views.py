@@ -26,6 +26,7 @@ from .models import (
 from .serializers import (
     DuplicateReviewSerializer,
     IncidentReportSerializer,
+    IncidentDetailSerializer,
     IncidentSerializer,
     IncidentTimelineEventSerializer,
     IncidentVerifySerializer,
@@ -447,9 +448,13 @@ class IncidentListView(generics.ListAPIView):
 
 
 class IncidentDetailView(generics.RetrieveAPIView):
-    serializer_class = IncidentSerializer
+    """One consolidated incident and the reports behind it."""
+
+    serializer_class = IncidentDetailSerializer
     permission_classes = [IsBFPPersonnel]
-    queryset = Incident.objects.select_related('verified_by')
+    queryset = Incident.objects.select_related('verified_by').prefetch_related(
+        'source_reports__reporter', 'source_reports__duplicate_of', 'source_reports__incident',
+    )
 
 
 class IncidentVerifyView(APIView):
