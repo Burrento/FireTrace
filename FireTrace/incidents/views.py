@@ -13,7 +13,7 @@ from accounts.permissions import IsBFPPersonnel
 from analytics.models import AuditLog, SystemSetting
 from realtime.notify import broadcast_dashboard_event
 
-from .duplicates import flag_possible_duplicate, related_reports
+from .duplicates import flag_possible_duplicate, group_map, related_reports
 from .models import (
     DuplicateStatus,
     GeocodingConfidence,
@@ -203,6 +203,53 @@ class ReportQueueView(generics.ListAPIView):
             qs = qs.filter(criteria)
 
         return qs.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        """One row per fire, not one per report.
+
+        Several people calling about one fire produced several rows, and an
+        operator counting the queue was counting phone calls rather than
+        fires. The duplicate flag already ties them together automatically, so
+        the queue collapses each group to its newest report and says how many
+        are behind it; the row opens onto all of them.
+
+        Grouping only. No report is altered and no incident is created --
+        `verify/` is still the only thing that does that, and it is still a
+        person who calls it. If the grouping is wrong, nothing has been written
+        that has to be undone.
+        """
+        reports = list(self.filter_queryset(self.get_queryset()))
+        groups = group_map()
+
+        # A filter means "fires with a report matching this", so a group is
+        # represented by the newest of its members that survived the filter.
+        seen = set()
+        leaders = []
+        for report in reports:            # already newest-first
+            members = groups.get(report.pk, frozenset({report.pk}))
+            key = min(members)            # stable identity for the group
+            if key in seen:
+                continue
+            seen.add(key)
+            leaders.append((report, members))
+
+        page = self.paginate_queryset(leaders) or leaders
+        context = self.get_serializer_context()
+        results = []
+        for report, members in page:
+            row = ReportQueueSerializer(report, context=context).data
+            row['group_size'] = len(members)
+            row['group_ids'] = sorted(members)
+            results.append(row)
+
+        if self.paginator is None:
+            return Response({'count': len(leaders), 'results': results})
+
+        response = self.get_paginated_response(results)
+        # The count is fires now, not reports; say so rather than leaving the
+        # caller to infer which one it got.
+        response.data['reports_count'] = len(reports)
+        return response
 
 
 class ReportWorkflowStatusView(APIView):

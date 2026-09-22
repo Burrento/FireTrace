@@ -184,55 +184,97 @@ def flag_possible_duplicate(report):
     return candidate
 
 
+
 # A cluster is a handful of calls about one fire. The cap is a guard against a
 # pathological chain (a busy night in one barangay, thresholds set wide), not a
 # page size: a group this large is a signal the thresholds need looking at.
 MAX_RELATED = 50
 
 
-def related_reports(report):
-    """Every report the system has tied to the same fire as ``report``.
+def _same_fire_edges():
+    """Every "these two are the same fire" link on record, as id pairs.
+
+    Two sources, and only two: the system's own pairwise duplicate flag, and a
+    canonical incident a person linked reports to. Both live here so the queue
+    and the report modal cannot end up with different ideas of what one fire is.
+
+    ponytail: reads the id columns of every report in one query. Fine at a
+    station's volume; if this table ever gets large, key the walk off a stored
+    group id maintained on write instead.
+    """
+    rows = IncidentReport.objects.values_list('id', 'duplicate_of_id', 'incident_id')
+
+    edges = []
+    by_incident = {}
+    for report_id, duplicate_of_id, incident_id in rows:
+        if duplicate_of_id:
+            edges.append((report_id, duplicate_of_id))
+        if incident_id:
+            by_incident.setdefault(incident_id, []).append(report_id)
+
+    # Reports sharing an incident are the same fire because a person said so.
+    for members in by_incident.values():
+        first = members[0]
+        edges.extend((first, other) for other in members[1:])
+
+    return edges
+
+
+def group_map():
+    """``{report id: frozenset of the ids in its group}`` for every report.
 
     Flagging is *pairwise*: each new report is flagged against its nearest
-    match alone, so three calls about one fire form a chain -- the third points
-    at the second, which points at the first -- and not one group. Reading
-    ``duplicate_of`` on its own therefore shows an operator one neighbour and
-    hides the rest of the fire.
+    match alone, so three calls about one fire link third -> second -> first
+    and never form a group on their own. This is the union of those chains --
+    the connected components -- which is what "one fire" actually means.
 
-    This walks those links in both directions, transitively, so the whole
-    cluster comes back however it was chained together. It is derived from the
-    flags already on record rather than by re-running the distance and time
-    rules: the thresholds are editable, and a group assembled from today's
-    settings could disagree with the flags an operator is actually looking at.
-
-    Reports sharing a canonical incident are included too, so the group stays
-    complete once personnel have consolidated part of it.
-
-    Returns the related reports, newest first. Never includes ``report``.
+    Derived from the flags already on record rather than by re-running the
+    distance and time rules: the thresholds are editable, and a grouping
+    assembled from today's settings could contradict the flags an operator is
+    looking at.
     """
-    seen = {report.pk}
-    frontier = [report]
+    parent = {}
 
-    while frontier and len(seen) < MAX_RELATED:
-        ids = [r.pk for r in frontier]
-        points_at = [r.duplicate_of_id for r in frontier if r.duplicate_of_id]
-        incidents = [r.incident_id for r in frontier if r.incident_id]
+    def find(x):
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
 
-        criteria = Q(duplicate_of_id__in=ids)          # flagged against these
-        if points_at:
-            criteria |= Q(pk__in=points_at)            # what these point at
-        if incidents:
-            criteria |= Q(incident_id__in=incidents)   # already grouped by a person
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
 
-        frontier = list(
-            IncidentReport.objects.filter(criteria)
-            .exclude(pk__in=seen)
-            .select_related('reporter', 'duplicate_of', 'incident')[:MAX_RELATED]
-        )
-        seen.update(r.pk for r in frontier)
+    for a, b in _same_fire_edges():
+        union(a, b)
+
+    groups = {}
+    for node in list(parent):
+        groups.setdefault(find(node), set()).add(node)
+
+    return {
+        member: frozenset(members)
+        for members in groups.values()
+        for member in members
+    }
+
+
+def related_reports(report):
+    """Every *other* report tied to the same fire as ``report``, newest first.
+
+    The group as ``group_map`` defines it, minus the report itself. Reading
+    ``duplicate_of`` instead would show one neighbour and hide the rest of the
+    fire, because the flags form a chain rather than a group.
+    """
+    members = group_map().get(report.pk, frozenset())
+    others = set(members) - {report.pk}
+    if not others:
+        return []
 
     return list(
-        IncidentReport.objects.filter(pk__in=seen - {report.pk})
+        IncidentReport.objects.filter(pk__in=list(others)[:MAX_RELATED])
         .select_related('reporter', 'duplicate_of', 'incident')
         .order_by('-created_at')
     )

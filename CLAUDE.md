@@ -91,16 +91,30 @@ Verified → Responding → Resolved) and `duplicate_status` (Not Flagged / Poss
 Kept Separate / Confirmed) live on separate fields, are moved by separate endpoints,
 and every combination is legal. Never derive one from the other.
 
+**The queue is a list of fires, not of reports.** `ReportQueueView.list`
+collapses each group to its newest member and returns `group_size` /
+`group_ids` beside it; `count` is fires and `reports_count` is the reports
+behind them. Clicking the row opens a modal listing all of them
+(`/api/reports/<id>/related/`). **Grouping only** — no report is altered and no
+`Incident` is created, so a wrong grouping has written nothing that must be
+undone. `verify/` is still the only thing that creates an incident and a person
+still calls it.
+
 **Flagging is pairwise, so a group is a chain.** Each new report is flagged
 against its *nearest* match alone. Three calls about one fire therefore link
-third → second → first, and reading `duplicate_of` off a row shows one
-neighbour while hiding the rest of the fire. `duplicates.related_reports` walks
-those links transitively in both directions (plus any shared incident) and
-`/api/reports/<id>/related/` serves the whole group; the queue row opens onto
-it, before anyone has ruled on anything. It is derived from the flags on record
-rather than by re-running the rules, because the thresholds are editable and a
-group assembled from today's settings could contradict the flags an operator is
-looking at.
+third → second → first and never form a group on their own. `duplicates`
+defines "same fire" **once**, in `_same_fire_edges` (the duplicate flag, plus a
+shared incident), and both `group_map` (the queue) and `related_reports` (the
+modal) are built on it, so the list and the thing it opens cannot disagree. It
+is derived from the flags on record rather than by re-running the distance and
+time rules, because the thresholds are editable and a grouping assembled from
+today's settings could contradict the flags an operator is looking at.
+
+**The portal shows report IDs (`#40`), not `FT-2026-00040`.** The reference
+number is still on the model and still what a civilian sees on their own
+report; the operations tables use the id because it is what personnel read out
+and type. `reference_number` remains a property, so neither can be filtered on
+in SQL.
 
 **Duplicates are flagged, never merged.** `incidents/duplicates.py` flags a report as
 `POSSIBLE` only when both `DUPLICATE_RADIUS_METERS` (Haversine, default 150) **and**

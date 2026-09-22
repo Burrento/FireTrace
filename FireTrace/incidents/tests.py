@@ -472,6 +472,61 @@ class DashboardAPITests(APITestCase):
         self.assertEqual(response.status_code, 201, response.data)
         return response.data
 
+    def test_queue_shows_one_row_per_fire(self):
+        """Three calls about one fire are one row, with the count behind it."""
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.0004)
+        flag_possible_duplicate(second)
+        third = make_report(self.civilian, lat=BASE_LAT + 0.0008)
+        flag_possible_duplicate(third)
+        # An unrelated fire across town stays its own row.
+        other = make_report(self.civilian, lat=BASE_LAT + 0.05)
+
+        self.client.force_authenticate(self.bfp)
+        data = self.client.get('/api/reports/queue/').data
+
+        self.assertEqual(data['count'], 2)            # two fires
+        self.assertEqual(data['reports_count'], 4)    # four reports
+        rows = {r['id']: r for r in data['results']}
+        # The newest of the group represents it.
+        self.assertIn(third.id, rows)
+        self.assertEqual(rows[third.id]['group_size'], 3)
+        self.assertEqual(
+            set(rows[third.id]['group_ids']), {first.id, second.id, third.id},
+        )
+        self.assertEqual(rows[other.id]['group_size'], 1)
+
+    def test_grouping_alters_no_report(self):
+        """The queue collapses rows; it must not touch the records."""
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.0004)
+        flag_possible_duplicate(second)
+        before = [
+            (r.pk, r.workflow_status, r.duplicate_status, r.incident_id)
+            for r in IncidentReport.objects.order_by('pk')
+        ]
+
+        self.client.force_authenticate(self.bfp)
+        self.client.get('/api/reports/queue/')
+
+        after = [
+            (r.pk, r.workflow_status, r.duplicate_status, r.incident_id)
+            for r in IncidentReport.objects.order_by('pk')
+        ]
+        self.assertEqual(before, after)
+        self.assertEqual(Incident.objects.count(), 0)
+        self.assertEqual(first.id, IncidentReport.objects.earliest('created_at').id)
+
+    def test_reports_consolidated_by_a_person_are_one_row_too(self):
+        first = make_report(self.civilian)
+        second = make_report(self.civilian, lat=BASE_LAT + 0.05)  # no flag ties them
+        self._consolidate(first, second)
+
+        data = self.client.get('/api/reports/queue/').data
+
+        self.assertEqual(data['count'], 1)
+        self.assertEqual(data['results'][0]['group_size'], 2)
+
     def test_consolidated_incident_lists_the_reports_behind_it(self):
         first = make_report(self.civilian)
         second = make_report(self.civilian, lat=BASE_LAT + 0.0005)

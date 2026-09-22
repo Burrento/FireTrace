@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import RelatedReports from './RelatedReports';
@@ -74,7 +74,10 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
   const { data, error, loading } = usePolledResource(path, tick, { onAuthError });
 
   const rows = data?.results ?? [];
+  // `count` is fires now that the queue groups; `reports_count` is the reports
+  // behind them. Saying "reports" for the first would undercount the intake.
   const total = data?.count ?? 0;
+  const reportsTotal = data?.reports_count ?? total;
   const hasNext = Boolean(data?.next);
   const hasPrevious = Boolean(data?.previous);
 
@@ -163,7 +166,8 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
         <div>
           <h2 className="bfp-panel-title">{title}</h2>
           <p className="bfp-panel-sub">
-            {total} report{total === 1 ? '' : 's'}
+            {total} fire{total === 1 ? '' : 's'}
+            {reportsTotal !== total && ` · ${reportsTotal} reports`}
             {filtersActive ? ' matching filters' : ''}
           </p>
         </div>
@@ -250,7 +254,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
           <thead>
             <tr>
               <th className="bfp-col-center" aria-label="Select" />
-              <th>Reference</th>
+              <th>Report</th>
               <th>Submitted</th>
               <th>Barangay</th>
               <th>Category</th>
@@ -288,7 +292,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                       checked={selected.has(report.id)}
                       disabled={Boolean(report.incident)}
                       onChange={() => toggleSelected(report.id)}
-                      aria-label={`Select ${report.reference_number}`}
+                      aria-label={`Select report ${report.id}`}
                       title={report.incident
                         ? `Already part of ${report.incident_reference}`
                         : 'Select for consolidation'}
@@ -305,8 +309,13 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                       aria-expanded={openId === report.id}
                       title="Show every report tied to this fire"
                     >
-                      <i className={`fa-solid fa-chevron-${openId === report.id ? 'down' : 'right'}`} />
-                      {report.reference_number}
+                      #{report.id}
+                      {/* One fire, several callers. The count rides on the row
+                          so the queue reads as a list of fires rather than of
+                          phone calls. */}
+                      {report.group_size > 1 && (
+                        <span className="bfp-group-count">{report.group_size} reports</span>
+                      )}
                     </button>
                     {report.geocoding_confidence === 'low' && (
                       <span
@@ -358,7 +367,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                   <td>
                     {report.incident ? (
                       <Link className="bfp-link-btn" to={`/bfp/incidents/${report.incident}`}>
-                        {report.incident_reference}
+                        #{report.incident}
                       </Link>
                     ) : (
                       <span className="bfp-muted">—</span>
@@ -371,7 +380,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                     {isFlagged && (
                       <div className="bfp-dup-detail">
                         <span className="bfp-dup-evidence">
-                          {report.duplicate_of_reference} ·{' '}
+                          #{report.duplicate_of} ·{' '}
                           {Math.round(report.duplicate_distance_m)} m ·{' '}
                           {Math.round((report.duplicate_time_delta_seconds ?? 0) / 60)} min apart
                         </span>
@@ -399,23 +408,22 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                 </tr>
               );
 
-              return openId === report.id ? (
-                <Fragment key={`${report.id}-group`}>
-                  {row}
-                  <tr key={`${report.id}-related`} className="bfp-row-detail">
-                    <td colSpan={9}>
-                      <RelatedReports
-                        reportId={report.id}
-                        onSelectGroup={(ids) => setSelected(new Set(ids))}
-                      />
-                    </td>
-                  </tr>
-                </Fragment>
-              ) : row;
+              return row;
             })}
           </tbody>
         </table>
       </div>
+
+      {openId !== null && (
+        <RelatedReports
+          reportId={openId}
+          onClose={() => setOpenId(null)}
+          onSelectGroup={(ids) => {
+            setSelected(new Set(ids));
+            setOpenId(null);
+          }}
+        />
+      )}
 
       {(hasPrevious || hasNext) && (
         <footer className="bfp-pager">

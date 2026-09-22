@@ -1372,9 +1372,53 @@ form .bfp-panel + .bfp-panel {
   color: var(--ft-red);
 }
 
-.bfp-row-detail > td {
-  padding: 0 14px 14px;
-  background: var(--civ-surface-alt);
+.bfp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.bfp-modal {
+  width: min(880px, 100%);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--civ-border);
+  border-radius: 14px;
+  background: var(--civ-surface);
+  box-shadow: 0 12px 40px var(--civ-shadow);
+  overflow: hidden;
+}
+
+.bfp-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--civ-border);
+}
+
+.bfp-modal-body {
+  padding: 16px 18px 18px;
+  overflow-y: auto;
+}
+
+/* The count of callers, on the queue row itself. */
+.bfp-group-count {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--civ-chip-bg);
+  color: var(--civ-text-muted);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .bfp-related-description {
