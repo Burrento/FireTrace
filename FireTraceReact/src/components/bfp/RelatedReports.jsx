@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { statusClass } from '../../lib/workflowStatus';
 
@@ -19,10 +20,11 @@ import { statusClass } from '../../lib/workflowStatus';
    disagree with any of it. The one action offered is to select the whole group
    for consolidation, which is still a person deciding. */
 
-function Related({ report, distance, apart }) {
+function Related({ report, distance, apart, onRule, busy }) {
+  const isFlagged = report.duplicate_status === 'possible_duplicate';
   return (
     <li className="bfp-related-item">
-      <span className="bfp-ref">#{report.id}</span>
+      <span className="bfp-ref">{report.reference_number}</span>
       <span className="bfp-related-meta">
         {new Date(report.created_at).toLocaleString()} · {report.barangay} ·{' '}
         {report.incident_type_display}
@@ -38,17 +40,47 @@ function Related({ report, distance, apart }) {
         <span className={statusClass(report.duplicate_status)}>
           {report.duplicate_status_display}
         </span>
-        {report.incident_reference && (
-          <span className="bfp-related-meta">in {report.incident_reference}</span>
+        {report.incident && (
+          /* The queue no longer carries an incident column, so this is the way
+             through to the incident itself. */
+          <Link className="bfp-link-btn" to={`/bfp/incidents/${report.incident}`}>
+            {report.incident_reference}
+          </Link>
         )}
       </span>
+      {/* Ruling on a report, beside the reports the ruling is about -- it was
+          in the queue row, where the other accounts of the fire were not
+          visible to judge it against. Only a flagged report can be ruled on:
+          the API accepts the two manual dispositions and nothing else. */}
+      {isFlagged && (
+        <span className="bfp-dup-actions">
+          <button
+            type="button"
+            className="bfp-mini-btn"
+            disabled={busy}
+            onClick={() => onRule(report, 'kept_separate')}
+          >
+            Keep separate
+          </button>
+          <button
+            type="button"
+            className="bfp-mini-btn bfp-mini-btn-danger"
+            disabled={busy}
+            onClick={() => onRule(report, 'confirmed_duplicate')}
+          >
+            Confirm duplicate
+          </button>
+        </span>
+      )}
     </li>
   );
 }
 
-function RelatedReports({ reportId, onSelectGroup, onClose }) {
+function RelatedReports({ reportId, onSelectGroup, onClose, onChanged }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0);
 
   /* No reset on reportId: the modal is mounted only while a row is open and
      is keyed by nothing else, so opening a different row unmounts this and
@@ -61,7 +93,27 @@ function RelatedReports({ reportId, onSelectGroup, onClose }) {
     return () => {
       cancelled = true;
     };
-  }, [reportId]);
+  }, [reportId, reload]);
+
+  /* A ruling changes what the group looks like, so the modal refetches and the
+     queue behind it refreshes. The modal stays open: an operator ruling on one
+     report of three is usually about to rule on the next. */
+  async function rule(report, duplicate_status) {
+    setBusy(true);
+    setError('');
+    try {
+      await apiFetch(`/api/reports/${report.id}/duplicate-review/`, {
+        method: 'POST',
+        body: JSON.stringify({ duplicate_status }),
+      });
+      setReload((n) => n + 1);
+      onChanged?.();
+    } catch (err) {
+      setError(err.message || 'Could not record that ruling.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // Escape closes it, which is what anyone reaches for before hunting the X.
   useEffect(() => {
@@ -85,11 +137,13 @@ function RelatedReports({ reportId, onSelectGroup, onClose }) {
         className="bfp-modal"
         role="dialog"
         aria-modal="true"
-        aria-label={`Reports behind report ${reportId}`}
+        aria-label="Reports tied to the same fire"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="bfp-modal-head">
-          <h2 className="bfp-panel-title">Report #{reportId}</h2>
+          <h2 className="bfp-panel-title">
+            {data ? data.report.reference_number : 'Report'}
+          </h2>
           <button
             type="button"
             className="bfp-icon-btn"
@@ -133,6 +187,8 @@ function RelatedReports({ reportId, onSelectGroup, onClose }) {
               report={report}
               distance={report.duplicate_distance_m}
               apart={report.duplicate_time_delta_seconds}
+              onRule={rule}
+              busy={busy}
             />
             {related.map((r) => (
               <Related
@@ -140,6 +196,8 @@ function RelatedReports({ reportId, onSelectGroup, onClose }) {
                 report={r}
                 distance={r.duplicate_distance_m}
                 apart={r.duplicate_time_delta_seconds}
+                onRule={rule}
+                busy={busy}
               />
             ))}
           </ul>

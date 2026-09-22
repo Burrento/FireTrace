@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import RelatedReports from './RelatedReports';
 import { CALAPAN_BARANGAYS } from '../../data/barangays';
@@ -149,15 +148,6 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
     );
   }
 
-  function reviewDuplicate(report, duplicate_status) {
-    return runAction(report.id, () =>
-      apiFetch(`/api/reports/${report.id}/duplicate-review/`, {
-        method: 'POST',
-        body: JSON.stringify({ duplicate_status }),
-      }),
-    );
-  }
-
   const filtersActive = Object.values(filters).some(Boolean);
 
   return (
@@ -254,24 +244,23 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
           <thead>
             <tr>
               <th className="bfp-col-center" aria-label="Select" />
-              <th>Report</th>
+              <th>Reference</th>
               <th>Submitted</th>
               <th>Barangay</th>
               <th>Category</th>
               <th className="bfp-col-center">Photo</th>
               <th>Status</th>
-              <th>Incident</th>
               <th>Duplicate Review</th>
             </tr>
           </thead>
           <tbody>
             {loading && rows.length === 0 && (
-              <tr><td colSpan={9} className="bfp-table-empty">Loading reports…</td></tr>
+              <tr><td colSpan={8} className="bfp-table-empty">Loading reports…</td></tr>
             )}
 
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="bfp-table-empty">
+                <td colSpan={8} className="bfp-table-empty">
                   {filtersActive ? 'No reports match these filters.' : 'No reports submitted yet.'}
                 </td>
               </tr>
@@ -292,7 +281,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                       checked={selected.has(report.id)}
                       disabled={Boolean(report.incident)}
                       onChange={() => toggleSelected(report.id)}
-                      aria-label={`Select report ${report.id}`}
+                      aria-label={`Select ${report.reference_number}`}
                       title={report.incident
                         ? `Already part of ${report.incident_reference}`
                         : 'Select for consolidation'}
@@ -309,7 +298,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                       aria-expanded={openId === report.id}
                       title="Show every report tied to this fire"
                     >
-                      #{report.id}
+                      {report.reference_number}
                       {/* One fire, several callers. The count rides on the row
                           so the queue reads as a list of fires rather than of
                           phone calls. */}
@@ -365,43 +354,31 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                     )}
                   </td>
                   <td>
-                    {report.incident ? (
-                      <Link className="bfp-link-btn" to={`/bfp/incidents/${report.incident}`}>
-                        #{report.incident}
-                      </Link>
+                    {/* The badge is the way in to the group: an operator who
+                        sees "possible duplicate" wants the other reports, not
+                        a verdict box. Ruling on one lives in the modal, beside
+                        the reports the ruling is about. */}
+                    {report.group_size > 1 || isFlagged ? (
+                      <button
+                        type="button"
+                        className={`bfp-dup-btn ${statusClass(report.duplicate_status)}`}
+                        onClick={() => toggleRow(report.id)}
+                        title="Show every report tied to this fire"
+                      >
+                        {report.duplicate_status_display}
+                      </button>
                     ) : (
-                      <span className="bfp-muted">—</span>
+                      <span className={statusClass(report.duplicate_status)}>
+                        {report.duplicate_status_display}
+                      </span>
                     )}
-                  </td>
-                  <td>
-                    <span className={statusClass(report.duplicate_status)}>
-                      {report.duplicate_status_display}
-                    </span>
                     {isFlagged && (
                       <div className="bfp-dup-detail">
                         <span className="bfp-dup-evidence">
-                          #{report.duplicate_of} ·{' '}
+                          {report.duplicate_of_reference} ·{' '}
                           {Math.round(report.duplicate_distance_m)} m ·{' '}
                           {Math.round((report.duplicate_time_delta_seconds ?? 0) / 60)} min apart
                         </span>
-                        <div className="bfp-dup-actions">
-                          <button
-                            type="button"
-                            className="bfp-mini-btn"
-                            disabled={busy}
-                            onClick={() => reviewDuplicate(report, 'kept_separate')}
-                          >
-                            Keep separate
-                          </button>
-                          <button
-                            type="button"
-                            className="bfp-mini-btn bfp-mini-btn-danger"
-                            disabled={busy}
-                            onClick={() => reviewDuplicate(report, 'confirmed_duplicate')}
-                          >
-                            Confirm duplicate
-                          </button>
-                        </div>
                       </div>
                     )}
                   </td>
@@ -418,6 +395,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
         <RelatedReports
           reportId={openId}
           onClose={() => setOpenId(null)}
+          onChanged={onChanged}
           onSelectGroup={(ids) => {
             setSelected(new Set(ids));
             setOpenId(null);

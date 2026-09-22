@@ -110,11 +110,12 @@ is derived from the flags on record rather than by re-running the distance and
 time rules, because the thresholds are editable and a grouping assembled from
 today's settings could contradict the flags an operator is looking at.
 
-**The portal shows report IDs (`#40`), not `FT-2026-00040`.** The reference
-number is still on the model and still what a civilian sees on their own
-report; the operations tables use the id because it is what personnel read out
-and type. `reference_number` remains a property, so neither can be filtered on
-in SQL.
+**The queue row carries no incident column and no ruling buttons.** Both moved
+into the modal: the incident as a link on the report that belongs to it, and
+*Keep separate* / *Confirm duplicate* beside the reports a ruling is about,
+which the row could not show. The duplicate badge is the way in — pressing
+`POSSIBLE DUPLICATE` opens the group. The reference also opens it, so a group
+formed by consolidation rather than by a flag is still reachable.
 
 **Duplicates are flagged, never merged.** `incidents/duplicates.py` flags a report as
 `POSSIBLE` only when both `DUPLICATE_RADIUS_METERS` (Haversine, default 150) **and**

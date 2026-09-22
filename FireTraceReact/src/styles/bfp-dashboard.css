@@ -1409,6 +1409,18 @@ form .bfp-panel + .bfp-panel {
   overflow-y: auto;
 }
 
+/* The duplicate badge doubles as the way in to the group, so it has to read
+   as pressable while keeping the badge colours that carry its meaning. */
+.bfp-dup-btn {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bfp-dup-btn:hover {
+  filter: brightness(1.12);
+}
+
 /* The count of callers, on the queue row itself. */
 .bfp-group-count {
   margin-left: 8px;
