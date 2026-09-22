@@ -190,7 +190,8 @@ export function useBfpPage(intervalMs = 15000) {
 
    Keeps the previous payload visible while a refresh is in flight, so panels
    never flash empty every 15 seconds. `onAuthError` fires for 401/403 so the
-   page can bounce a non-BFP user out. */
+   page can bounce a non-BFP user out. A null `path` fetches nothing, so a page
+   that hides a panel does not also poll for it. */
 export function usePolledResource(path, tick, { onAuthError } = {}) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -202,6 +203,9 @@ export function usePolledResource(path, tick, { onAuthError } = {}) {
   });
 
   useEffect(() => {
+    // Nothing to fetch. The caller that passed null is not rendering the panel
+    // either, so `loading` is never read on this branch.
+    if (!path) return undefined;
     let cancelled = false;
 
     apiFetch(path)

@@ -160,10 +160,6 @@
     --civ-status-resolved-bg: rgba(34, 197, 94, 0.15);
 }
 
-:root[data-theme='dark'] #social .button-icon {
-  filter: invert(1) brightness(2);
-}
-
 body {
   margin: 0;
   background: var(--ft-backdrop);
@@ -212,14 +208,6 @@ h2 {
 
 p {
   margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--ft-text);
 }
 
 code {

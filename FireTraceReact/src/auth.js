@@ -58,7 +58,3 @@ export function clearTokens() {
 export function isLoggedIn() {
   return Boolean(getRefreshToken());
 }
-
-export function wasRemembered() {
-  return safe(() => localStorage.getItem(REMEMBER_KEY) === '1', false);
-}

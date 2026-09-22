@@ -341,7 +341,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    # Short-lived: the frontend silently refreshes it via authFetch().
+    # Short-lived: the frontend silently refreshes it via apiFetch().
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     # How long a normal ("remember me" unticked) session survives.
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),

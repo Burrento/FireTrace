@@ -81,40 +81,12 @@ export async function apiFetch(path, options = {}, { skipAuth = false } = {}) {
   return data;
 }
 
-/**
- * fetch() with the bearer token attached. On a 401 it refreshes the access
- * token once and retries; if the refresh also fails the session is over, so
- * the tokens are cleared and the 401 is handed back for the caller to
- * redirect on.
- */
-export async function authFetch(path, options = {}) {
-  let res = await send(path, options, getAccessToken());
-  if (res.status !== 401) return res;
-
-  const access = await refreshAccessToken();
-  if (!access) {
-    clearTokens();
-    return res;
-  }
-  return send(path, options, access);
-}
-
-/** authFetch + JSON parsing, mirroring apiFetch's error handling. */
-export async function authFetchJson(path, options = {}) {
-  const res = await authFetch(path, options);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(describeError(data));
-  }
-  return data;
-}
-
 /** Revokes the refresh token server-side, then drops the local copies. */
 export async function logout() {
   const refresh = getRefreshToken();
   if (refresh) {
     try {
-      await authFetch('/accounts/logout', {
+      await apiFetch('/accounts/logout', {
         method: 'POST',
         body: JSON.stringify({ refresh }),
       });

@@ -1095,28 +1095,7 @@ form .bfp-panel + .bfp-panel {
 }
 .bfp-setting-control input[type='number'] { width: 90px; }
 .bfp-setting-unit { font-size: 12px; color: var(--civ-text-muted); }
-
-.bfp-switch {
-  position: relative;
-  width: 40px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--civ-border);
-  flex-shrink: 0;
-  transition: background 0.15s ease;
-}
 .bfp-switch.is-on { background: var(--ft-red); }
-.bfp-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-.bfp-switch-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.15s ease;
-}
 .bfp-switch.is-on .bfp-switch-knob { transform: translateX(18px); }
 
 .bfp-settings-actions {
@@ -1247,19 +1226,6 @@ form .bfp-panel + .bfp-panel {
   color: var(--civ-text);
 }
 .bfp-stat-foot { margin-top: 2px; font-size: 12px; color: var(--civ-text-muted); }
-
-.bfp-meter {
-  margin-top: 8px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--civ-border);
-  overflow: hidden;
-}
-.bfp-meter-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--civ-status-verified);
-}
 .bfp-meter-fill.is-warn { background: var(--civ-status-review); }
 .bfp-meter-fill.is-crit { background: var(--ft-red); }
 

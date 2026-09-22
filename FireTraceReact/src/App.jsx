@@ -6,9 +6,7 @@ import Dashboard from './pages/Dashboard';
 import LiveFireMap from './pages/LiveFireMap';
 import BfpDashboard from './pages/bfp/BfpDashboard';
 import BfpReports from './pages/bfp/BfpReports';
-import BfpIncidentMap from './pages/bfp/BfpIncidentMap';
 import BfpOperational from './pages/bfp/BfpOperational';
-import BfpAnalyticReport from './pages/bfp/BfpAnalyticReport';
 import BfpUsers from './pages/bfp/BfpUsers';
 import BfpReference from './pages/bfp/BfpReference';
 import BfpSettings from './pages/bfp/BfpSettings';
@@ -55,9 +53,10 @@ function App() {
           <Route path="/bfp" element={<BfpDashboard />} />
           <Route path="/bfp/reports" element={<BfpReports />} />
           <Route path="/bfp/intake" element={<BfpIntake />} />
-          <Route path="/bfp/BfpIncidentMap" element={<BfpIncidentMap />} />
+          {/* Both are BfpReports with one half turned off. */}
+          <Route path="/bfp/BfpIncidentMap" element={<BfpReports queue={false} mapTitle="Incident Map" />} />
           <Route path="/bfp/BfpOperational" element={<BfpOperational />} />
-          <Route path="/bfp/BfpAnalyticReport" element={<BfpAnalyticReport />} />
+          <Route path="/bfp/BfpAnalyticReport" element={<BfpReports map={false} />} />
           <Route path="/bfp/BfpUsers" element={<BfpUsers />} />
           <Route path="/bfp/BfpReference" element={<BfpReference />} />
           <Route path="/bfp/BfpSettings" element={<BfpSettings />} />
