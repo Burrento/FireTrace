@@ -1353,3 +1353,74 @@ form .bfp-panel + .bfp-panel {
   color: var(--civ-text-muted);
   font-size: 0.85rem;
 }
+
+/* --- The group behind one report, opened from a queue row --------------- */
+
+.bfp-ref-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bfp-ref-btn:hover {
+  color: var(--ft-red);
+}
+
+.bfp-row-detail > td {
+  padding: 0 14px 14px;
+  background: var(--civ-surface-alt);
+}
+
+.bfp-related-description {
+  margin: 0 0 10px;
+  color: var(--civ-text-muted);
+  font-style: italic;
+}
+
+.bfp-related-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.bfp-related-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bfp-related-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--civ-border);
+  border-radius: 8px;
+  background: var(--civ-surface);
+}
+
+.bfp-related-meta {
+  color: var(--civ-text-muted);
+  font-size: 0.85rem;
+}
+
+.bfp-related-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}

@@ -13,7 +13,12 @@ from rest_framework.test import APITestCase
 from accounts.models import User
 from analytics.models import AuditLog
 
-from .duplicates import find_duplicate_candidates, flag_possible_duplicate, haversine_meters
+from .duplicates import (
+    find_duplicate_candidates,
+    flag_possible_duplicate,
+    haversine_meters,
+    related_reports,
+)
 from .geocoding import derive_confidence
 from .models import (
     DuplicateStatus,
@@ -204,6 +209,52 @@ class DuplicateFlaggingTests(TestCase):
         self.assertEqual(flag_possible_duplicate(nearby), self.original)
         nearby.refresh_from_db()
         self.assertEqual(nearby.duplicate_status, DuplicateStatus.POSSIBLE)
+
+    def test_related_returns_the_whole_chain_not_one_neighbour(self):
+        """Three calls about one fire are one group, however they chained.
+
+        Flagging is pairwise: the third report is flagged against the second,
+        which was flagged against the first. Reading duplicate_of alone shows
+        an operator one neighbour and hides the rest of the fire.
+        """
+        second = make_report(self.reporter, lat=BASE_LAT + 0.0004)
+        flag_possible_duplicate(second)
+        third = make_report(self.reporter, lat=BASE_LAT + 0.0008)
+        flag_possible_duplicate(third)
+        third.refresh_from_db()
+        # Confirm the chain really is a chain, or this proves nothing.
+        self.assertEqual(third.duplicate_of, second)
+
+        for report, expected in (
+            (self.original, {second, third}),
+            (second, {self.original, third}),
+            (third, {self.original, second}),
+        ):
+            with self.subTest(report=report.reference_number):
+                self.assertEqual(set(related_reports(report)), expected)
+
+    def test_related_excludes_the_report_itself(self):
+        second = make_report(self.reporter, lat=BASE_LAT + 0.0004)
+        flag_possible_duplicate(second)
+        self.assertNotIn(self.original, related_reports(self.original))
+
+    def test_related_is_empty_for_an_unflagged_report(self):
+        lone = make_report(self.reporter, lat=BASE_LAT + 0.05)
+        self.assertEqual(related_reports(lone), [])
+
+    def test_related_includes_reports_grouped_by_a_person(self):
+        """Consolidating part of a group must not split the view of it."""
+        incident = Incident.objects.create(
+            incident_type='fire', barangay='Ibaba East',
+            latitude=BASE_LAT, longitude=BASE_LNG,
+            workflow_status=WorkflowStatus.VERIFIED,
+        )
+        # Far enough apart that no flag ties them -- only the incident does.
+        far = make_report(self.reporter, lat=BASE_LAT + 0.05, incident=incident)
+        self.original.incident = incident
+        self.original.save(update_fields=['incident'])
+
+        self.assertIn(far, related_reports(self.original))
 
     def test_does_not_re_flag_a_decided_report(self):
         nearby = make_report(self.reporter, lat=BASE_LAT + 0.0005)

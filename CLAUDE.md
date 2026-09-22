@@ -91,6 +91,17 @@ Verified → Responding → Resolved) and `duplicate_status` (Not Flagged / Poss
 Kept Separate / Confirmed) live on separate fields, are moved by separate endpoints,
 and every combination is legal. Never derive one from the other.
 
+**Flagging is pairwise, so a group is a chain.** Each new report is flagged
+against its *nearest* match alone. Three calls about one fire therefore link
+third → second → first, and reading `duplicate_of` off a row shows one
+neighbour while hiding the rest of the fire. `duplicates.related_reports` walks
+those links transitively in both directions (plus any shared incident) and
+`/api/reports/<id>/related/` serves the whole group; the queue row opens onto
+it, before anyone has ruled on anything. It is derived from the flags on record
+rather than by re-running the rules, because the thresholds are editable and a
+group assembled from today's settings could contradict the flags an operator is
+looking at.
+
 **Duplicates are flagged, never merged.** `incidents/duplicates.py` flags a report as
 `POSSIBLE` only when both `DUPLICATE_RADIUS_METERS` (Haversine, default 150) **and**
 `DUPLICATE_TIME_WINDOW_MINUTES` (default 30) hold. The distance and time delta that
@@ -372,8 +383,9 @@ by mistake impossible to reverse. Reversibility wins; there is a test naming
 that trade.
 
 **Timeline endpoints are unused.** `/api/reports/<id>/timeline/` and
-`/api/incidents/<id>/timeline/` are built and tested; no screen consumes them, and
-clicking a queue row does nothing.
+`/api/incidents/<id>/timeline/` are built and tested; no screen consumes them.
+The queue row now opens (the reference is a disclosure button) but shows the
+duplicate group, not the timeline — that panel is where a timeline would go.
 
 **No restore endpoint, deliberately.** `/api/dashboard/backup/export/` produces a
 full JSON export (no password hashes) and audits itself. There is no import

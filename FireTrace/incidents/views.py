@@ -13,7 +13,7 @@ from accounts.permissions import IsBFPPersonnel
 from analytics.models import AuditLog, SystemSetting
 from realtime.notify import broadcast_dashboard_event
 
-from .duplicates import flag_possible_duplicate
+from .duplicates import flag_possible_duplicate, related_reports
 from .models import (
     DuplicateStatus,
     GeocodingConfidence,
@@ -416,6 +416,41 @@ class ReportNotificationsView(APIView):
             'message': message,
             'created_at': event.created_at,
         }
+
+
+class ReportRelatedView(APIView):
+    """Every other report the system has tied to the same fire as this one.
+
+    Answers the question an operator actually has on opening a flagged report:
+    not "what is this one report" but "how many people are calling about this
+    fire". No ruling is needed first -- the group is what the system has
+    flagged, shown before anyone has decided anything, which is the point at
+    which it is most useful.
+
+    ``related`` is the group; the reports carry their own evidence, so the
+    operator can see which pair triggered which flag rather than being handed a
+    cluster to take on trust.
+    """
+
+    permission_classes = [IsBFPPersonnel]
+
+    def get(self, request, pk):
+        report = generics.get_object_or_404(
+            IncidentReport.objects.select_related('reporter', 'duplicate_of', 'incident'),
+            pk=pk,
+        )
+        related = related_reports(report)
+        context = {'request': request}
+        # The focus report is serialised as a queue row like the rest, so the
+        # group renders through one shape instead of two. Its description rides
+        # alongside because that is the one thing a row leaves out and an
+        # operator opening the row wants.
+        return Response({
+            'report': ReportQueueSerializer(report, context=context).data,
+            'description': report.description,
+            'related': ReportQueueSerializer(related, many=True, context=context).data,
+            'related_count': len(related),
+        })
 
 
 class ReportTimelineView(generics.ListAPIView):

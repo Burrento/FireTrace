@@ -17,6 +17,7 @@ urlpatterns = [
     path('reports/<int:pk>/', views.IncidentReportDetailView.as_view()),
     path('reports/<int:pk>/status/', views.ReportWorkflowStatusView.as_view()),
     path('reports/<int:pk>/duplicate-review/', views.ReportDuplicateReviewView.as_view()),
+    path('reports/<int:pk>/related/', views.ReportRelatedView.as_view()),
     path('reports/<int:pk>/timeline/', views.ReportTimelineView.as_view()),
     path('reports/<int:pk>/link/', views.ReportLinkView.as_view()),
 

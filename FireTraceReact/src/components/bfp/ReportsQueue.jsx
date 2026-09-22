@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../api';
+import RelatedReports from './RelatedReports';
 import { CALAPAN_BARANGAYS } from '../../data/barangays';
 import { WORKFLOW_STATUSES, statusClass } from '../../lib/workflowStatus';
 import { usePolledResource } from '../../pages/bfp/useDashboardData';
@@ -56,6 +57,9 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
   // landing mid-selection does not leave stale copies behind.
   const [selected, setSelected] = useState(() => new Set());
   const [consolidating, setConsolidating] = useState(false);
+  // The row whose group is open. One at a time: the panel is tall, and two
+  // open at once pushes the rest of the queue off the screen.
+  const [openId, setOpenId] = useState(null);
 
   const path = useMemo(() => {
     const params = new URLSearchParams();
@@ -82,6 +86,10 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
   function clearFilters() {
     setFilters(EMPTY_FILTERS);
     setPage(1);
+  }
+
+  function toggleRow(id) {
+    setOpenId((current) => (current === id ? null : id));
   }
 
   function toggleSelected(id) {
@@ -270,7 +278,7 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
               const isFlagged = report.duplicate_status === 'possible_duplicate';
               const busy = busyId === report.id;
 
-              return (
+              const row = (
                 <tr key={report.id} className={isFlagged ? 'bfp-row-flagged' : undefined}>
                   <td className="bfp-col-center">
                     {/* A report already in an incident is not loose evidence to
@@ -287,7 +295,19 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                     />
                   </td>
                   <td>
-                    <span className="bfp-ref">{report.reference_number}</span>
+                    {/* The row opens on the reference, not on the whole row:
+                        the status dropdown and the duplicate buttons live in
+                        the same row and must stay clickable on their own. */}
+                    <button
+                      type="button"
+                      className="bfp-ref bfp-ref-btn"
+                      onClick={() => toggleRow(report.id)}
+                      aria-expanded={openId === report.id}
+                      title="Show every report tied to this fire"
+                    >
+                      <i className={`fa-solid fa-chevron-${openId === report.id ? 'down' : 'right'}`} />
+                      {report.reference_number}
+                    </button>
                     {report.geocoding_confidence === 'low' && (
                       <span
                         className="bfp-conf-warn"
@@ -378,6 +398,20 @@ function ReportsQueue({ tick, onAuthError, onChanged, title = 'Incoming Reports'
                   </td>
                 </tr>
               );
+
+              return openId === report.id ? (
+                <Fragment key={`${report.id}-group`}>
+                  {row}
+                  <tr key={`${report.id}-related`} className="bfp-row-detail">
+                    <td colSpan={9}>
+                      <RelatedReports
+                        reportId={report.id}
+                        onSelectGroup={(ids) => setSelected(new Set(ids))}
+                      />
+                    </td>
+                  </tr>
+                </Fragment>
+              ) : row;
             })}
           </tbody>
         </table>

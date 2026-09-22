@@ -182,3 +182,57 @@ def flag_possible_duplicate(report):
         actor=None,
     )
     return candidate
+
+
+# A cluster is a handful of calls about one fire. The cap is a guard against a
+# pathological chain (a busy night in one barangay, thresholds set wide), not a
+# page size: a group this large is a signal the thresholds need looking at.
+MAX_RELATED = 50
+
+
+def related_reports(report):
+    """Every report the system has tied to the same fire as ``report``.
+
+    Flagging is *pairwise*: each new report is flagged against its nearest
+    match alone, so three calls about one fire form a chain -- the third points
+    at the second, which points at the first -- and not one group. Reading
+    ``duplicate_of`` on its own therefore shows an operator one neighbour and
+    hides the rest of the fire.
+
+    This walks those links in both directions, transitively, so the whole
+    cluster comes back however it was chained together. It is derived from the
+    flags already on record rather than by re-running the distance and time
+    rules: the thresholds are editable, and a group assembled from today's
+    settings could disagree with the flags an operator is actually looking at.
+
+    Reports sharing a canonical incident are included too, so the group stays
+    complete once personnel have consolidated part of it.
+
+    Returns the related reports, newest first. Never includes ``report``.
+    """
+    seen = {report.pk}
+    frontier = [report]
+
+    while frontier and len(seen) < MAX_RELATED:
+        ids = [r.pk for r in frontier]
+        points_at = [r.duplicate_of_id for r in frontier if r.duplicate_of_id]
+        incidents = [r.incident_id for r in frontier if r.incident_id]
+
+        criteria = Q(duplicate_of_id__in=ids)          # flagged against these
+        if points_at:
+            criteria |= Q(pk__in=points_at)            # what these point at
+        if incidents:
+            criteria |= Q(incident_id__in=incidents)   # already grouped by a person
+
+        frontier = list(
+            IncidentReport.objects.filter(criteria)
+            .exclude(pk__in=seen)
+            .select_related('reporter', 'duplicate_of', 'incident')[:MAX_RELATED]
+        )
+        seen.update(r.pk for r in frontier)
+
+    return list(
+        IncidentReport.objects.filter(pk__in=seen - {report.pk})
+        .select_related('reporter', 'duplicate_of', 'incident')
+        .order_by('-created_at')
+    )
