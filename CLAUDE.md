@@ -14,7 +14,7 @@ operational. This file covers architecture and what is **not** done.
 # backend (from FireTrace/)
 python manage.py runserver 0.0.0.0:8000     # 0.0.0.0 needed for LAN/phone testing
 python manage.py migrate
-python manage.py test                        # 35 tests: incidents/tests.py + accounts/tests.py
+python manage.py test                        # 131 tests across all four apps
 python manage.py test incidents.tests.DuplicateFlaggingTests.test_name   # single test
 python manage.py seed_demo_data [--reset]    # bfp@firetrace.test / firetrace123, then /bfp
 
@@ -336,6 +336,13 @@ complete but the queue has no row selection and nothing calls
 `POST /api/incidents/verify/`. Consequence: the Responding and Resolved KPI cards
 read 0 forever in real use, since only `seed_demo_data` or the admin creates any.
 
+`/api/incidents/` and `/api/incidents/<id>/` are **read-only**. `verify/` is the
+only way an `Incident` comes into being and `status/` the only way it moves —
+that is the design, not an omission, so build the queue's row selection against
+`verify/` rather than restoring a plain POST. A bare create would mint a
+canonical event traceable to no report, and a PUT would edit one without the
+timeline entry every other mutation writes.
+
 **Timeline endpoints are unused.** `/api/reports/<id>/timeline/` and
 `/api/incidents/<id>/timeline/` are built and tested; no screen consumes them, and
 clicking a queue row does nothing.
@@ -348,9 +355,12 @@ loses every fire reported so far. `BfpBackup.jsx` documents Azure Postgres
 point-in-time restore as the actual recovery path. There is also no scheduler in
 this application, so nothing claims to run scheduled backups — Azure does that.
 
-**`BfpAnalyticReport` duplicates `BfpReports`.** Both render `ReportsQueue`; the
-Analytics one just omits the map. Nav lists them under different groups. Worth
-collapsing or differentiating.
+**Three portal routes are one page.** `/bfp/reports`, `/bfp/BfpIncidentMap` and
+`/bfp/BfpAnalyticReport` all render `pages/bfp/BfpReports.jsx`, which takes
+`map` and `queue` props — the Incident Map is it without the queue, the
+Analytics one without the map. They were three near-identical files. The nav
+still lists them under three groups, which is a question for BFP rather than a
+code problem: whether the station wants three entry points to one archive.
 
 **Civilian app still on the legacy path.** It posts to `/incidents/`
 (`incidents/legacy_urls.py`) and reads `report.status`, a read-only serializer alias
@@ -362,7 +372,7 @@ uncovered. `analytics/tests.py` now covers the audit, operational, reference,
 settings, export and health endpoints, plus that a changed threshold actually
 changes what gets flagged. `accounts/tests.py` covers registration, the
 privilege-escalation attempt and the login split; `accounts/test_administration.py`
-covers profile editing, password change and the user-admin guards. 109 tests
+covers profile editing, password change and the user-admin guards. 131 tests
 total. The dashboard and the wizard have been verified by hand in a browser, not
 by a suite.
 
@@ -403,11 +413,10 @@ equivalent at all.
   against `ALLOWED_HOSTS`, since CORS does not apply to sockets, so narrowing it
   carelessly silently drops realtime back to polling. Container Apps health
   probes also send the container IP as `Host`.
-- 26 `.pyc` files are tracked in git, including `settings.cpython-314.pyc`, which
-  shows as modified after every run.
-- Email backend is console-only, so password reset mails print to the terminal.
-- `django-filter` is installed and in the `Pipfile` but never imported — queue
-  filtering is hand-written in `ReportQueueView.get_queryset`. Use it or drop it.
+- **No email backend is configured at all.** There used to be a `MAILERS` dict
+  in `settings.py`, which is not a setting Django reads, so it configured
+  nothing — mail would have gone to the default SMTP backend and failed. Add
+  `EMAIL_BACKEND` when password reset is actually built.
 
 ---
 

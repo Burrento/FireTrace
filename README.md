@@ -250,10 +250,8 @@ FireTrace has two parts that both need to be running at once for the app to work
 | `djangorestframework` | REST API layer |
 | `djangorestframework-simplejwt` | JWT auth (login/refresh tokens) |
 | `django-cors-headers` | Allows the React frontend (different origin) to call the API |
-| `django-filter` | Queryset filtering for DRF views |
 | `django-environ` | Reads config (DB credentials, etc.) from `.env` |
 | `psycopg[binary]` | PostgreSQL driver |
-| `markdown` | Renders DRF's browsable API docs |
 | `channels` | ASGI/WebSocket layer behind the live dashboard |
 | `channels-redis` | Redis channel layer — used whenever `REDIS_HOST` is set, which is how the deployment runs |
 | `django-storages[azure]` | Uploads to Azure Blob Storage when a storage account is configured |
