@@ -1496,6 +1496,9 @@ textarea{
 }
 
 .notif-item {
+    /* The row is a link to the report; it must not look like one. */
+    color: inherit;
+    text-decoration: none;
     display: flex;
     align-items: center;
     gap: 12px;

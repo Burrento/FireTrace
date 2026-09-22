@@ -258,7 +258,6 @@ class IncidentTimelineEvent(models.Model):
         DUPLICATE_FLAGGED = 'duplicate_flagged', 'Duplicate Flagged'
         DUPLICATE_REVIEW = 'duplicate_review', 'Duplicate Review'
         REPORT_LINKED = 'report_linked', 'Report Linked To Incident'
-        NOTE = 'note', 'Note'
         REPORT_UNLINKED = 'report_unlinked', 'Report Unlinked From Incident'
 
     incident = models.ForeignKey(

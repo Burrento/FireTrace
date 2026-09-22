@@ -25,7 +25,7 @@ urlpatterns = [
     path('incidents/ongoing/', views.OngoingFireMapView.as_view()),
 
     # Canonical, personnel-verified events
-    path('incidents/', views.IncidentListCreateView.as_view()),
+    path('incidents/', views.IncidentListView.as_view()),
     path('incidents/verify/', views.IncidentVerifyView.as_view()),
     path('incidents/<int:pk>/', views.IncidentDetailView.as_view()),
     path('incidents/<int:pk>/status/', views.IncidentWorkflowStatusView.as_view()),

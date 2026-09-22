@@ -63,11 +63,39 @@ ACTIVE_STATUSES = (
 
 
 def _reporter_contact(report):
-    """Who to call back: the caller for an encoded report, else the account holder."""
+    """Who to call back: the caller for an encoded report, else the account holder.
+
+    Returned as the two map-payload keys so a marker row can splat it, rather
+    than calling this once per field.
+    """
     if report.source_channel != SourceChannel.PWA:
-        return report.caller_name, report.caller_phone
-    user = report.reporter
-    return (user.get_full_name() or user.email or user.username), user.phone_number
+        name, phone = report.caller_name, report.caller_phone
+    else:
+        user = report.reporter
+        name = user.get_full_name() or user.email or user.username
+        phone = user.phone_number
+    return {'reporter_name': name, 'reporter_phone': phone}
+
+
+def _after_report_created(report, *, actor, action, summary, context):
+    """The write path every new report takes, however it arrived.
+
+    Audit trail, then the advisory duplicate flag, then the dashboard nudge --
+    in that order. Shared so a report encoded at the station cannot end up
+    following a different sequence from one a civilian filed.
+    """
+    record_activity(
+        actor=actor,
+        action=action,
+        event_type=IncidentTimelineEvent.EventType.REPORT_SUBMITTED,
+        summary=summary,
+        report=report,
+        context=context,
+    )
+    # Advisory flag only -- nothing is merged, nothing is deleted, and the
+    # report's workflow status is untouched.
+    flag_possible_duplicate(report)
+    broadcast_dashboard_event('report.created', {'report_id': report.id})
 
 
 class QueuePagination(PageNumberPagination):
@@ -92,24 +120,16 @@ class IncidentReportListCreateView(ReportQuerysetMixin, generics.ListCreateAPIVi
 
     def perform_create(self, serializer):
         report = serializer.save()
-
-        record_activity(
+        _after_report_created(
+            report,
             actor=report.reporter,
             action=AuditLog.Action.REPORT_SUBMITTED,
-            event_type=IncidentTimelineEvent.EventType.REPORT_SUBMITTED,
             summary=f"Report {report.reference_number} submitted from {report.barangay}",
-            report=report,
             context={
                 'incident_type': report.incident_type,
                 'geocoding_confidence': report.geocoding_confidence,
             },
         )
-
-        # Advisory flag only -- nothing is merged, nothing is deleted, and the
-        # report's workflow status is untouched.
-        flag_possible_duplicate(report)
-
-        broadcast_dashboard_event('report.created', {'report_id': report.id})
 
 
 class ReportIntakeView(generics.CreateAPIView):
@@ -124,16 +144,13 @@ class ReportIntakeView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         report = serializer.save()
-        record_activity(
+        _after_report_created(
+            report,
             actor=self.request.user,
             action=AuditLog.Action.REPORT_ENCODED,
-            event_type=IncidentTimelineEvent.EventType.REPORT_SUBMITTED,
             summary=f"Report {report.reference_number} encoded from {report.get_source_channel_display()}",
-            report=report,
             context={'source_channel': report.source_channel, 'incident_type': report.incident_type},
         )
-        flag_possible_duplicate(report)
-        broadcast_dashboard_event('report.created', {'report_id': report.id})
 
 
 class IncidentReportDetailView(ReportQuerysetMixin, generics.RetrieveAPIView):
@@ -408,8 +425,15 @@ class ReportTimelineView(generics.ListAPIView):
         return IncidentTimelineEvent.objects.filter(report_id=self.kwargs['pk']).select_related('actor')
 
 
-class IncidentListCreateView(generics.ListCreateAPIView):
-    """Canonical incidents. BFP only -- civilians never see this record type."""
+class IncidentListView(generics.ListAPIView):
+    """Canonical incidents. BFP only -- civilians never see this record type.
+
+    Read-only. An incident is brought into being by ``IncidentVerifyView`` and
+    moved by ``IncidentWorkflowStatusView``, and those are the only two ways:
+    a bare POST here would have created a canonical event traceable to no
+    report at all, and a PUT would have edited one without the timeline entry
+    every other mutation writes.
+    """
 
     serializer_class = IncidentSerializer
     permission_classes = [IsBFPPersonnel]
@@ -421,19 +445,8 @@ class IncidentListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(workflow_status__in=[v for v in raw.split(',') if v])
         return qs
 
-    def perform_create(self, serializer):
-        incident = serializer.save(verified_by=self.request.user, verified_at=timezone.now())
-        record_activity(
-            actor=self.request.user,
-            action=AuditLog.Action.INCIDENT_VERIFIED,
-            event_type=IncidentTimelineEvent.EventType.VERIFICATION,
-            summary=f"Incident {incident.reference_number} created for {incident.barangay}",
-            incident=incident,
-        )
-        broadcast_dashboard_event('incident.created', {'incident_id': incident.id})
 
-
-class IncidentDetailView(generics.RetrieveUpdateAPIView):
+class IncidentDetailView(generics.RetrieveAPIView):
     serializer_class = IncidentSerializer
     permission_classes = [IsBFPPersonnel]
     queryset = Incident.objects.select_related('verified_by')
@@ -641,8 +654,7 @@ class DashboardMapView(APIView):
                     'geocoding_confidence': r.geocoding_confidence,
                     # Who to call back. Personnel-only endpoint, so the contact
                     # details are safe here; OngoingFireMapView never carries them.
-                    'reporter_name': _reporter_contact(r)[0],
-                    'reporter_phone': _reporter_contact(r)[1],
+                    **_reporter_contact(r),
                     'source_channel': r.source_channel,
                     'source_channel_display': r.get_source_channel_display(),
                     'has_photo': r.has_photo,

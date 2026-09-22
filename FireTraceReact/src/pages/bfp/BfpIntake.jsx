@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { apiFetch } from '../../api';
+import { INCIDENT_TYPES } from '../../lib/incidentTypes';
 import LocationPickerMap from '../../components/LocationPickerMap';
+import { roundCoord } from '../../lib/coords';
 import BfpShell from './BfpShell';
 import { useBfpPage } from './useDashboardData';
 
@@ -17,13 +19,6 @@ const CHANNELS = [
   { value: 'referral', label: 'Inter-agency referral' },
 ];
 
-const INCIDENT_TYPES = [
-  { value: 'fire', label: 'Residential Fire' },
-  { value: 'vehicle', label: 'Vehicle Fire' },
-  { value: 'electrical', label: 'Electrical Fire' },
-  { value: 'other', label: 'Other' },
-];
-
 const EMPTY = {
   source_channel: 'hotline',
   incident_type: '',
@@ -35,9 +30,6 @@ const EMPTY = {
   latitude: null,
   longitude: null,
 };
-
-// The coordinate columns hold 6 decimal places; Google hands back a dozen.
-const round6 = (value) => Math.round(value * 1e6) / 1e6;
 
 function BfpIntake() {
   const { lastRefresh, refreshNow, live } = useBfpPage(60000);
@@ -150,7 +142,7 @@ function BfpIntake() {
               <LocationPickerMap
                 latitude={form.latitude}
                 longitude={form.longitude}
-                onChange={(lat, lng) => update({ latitude: round6(lat), longitude: round6(lng) })}
+                onChange={(lat, lng) => update({ latitude: roundCoord(lat), longitude: roundCoord(lng) })}
                 onClear={() => update({ latitude: null, longitude: null, barangay: '' })}
                 onResolveLocation={handleResolveLocation}
               />

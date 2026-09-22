@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '../../api';
 import BfpShell from './BfpShell';
 import { useBfpPage, usePolledResource } from './useDashboardData';
-import { downloadCsv as download } from '../../lib/csv';
+import { csvLine, downloadCsv as download } from '../../lib/csv';
 
 /* The personnel activity trail, from /api/dashboard/audit/.
 
@@ -47,21 +47,17 @@ function fmt(iso) {
 }
 
 function toCsv(rows) {
-  const header = ['Timestamp', 'Actor', 'Action', 'Summary', 'Reference', 'Source'];
-  const escape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-  const lines = rows.map((row) =>
-    [
+  return [
+    csvLine(['Timestamp', 'Actor', 'Action', 'Summary', 'Reference', 'Source']),
+    ...rows.map((row) => csvLine([
       new Date(row.created_at).toISOString(),
       row.actor_name,
       row.action_display,
       row.summary,
       row.reference,
       row.source,
-    ]
-      .map(escape)
-      .join(','),
-  );
-  return [header.map(escape).join(','), ...lines].join('\r\n');
+    ])),
+  ].join('\r\n');
 }
 
 function BfpAudit() {

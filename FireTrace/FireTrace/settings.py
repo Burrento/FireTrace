@@ -207,9 +207,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'FireTrace.wsgi.application'
-
-
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
@@ -301,14 +298,9 @@ STORAGES = {
 }
 
 
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Email is deliberately unconfigured: password reset is still a stub with no
+# endpoint behind it, and the setting that was here ("MAILERS") is not one
+# Django reads, so it configured nothing. Add EMAIL_BACKEND when reset is built.
 
 
 # Exact origins, comma-separated in .env. Add your LAN origin here when testing

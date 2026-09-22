@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { roundCoord } from '../lib/coords';
 import { ReportDraftContext } from './reportDraftContextObject';
 
 const STORAGE_KEY = 'reportDraft';
@@ -9,15 +10,7 @@ const STORAGE_KEY = 'reportDraft';
    total". Round on the way into the draft, once, so every writer is covered and
    the Lat/Lng the reporter is shown is exactly what gets filed.
 
-   Six decimal places is ~0.1 m at this latitude: far finer than any fix the
-   phone or the map pin can actually justify. */
-const COORD_DECIMALS = 6;
-
-function roundCoord(value) {
-  if (value === null || value === undefined || value === '') return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? Number(number.toFixed(COORD_DECIMALS)) : null;
-}
+   The rule itself lives in lib/coords.js, shared with the BFP intake form. */
 
 function withRoundedCoords(patch) {
   const next = { ...patch };

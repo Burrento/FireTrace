@@ -24,11 +24,9 @@ const ICONS = {
 
 function dayLabel(iso) {
     const day = new Date(iso);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-    if (day.toDateString() === today.toDateString()) return 'Today';
-    if (day.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    const daysAgo = (n) => new Date(Date.now() - n * 86400000).toDateString();
+    if (day.toDateString() === daysAgo(0)) return 'Today';
+    if (day.toDateString() === daysAgo(1)) return 'Yesterday';
     return day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
@@ -86,7 +84,6 @@ function Notifications() {
                                     className="notif-item"
                                     key={item.id}
                                     to={`/report/${item.report_id}`}
-                                    style={{ textDecoration: 'none', color: 'inherit' }}
                                 >
                                     <span className={`notif-icon notif-icon-${icon}`}>{glyph}</span>
                                     <div className="notif-content">

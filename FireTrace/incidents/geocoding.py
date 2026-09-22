@@ -15,19 +15,13 @@ from django.conf import settings
 from .models import GeocodingConfidence, LocationSource
 
 
-def _accuracy_bands():
-    return (
-        getattr(settings, 'GEO_HIGH_ACCURACY_M', 50),
-        getattr(settings, 'GEO_MEDIUM_ACCURACY_M', 200),
-    )
-
-
 def derive_confidence(location_source, gps_accuracy_m=None, has_coordinates=True):
     """Grade a captured location as high / medium / low confidence."""
     if not has_coordinates:
         return GeocodingConfidence.LOW
 
-    high_band, medium_band = _accuracy_bands()
+    high_band = getattr(settings, 'GEO_HIGH_ACCURACY_M', 50)
+    medium_band = getattr(settings, 'GEO_MEDIUM_ACCURACY_M', 200)
 
     if location_source == LocationSource.MAP_PIN:
         return GeocodingConfidence.HIGH

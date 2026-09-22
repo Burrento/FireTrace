@@ -24,7 +24,6 @@ class AuditLog(models.Model):
         DISPATCH_ASSIGNED = 'dispatch_assigned', 'Dispatch Assigned'
         DUPLICATE_REVIEWED = 'duplicate_reviewed', 'Duplicate Reviewed'
         REPORT_LINKED = 'report_linked', 'Report Linked To Incident'
-        NOTE_ADDED = 'note_added', 'Note Added'
         # Administrative actions. These touch no incident, which is exactly why
         # they belong here and not on an incident timeline.
         SETTINGS_UPDATED = 'settings_updated', 'Settings Updated'

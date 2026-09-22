@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '../../style.css';
 import { apiFetch } from '../../api';
+import { INCIDENT_TYPES } from '../../lib/incidentTypes';
 import { isLoggedIn } from '../../auth';
 import { useReportDraft } from '../../context/useReportDraft';
 import LocationPickerMap from '../../components/LocationPickerMap';
@@ -231,10 +232,9 @@ function ReportForm() {
                         required
                     >
                         <option value="">Select Incident Type</option>
-                        <option value="fire">Residential Fire</option>
-                        <option value="vehicle">Vehicle Fire</option>
-                        <option value="electrical">Electrical Fire</option>
-                        <option value="other">Other</option>
+                        {INCIDENT_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>{type.label}</option>
+                        ))}
                     </select>
                 </div>
 
